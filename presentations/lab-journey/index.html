@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מסע הפרויקט — ניהול כלים · יומן הנדסי</title>
+<style>
+  :root{
+    --bg:#0f1620; --surface:#18222f; --surface2:#1f2c3c; --text:#e7eef6;
+    --muted:#9fb0c3; --blue:#3b82f6; --green:#22c55e; --red:#ef4444;
+    --amber:#f59e0b; --purple:#a78bfa; --border:#2a3a4d; --radius:16px;
+    --teal:#2dd4bf; --pink:#ec4899; --slate:#64748b;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,"Segoe UI",Tahoma,Arial,"Noto Sans Hebrew",sans-serif;
+    line-height:1.85; font-size:17px; -webkit-font-smoothing:antialiased;
+  }
+  .deck{max-width:980px;margin:0 auto;padding:0 22px 120px;}
+  /* ---- cover ---- */
+  .cover{
+    min-height:88vh;display:flex;flex-direction:column;justify-content:center;
+    padding:40px 0 60px;border-bottom:1px solid var(--border);
+  }
+  .cover .kicker{color:var(--blue);font-weight:700;letter-spacing:.5px;margin-bottom:14px;}
+  .cover h1{font-size:46px;line-height:1.2;margin:0 0 18px;font-weight:800;}
+  .cover .sub{font-size:21px;color:var(--muted);max-width:760px;margin-bottom:28px;}
+  .cover .meta{display:flex;flex-wrap:wrap;gap:10px;}
+  .pill{
+    background:var(--surface);border:1px solid var(--border);border-radius:999px;
+    padding:7px 16px;font-size:14px;color:var(--muted);
+  }
+  .pill b{color:var(--text);}
+  /* ---- chapters ---- */
+  .chapter{
+    padding:54px 0;border-bottom:1px solid var(--border);
+  }
+  .chapter:last-child{border-bottom:none;}
+  .chnum{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:48px;height:48px;border-radius:14px;font-weight:800;font-size:20px;
+    background:var(--surface2);color:var(--blue);border:1px solid var(--border);
+    margin-bottom:18px;
+  }
+  .chapter h2{
+    font-size:31px;line-height:1.25;margin:0 0 8px;font-weight:800;
+  }
+  .chapter .lead{color:var(--muted);font-size:18px;margin:0 0 22px;}
+  .prose{max-width:820px;}
+  .prose p{margin:0 0 16px;}
+  .prose h3{
+    font-size:20px;margin:30px 0 10px;color:var(--text);font-weight:700;
+    border-right:3px solid var(--blue);padding-right:12px;
+  }
+  .muted{color:var(--muted);}
+  .em-blue{color:var(--blue);font-weight:700;}
+  .em-green{color:var(--green);font-weight:700;}
+  .em-red{color:var(--red);font-weight:700;}
+  .em-amber{color:var(--amber);font-weight:700;}
+  .em-purple{color:var(--purple);font-weight:700;}
+  .em-teal{color:var(--teal);font-weight:700;}
+  .em-pink{color:var(--pink);font-weight:700;}
+  /* ---- cards / callouts ---- */
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:20px 24px;margin:22px 0;max-width:820px;
+  }
+  .card.tip{border-right:4px solid var(--blue);}
+  .card.warn{border-right:4px solid var(--amber);}
+  .card.bad{border-right:4px solid var(--red);}
+  .card.good{border-right:4px solid var(--green);}
+  .card h4{margin:0 0 8px;font-size:17px;}
+  .card p{margin:0 0 8px;}
+  .card p:last-child{margin-bottom:0;}
+  /* ---- code/id chips ---- */
+  code{
+    background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+    padding:1px 7px;font-family:"Consolas","SF Mono",monospace;font-size:14px;
+    color:#cfe0f3;direction:ltr;display:inline-block;
+  }
+  /* ---- timeline ---- */
+  .timeline{max-width:820px;margin:22px 0;}
+  .tl-item{
+    position:relative;padding:0 26px 22px 0;border-right:2px solid var(--border);
+    margin-right:8px;
+  }
+  .tl-item:last-child{border-right:2px solid transparent;padding-bottom:0;}
+  .tl-item::before{
+    content:"";position:absolute;right:-9px;top:4px;width:14px;height:14px;
+    border-radius:50%;background:var(--blue);border:3px solid var(--bg);
+  }
+  .tl-item.done::before{background:var(--green);}
+  .tl-item.next::before{background:var(--amber);}
+  .tl-item h4{margin:0 0 4px;font-size:17px;}
+  .tl-item p{margin:0;color:var(--muted);font-size:15px;}
+  /* ---- screenshots ---- */
+  figure{margin:24px 0;max-width:820px;}
+  figure img{
+    width:100%;height:auto;display:block;border-radius:var(--radius);
+    border:1px solid var(--border);background:var(--surface);
+  }
+  figcaption{color:var(--muted);font-size:14px;margin-top:8px;text-align:center;}
+  /* ---- table ---- */
+  table{
+    width:100%;max-width:820px;border-collapse:collapse;margin:22px 0;
+    font-size:15px;background:var(--surface);border-radius:var(--radius);overflow:hidden;
+  }
+  th,td{padding:11px 14px;text-align:right;border-bottom:1px solid var(--border);}
+  th{background:var(--surface2);font-weight:700;color:var(--text);}
+  tr:last-child td{border-bottom:none;}
+  /* ---- status swatches ---- */
+  .swatch{display:inline-block;width:13px;height:13px;border-radius:4px;margin-left:8px;vertical-align:middle;}
+  /* ---- issue grid ---- */
+  .issue{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:18px 22px;margin:16px 0;max-width:820px;border-right:4px solid var(--purple);
+  }
+  .issue.blocker{border-right-color:var(--red);}
+  .issue .tag{
+    display:inline-block;font-size:12px;font-weight:700;border-radius:999px;
+    padding:3px 11px;margin-bottom:8px;
+  }
+  .tag.block{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.4);}
+  .tag.minor{background:rgba(167,139,250,.15);color:#c9b8fb;border:1px solid rgba(167,139,250,.4);}
+  .issue h4{margin:0 0 8px;font-size:18px;}
+  .issue .row{margin:6px 0;}
+  .issue .row b{color:var(--muted);font-weight:600;}
+  .stat-row{display:flex;flex-wrap:wrap;gap:14px;margin:22px 0;max-width:820px;}
+  .stat{
+    flex:1 1 150px;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:18px 20px;
+  }
+  .stat .n{font-size:32px;font-weight:800;line-height:1;}
+  .stat .l{color:var(--muted);font-size:14px;margin-top:6px;}
+  .foot{padding:48px 0 0;color:var(--muted);font-size:14px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ===================== COVER ===================== -->
+<section class="cover">
+  <div class="kicker">יומן הנדסי · מסמך פנימי מפורט</div>
+  <h1>ניהול כלים — מסע הפרויקט מההתחלה ועד עכשיו</h1>
+  <p class="sub">סיפור צעד־אחר־צעד של כל מה שנעשה: מהבנת ההגדרה, דרך ההחלטה
+  הארכיטקטונית, בניית הליבה הבדוקה, העלייה לענן, מנוע התהליכים, ועד מועצת
+  הביקורת הרב־צוותית ותיקוניה. מסמך ארוך ומפורט — בכוונה.</p>
+  <div class="meta">
+    <span class="pill">פרויקט: <b>tools-251d3</b> (Firebase · me-west1)</span>
+    <span class="pill">סטטוס: <b>חי בענן</b></span>
+    <span class="pill">בדיקות: <b>85 ירוקות</b></span>
+    <span class="pill">עודכן: <b>2026-06-25</b></span>
+  </div>
+</section>
+
+<!-- ===================== 1 — THE BRIEF ===================== -->
+<section class="chapter">
+  <div class="chnum">1</div>
+  <h2>ההגדרה — להבין מה בעצם מבקשים</h2>
+  <p class="lead">לפני שורת קוד אחת, היה צריך להבין את הסיפור האמיתי שמאחורי
+  הבקשה.</p>
+  <div class="prose">
+    <p>הפרויקט נולד ממשפט פשוט: "תוכנה לניהול כלים". אבל מאחורי המשפט הזה
+    הסתתר עולם שלם. מדובר במלאי שמאורגן <b>תחת מחלקה</b>, כשהכלים יושבים
+    במגוון מכלים — <b>"עגלות", ארונות ואזורי עבודה</b> — ללא תלות במיקום
+    הפיזי שבו המכל עומד. בעולם הזה <em>כיול</em> פג־תוקף הוא לא טעות מנהלתית
+    אלא פגיעה ממשית: כלי לא־מכויל "מזייף", והשימוש בו פוגע בדיוק העבודה
+    ומזיק לציוד. ומי־עשה־מה צריך להישמר ולהיות ניתן לשחזור.</p>
+
+    <p>מההגדרה המלאה עלו דרישות רבות, וכל אחת מהן נרשמה כדי שלא תאבד: סנכרון
+    ענן חי (גיבוי מקביל ל־OneDrive ול־Google Drive), <b>שיתוף לפי כתובת
+    אימייל</b> עם רמות הרשאה, <b>שלושה תפקידים</b> נפרדים, מנגנון <b>גרסאות
+    וגיבוי</b> (שלוש גרסאות אחורה + גרסת בסיס "אלפא" מאומתת), עבודה נוחה
+    מהטלפון.</p>
+
+    <p>שלושת התפקידים התגבשו כך:</p>
+    <table>
+      <tr><th>תפקיד</th><th>במילים פשוטות</th></tr>
+      <tr><td><span class="em-blue">מנהל המערכת / בעל הכלים</span></td>
+        <td>הדרג העליון. עושה הכול: מוחק נתונים, משנה הרשאות, רואה את יומן
+        הביקורת, מאשר גרסאות ומגלגל אחורה, מייצא את גרסת האלפא. יכול גם
+        להחזיק מכל אחד או יותר משלו.</td></tr>
+      <tr><td><span class="em-amber">אחראי כלים</span></td>
+        <td>רואה הכול ועורך כלים ומיקומים, בונה הזמנות, מייצא קבצים, מוסיף
+        משתמשים — אבל <em>לא</em> מוחק נתונים בעצמו, ולא רואה יומן ביקורת.
+        יכול להחזיק מכל אחד או יותר משלו.</td></tr>
+      <tr><td><span class="em-green">בעל עגלה</span></td>
+        <td>צפייה בלבד במכל (או במכלים) שלו, וייצוא דוח עליו. הבית שלו ממוקד
+        למכלו. למכל יכולים להיות כמה בעלים.</td></tr>
+    </table>
+
+    <p>נקודה חשובה שנקבעה כבר כאן: הדרישות מגיעות בגלים. עלו שורה של
+    רעיונות־שדרוג תוך כדי — חתימה יומית, בדיקה רבעונית, מנגנון כיול, חוסר
+    מאושר, הצהרת שבור, כלים בלי מיקום ידוע. כל אלה נרשמו בקובץ מפרט נפרד כדי
+    שאף דרישה לא "תיפול בין הכיסאות".</p>
+
+    <div class="card tip">
+      <h4>עיקרון מנחה: מודל ממוקד־מחלקה</h4>
+      <p>הארגון מתחיל מהמחלקה, לא מהמיקום הפיזי. <b>מכל</b> הוא מושג גנרי —
+      "עגלה" (<code>C</code>), ארון (<code>B</code>), או חלק מאזור עבודה.
+      בטקסט הממשק "עגלה" מופיעה במרכאות או במונח מכל ניטרלי, כי בפועל זה
+      עשוי להיות ארון או אזור.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 2 — THINK BEFORE BUILDING ===================== -->
+<section class="chapter">
+  <div class="chnum">2</div>
+  <h2>לחשוב לפני שבונים — ההחלטה הארכיטקטונית</h2>
+  <p class="lead">פיצול הדרכים שקבע את כל מה שבא אחריו.</p>
+  <div class="prose">
+    <p>נוצר פיצול דרכים אמיתי: <b>אפליקציה לא־מקוונת בקובץ אחד</b> (פשוטה,
+    אבל מבודדת) מול <b>אפליקציית ענן אמיתית</b> (מסונכרנת, משותפת לפי
+    הרשאות, נגישה מהטלפון). אי־אפשר לבחור גם וגם — ההחלטה הזו מכתיבה הכול.</p>
+
+    <p>שלוש שאלות הוצגו, ושלוש תשובות הכריעו: המשתמשים עובדים
+    <b>מטלפונים וממחשבים מחוברים לאינטרנט</b> → אפליקציית ענן אמיתית;
+    בעל־עגלה הוא <b>צפייה בלבד</b> במכלו; ויש צורך בקצה־שרת (backend) שצריך
+    לבחור ולכוון מאפס.</p>
+
+    <div class="card tip">
+      <h4>ההכרעה</h4>
+      <p>נבחרה <span class="em-blue">אפליקציית ענן אמיתית</span>, לא לא־מקוונת.
+      PWA לטלפון. עטיפה לאפליקציה native ופרסום בחנויות סומנו כיעד
+      <b>אופציונלי ורחוק מאוד</b> — לא לעכשיו.</p>
+    </div>
+
+    <p>מתוך ההחלטה הזו נשר באופן טבעי <b>מודל ההרשאות</b>: ברגע שיש ענן
+    משותף, השאלה "מי רשאי לעשות מה" הופכת לליבת המערכת, לא לקישוט. נבחרה
+    דרך עבודה זהירה: לבנות תחילה מול מתאם נתונים <em>מקומי</em> עם נתוני
+    זרע (seed) ולבדוק את ההיגיון מיידית — בלי לחכות לשרת. רק כשהכול ירוק,
+    לחבר את מתאם הענן. כך התקדמנו מהר בלי תלות חיצונית.</p>
+
+    <p>הערה על השרת עצמו: נבחר <b>Firebase</b>. הפרויקט נוצר נקי בשם
+    <code>tools-251d3</code> (Firestore במצב Native, אזור me-west1), עם
+    כתובות אדמין מוגדרות ב־<code>admins.js</code> וחוקי אבטחה ייעודיים.</p>
+  </div>
+</section>
+
+<!-- ===================== 3 — THE SPINE: IDS + PERMISSIONS ===================== -->
+<section class="chapter">
+  <div class="chnum">3</div>
+  <h2>עמוד השדרה — דקדוק המזהים ומנוע ההרשאות</h2>
+  <p class="lead">שני הרכיבים שעליהם נשען כל השאר, ולכן נבנו ראשונים וכפונקציות
+  טהורות וניתנות לבדיקה.</p>
+  <div class="prose">
+    <p>הליבה נבנתה כפונקציות טהורות, ללא DOM וללא רשת, כך שאותו קוד בדיוק רץ
+    בדפדפן, במעבדה ובבדיקות. ההצדקה: אם ההיגיון נקי ובדוק — אפשר לסמוך עליו
+    בכל מקום.</p>
+
+    <h3>דקדוק המזהים (ids.js) — עמוד השדרה</h3>
+    <p>נקבעה היררכיה ברורה: <b>מיקום → מכל → מגירה/מדף → כלי</b>, ולכל שכבה
+    דקדוק מזהה מדויק שניתן לאמת. כל ילד נושא את מזהה ההורה שלו כקידומת:</p>
+    <table>
+      <tr><th>ישות</th><th>סימון</th><th>הערה</th></tr>
+      <tr><td>מיקום</td><td><code>L</code> + 4 תווים</td><td>לכל מיקום שם תצוגה בעברית</td></tr>
+      <tr><td>מכל</td><td><code>C</code>="עגלה" / <code>B</code>=ארון + 4 תווים</td><td>אזור עבודה — סימון יוגדר</td></tr>
+      <tr><td>מגירה / מדף</td><td>מזהה מכל + 2 תווים</td><td>נושא את מזהה המכל</td></tr>
+      <tr><td>כלי</td><td>מזהה מגירה + 4 תווים</td><td>נושא את מזהה המגירה</td></tr>
+    </table>
+    <p class="muted">הספירה המדויקת (האם אות הסוג נכללת בארבעת התווים) היא
+    שאלה פתוחה שתאומת מול בעל הכלים לפני נעילת ה־regex.</p>
+    <p>בנוסף נבנו בנאים (builders), מאמתים (validators), נגזרות (לחלץ מכל/מגירה
+    ממזהה כלי), חישוב הרץ הבא במגירה, וקבלת מזהה "חרוט" מפורש בייבוא — בתנאי
+    שהוא שייך באמת למגירת היעד.</p>
+
+    <h3>מנוע ההרשאות (permissions.js)</h3>
+    <p>מטריצת התפקידים קודדה כקבוצות יכולות לכל תפקיד, עם
+    <code>canPerform(role, action, ctx)</code> שמחזיר כן/לא. עידונים תלויי־הקשר
+    נבנו פנימה: פעולות בעל־עגלה מוגבלות למכלים שבבעלותו בלבד. עוד נבנו
+    <code>canViewCart</code> ו־<code>visibleCartIds</code> (שמחזיר <em>null</em>
+    כשמותר לראות הכול) — אלה מזינים אחר־כך את הסינון בכל מסך.</p>
+
+    <div class="card tip">
+      <h4>למה זה ראשון</h4>
+      <p>מזהים והרשאות הם ה"חוזה" של המערכת. אם הם נכונים ובדוקים, כל שכבה
+      שמעליהם — מודל, תהליכים, UI — יכולה לסמוך עליהם בלי לבדוק שוב. לכן הם
+      נבנו לפני כל דבר אחר, וכוסו בבדיקות לפני שנכתבה שורת ממשק אחת.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 4 — MODEL, STORAGE, SEED + LAB ===================== -->
+<section class="chapter">
+  <div class="chnum">4</div>
+  <h2>המודל, האחסון, והזרע — ואיך בודקים בלי Node</h2>
+  <p class="lead">שכבת הפעולות מעל המזהים וההרשאות, ופתרון מקורי להרצת בדיקות
+  בתוך הדפדפן.</p>
+  <div class="prose">
+    <h3>מודל הנתונים, האחסון והזרע</h3>
+    <p>נבנה <code>model.js</code> — כל פעולה מקבלת (db, actor, payload), אוכפת
+    הרשאה, רושמת שורת ביקורת (audit) ומחזירה את הישות. נבנה
+    <code>storage.js</code> עם מתאם מקומי חי ומתאם Firebase כשלד. נבנה
+    <code>seed.js</code> שמייצר מלאי סינתטי <em>דטרמיניסטי</em> לבדיקות חוזרות
+    ויציבות.</p>
+
+    <div class="card tip">
+      <h4>איך מריצים את הבדיקות</h4>
+      <p>הבדיקות רצות <b>בתוך הדפדפן עצמו</b> דרך Chrome/Edge headless
+      (<code>--dump-dom</code>) שקורא runner־בדיקות בעמוד, מעל שרת סטטי פשוט
+      (<code>python -m http.server</code>). אותו קוד ליבה רץ כך בלי תלות חיצונית.</p>
+    </div>
+    <p>התוצאה בשלב זה: <code>ids.js</code> + <code>permissions.js</code> +
+    <b>31 בדיקות יחידה</b> בתוך הדפדפן — כולן עברו headless. גם נכתב
+    <code>run-tests.ps1</code> כמריץ קבוע.</p>
+  </div>
+</section>
+
+<!-- ===================== 5 — EXECUTION: MAKE IT REAL ===================== -->
+<section class="chapter">
+  <div class="chnum">5</div>
+  <h2>ביצוע — להפוך את זה לאמיתי</h2>
+  <p class="lead">לוח המחוונים עם צבעי סטטוס הכיול, ומיקוד לפי תפקיד — ואז
+  עלייה חיה לענן.</p>
+  <div class="prose">
+    <p>על גבי הליבה הבדוקה נבנה ה־UI: <code>index.html</code> + גיליון סגנון
+    כהה + <code>app.js</code>. מעטפת RTL הכוללת מסך כניסה, תג תפקיד, מתג־תפקיד
+    להדגמה, כרטיסי סטטיסטיקת כיול, "ציפסים" של מכלים, וטבלת כלים עם
+    <b>קידוד צבע לפי סטטוס</b>.</p>
+
+    <h3>צבעי הסטטוס — צבע נפרד לכל מצב</h3>
+    <p>עיקרון מחייב: <b>לכל סטטוס צבע משלו, ייחודי</b>. אין שני מצבים שונים
+    שחולקים אותו צבע — בפרט "בכיול" ו"שבור" חייבים להיות צבעים שונים. הפונקציה
+    <code>calibrationStatus</code> ממפה כל מצב לצבע נבדל:</p>
+    <table>
+      <tr><th>מצב</th><th>צבע</th><th>משמעות</th></tr>
+      <tr><td>פג תוקף</td><td><span class="swatch" style="background:#ef4444"></span><span class="em-red">אדום</span></td><td>הכיול כבר פג תוקף</td></tr>
+      <tr><td>לקראת פקיעה</td><td><span class="swatch" style="background:#f59e0b"></span><span class="em-amber">כתום</span></td><td>הכיול יפוג בקרוב</td></tr>
+      <tr><td>בכיול</td><td><span class="swatch" style="background:#a78bfa"></span><span class="em-purple">סגול</span></td><td>הכלי נשלח/נמצא בכיול</td></tr>
+      <tr><td>שבור</td><td><span class="swatch" style="background:#ec4899"></span><span class="em-pink">ורוד</span></td><td>הכלי הוצהר שבור</td></tr>
+      <tr><td>תקין</td><td><span class="swatch" style="background:#22c55e"></span><span class="em-green">ירוק</span></td><td>בתוקף, רחוק מפקיעה</td></tr>
+      <tr><td>ללא כיול</td><td><span class="swatch" style="background:#64748b"></span><span class="muted">אפור</span></td><td>כלי שאינו מכויל כלל</td></tr>
+    </table>
+
+    <p>מצב ההדגמה (<code>?demo=1&as=admin|manager|owner</code>) טוען נתוני זרע
+    ומאפשר לוודא את המיקוד לפי תפקיד. וזה אומת: הדרג העליון רואה את כל המכלים
+    וכל הכלים; בעל־עגלה רואה רק את המכל שלו, בצפייה בלבד.
+    <span class="muted">(הכמויות בהדגמה הן דוגמה בלבד.)</span> רונדרו צילומי
+    מסך אמיתיים מ־Chrome headless.</p>
+
+    <figure>
+      <img src="../../lab/reports/view-admin.png" alt="לוח התצוגה המלאה">
+      <figcaption>תצוגה מלאה — כל המכלים, כל הכלים, כרטיסי סטטוס כיול וטבלה
+      מקודדת־צבע.</figcaption>
+    </figure>
+    <figure>
+      <img src="../../lab/reports/view-owner.png" alt="לוח בעל המכל">
+      <figcaption>תצוגת בעל־עגלה — ממוקדת למכל שלו בלבד, צפייה בלבד.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ===================== 6 — GOING LIVE ===================== -->
+<section class="chapter">
+  <div class="chnum">6</div>
+  <h2>עולים לאוויר — מהדגמה לענן חי</h2>
+  <p class="lead">הרגע שבו האפליקציה הפסיקה להיות הדמיה והפכה למערכת אמיתית
+  שמתחברים אליה.</p>
+  <div class="prose">
+    <p>עד כה הכול רץ מול נתוני זרע מקומיים. עכשיו הגיע הרגע לחבר את הענן
+    באמת. החיבור נעשה בזהירות, בשתי שכבות נפרדות, כדי שמצב ההדגמה לא ייפגע
+    ויישאר זמין כרשת ביטחון.</p>
+
+    <p>נבנה <code>firebase.js</code> שמאתחל את האפליקציה, את Auth ואת Firestore
+    (נטען דינמית רק במצב חי). נבנה <code>firebase-adapter.js</code>
+    עם <code>loadDb()</code> שקורא את כל האוספים אל מבנה ה־db, עם
+    <code>getActorForUser()</code> שמזהה תפקיד (מנהל המערכת לפי אימייל / מסמך
+    <code>users/{uid}</code>), ועם כותבי ישויות לייבוא ולעריכות. ה־UI כוון
+    לזרימה חיה: מסך כניסה → onAuth → טעינת הענן → לוח ממוקד־תפקיד, עם יציאה
+    ומסך "אין עדיין תפקיד". מצב ההדגמה נשמר.</p>
+    <figure>
+      <img src="../../lab/reports/live-login.png" alt="מסך כניסה חי">
+      <figcaption>מסך הכניסה החי (Firebase Auth) — אומת headless, אינו נחתך
+      בטלפון.</figcaption>
+    </figure>
+    <div class="card good">
+      <h4>סטטוס: חי</h4>
+      <p>האפליקציה עלתה לאוויר. ההתחברות עם
+      <code>aseelhalaby646@gmail.com</code> (מנהל המערכת / בעל הכלים לפי
+      אימייל) טוענת לוח מ־Firestore, ומאפשרת להתחיל להזין נתונים.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 7 — DEEPENING: WORKFLOW ENGINE ===================== -->
+<section class="chapter">
+  <div class="chnum">7</div>
+  <h2>מעמיקים — מנוע התהליכים התפעולי</h2>
+  <p class="lead">כאן המערכת הפכה מ"רשימת מלאי" ל"מערכת ניהול תפעולי" אמיתית.</p>
+  <div class="prose">
+    <p>על בסיס המפרט, נבנה <code>workflows.js</code> — שכבת תהליכים מעל המודל.
+    מנוע ההרשאות הורחב בפעולות חדשות (חתימה, בדיקה, בקשת כיול, בקשת חוץ,
+    אישור, יזום כיול, הצהרת שבור, הוספת/ביטול כלי לא־ממוקם), כולן עם מיקוד
+    לבעלות. ה־db הורחב באוספים: <code>signoffs</code>, <code>inspections</code>,
+    <code>requests</code>, <code>notifications</code>.</p>
+
+    <h3>שבעת התהליכים שנבנו</h3>
+    <table>
+      <tr><th>#</th><th>תהליך</th><th>מה הוא עושה</th></tr>
+      <tr><td>1</td><td>חתימה יומית</td><td>חתימה תפעולית על "עגלות" שדורשות זאת,
+        פעם ביום. מפתח טבעי <code>cartId_date</code> מבטיח חתימה אחת למכל ליום.
+        שישי ושבת — ללא חתימה נדרשת.</td></tr>
+      <tr><td>2</td><td>חתימת ארון מחלקתי</td><td>פעולה <em>נפרדת</em> מחתימת
+        "עגלה". עובד מהמחלקה יכול להתבקש (בהתראה) לבדוק ולחתום ארון ספציפי;
+        גם אחראי ומנהל המערכת יכולים לחתום.</td></tr>
+      <tr><td>3</td><td>בדיקה רבעונית</td><td>אחראי / מנהל המערכת בודק כל 90 יום;
+        אם לא — המכל הופך אדום.</td></tr>
+      <tr><td>4</td><td>בקשת כיול</td><td>כלי שנכנס ל־30 הימים האחרונים לתוקפו
+        פותח אופציה לבקש שליחה לכיול (בחירת הכול / רק הפוקעים). אישור בשני
+        זוגות עיניים; אחראי/מנהל בשליחה ישירה — צעד אחד.</td></tr>
+      <tr><td>5</td><td>חוסר מאושר חיצוני</td><td>בקשה להוציא כלי לשימוש מחוץ
+        למחלקה, עם סיבה = המיקום; אותו מנגנון אישור.</td></tr>
+      <tr><td>6</td><td>הצהרת שבור</td><td>כלי מוצהר שבור → התראה למנהל המערכת +
+        דוח שבורים עם מק"ט.</td></tr>
+      <tr><td>7</td><td>מחיקת משתמש</td><td>אחראי <em>מבקש</em>, ורק מנהל המערכת /
+        בעל הכלים <em>מאשר ומבצע</em> את המחיקה בפועל.</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ===================== 8 — SHORTCUTS, VIEWS, TEST GROWTH ===================== -->
+<section class="chapter">
+  <div class="chnum">8</div>
+  <h2>קיצורים, תצוגות, וצמיחת הבדיקות</h2>
+  <p class="lead">הפרטים הקטנים שהפכו את מנוע התהליכים לשמיש באמת.</p>
+  <div class="prose">
+    <p>מנוע תהליכים טוב הוא לא רק "הזרימה הראשית" אלא גם הקיצורים והתצוגות
+    שמסביב. נבנו כמה כאלה כדי שהמערכת תרגיש טבעית בשטח.</p>
+
+    <h3>הקיצור: יזום כיול ישיר</h3>
+    <p>בדרך־כלל בקשת כיול עוברת שני זוגות עיניים. אבל כשמנהל המערכת או אחראי
+    מחליט בעצמו להוציא כלים לכיול, אין טעם בשני אימותים — נבנה
+    <code>initiateCalibrationDirect</code> שמבצע "חוסר מאושר" בצעד אחד,
+    מאושר־עצמית. כך השטח לא נחסם על בירוקרטיה מיותרת.</p>
+
+    <h3>תצוגות החתימה — תפעוליות בלבד</h3>
+    <p>נבנו תצוגות נגזרות מהחתימות: <em>מי חתם ביום נתון</em> בכל המחלקה (כמה
+    מכלים חתומים מול לא־חתומים — תמונת מצב תפעולית, מי לא נחתם), ו<em>היסטוריית
+    חתימות</em> למכל עד <b>שנה אחורה</b>. שישי ושבת מוחרגים מהימים הנדרשים. וכן
+    נבנה מנגנון התראות מרוכז (כיול, שבורים, מכלים אדומים, מכלים שלא נחתמו).</p>
+
+    <h3>הבדיקות ממשיכות לגדול</h3>
+    <p>כל פיצ'ר חדש הגיע עם בדיקות. נוספו <b>17 בדיקות תהליכים</b>, והסך הכל
+    הגיע ל־<b>69 בדיקות, כולן ירוקות</b> headless. תוך כדי אותרה ותוקנה באג
+    עדין של אזורי־זמן (UTC מול שעון מקומי) בחישוב תאריכים — רמז מקדים לבעיה
+    שתחזור ותיתפס שוב במועצה.</p>
+  </div>
+</section>
+
+<!-- ===================== 9 — DECISION TO UPGRADE ===================== -->
+<section class="chapter">
+  <div class="chnum">9</div>
+  <h2>ההחלטה לשדרג — לכנס מועצה</h2>
+  <p class="lead">לפני שממשיכים לבנות עוד, עוצרים ושואלים: מה כאן שבור?</p>
+  <div class="prose">
+    <p>קודם, עדכוני מודל: הבדיקה הפכה מ<b>חודשיים לרבעון</b> (90 יום);
+    למכל נוסף <em>primaryOwnerUid</em> עם פעולות <code>addCartOwner</code>
+    ו־<code>setPrimaryOwner</code> (כמה בעלים למכל, אחד ראשי); ונוספו תצוגות
+    חתימה. עוד 3 בדיקות → סך הכל <b>72 בדיקות, כולן ירוקות</b>.</p>
+
+    <p>ואז התקבלה ההחלטה החשובה: לא להמשיך לבנות פיצ'רים על בסיס שאולי סדוק.
+    כונסה <span class="em-purple">מועצה רב־צוותית</span> (זרימת
+    <code>wf_3a75bc32</code>, כ־23 סוכנים), עם הוראה מפורשת: <b>להיות כנים
+    באכזריות, לא מחמיאים</b>.</p>
+
+    <div class="card tip">
+      <h4>מי ישב במועצה</h4>
+      <p><b>צוות ביקורת</b> בחמש זוויות: קוד, QA, UI, חוויית־משתמש בטא,
+      ואיכות. אחריו <b>חדר־מחשבה (think-tank)</b> שהוטל עליו להציע לפחות
+      שלושה דפוסי־פתרון לכל בעיה. אחריו <b>צוות פיתוח</b> שבוחר את הפתרון
+      המנצח עם סקיצת קוד. ולבסוף <b>צוות תיעוד</b> שכותב את חבילת המסמכים.</p>
+    </div>
+
+    <p>הזרימה רצה ברקע. הכוונה הייתה ברורה: לאסוף את הממצאים, לבחור פתרונות,
+    ולהחיל את התיקונים המנצחים <em>בבטחה</em> — כלומר תוך הבחנה בין מה שאפשר
+    לתקן מיד למה שמחייב את בעל הכלים מחובר לענן החי.</p>
+  </div>
+</section>
+
+<!-- ===================== 10 — WHAT COUNCIL FOUND: BLOCKERS ===================== -->
+<section class="chapter">
+  <div class="chnum">10</div>
+  <h2>מה המועצה מצאה — שלושת החוסמים</h2>
+  <p class="lead">הבעיות שחייבות תיקון לפני שאפשר לסמוך על המערכת בענן. לכל
+  אחת: איזה צוות חשף אותה, והפתרון המנצח.</p>
+  <div class="prose">
+    <p>הביקורת הכנה החזירה שש בעיות אמיתיות. שלוש מהן סווגו
+    <span class="em-red">חוסמות (blockers)</span> — בלי לתקן אותן, נתונים
+    יכולים ללכת לאיבוד או לדלוף. נפתח בהן:</p>
+
+    <div class="issue blocker">
+      <span class="tag block">חוסם · ISS-1</span>
+      <h4>אין נתיב כתיבה לענן</h4>
+      <div class="row"><b>מה התגלה:</b> האפליקציה החיה רק <em>קוראת</em>
+      מ־Firestore — אף פעם לא כותבת. שום שינוי ושום ביקורת לא נשמרים. זו
+      הפרצה הגדולה ביותר.</div>
+      <div class="row"><b>מי חשף:</b> צוות הקוד.</div>
+      <div class="row"><b>הפתרון המנצח:</b> דפוס change-set / unit-of-work —
+      כל פעולה מחזירה את ה"אפקטים" שלה, והם נכתבים יחד ב־<code>writeBatch</code>
+      אחד.</div>
+    </div>
+
+    <div class="issue blocker">
+      <span class="tag block">חוסם · ISS-2</span>
+      <h4>חוקי אבטחה חסרים/רופפים</h4>
+      <div class="row"><b>מה התגלה:</b> ב־<code>firestore.rules</code> אין כללים
+      לאוספים <code>signoffs</code>/<code>inspections</code>/<code>requests</code>/<code>notifications</code>
+      → ברירת־מחדל היא חסימה (default-deny), ו־<code>loadDb</code> בלע את השגיאה
+      בשקט.</div>
+      <div class="row"><b>מי חשף:</b> צוות QA/אבטחה.</div>
+      <div class="row"><b>הפתרון המנצח:</b> כללים לכל אוסף + <code>loadDb</code>
+      שנכשל בקול (לא בולע שגיאות שאינן הרשאה).</div>
+    </div>
+
+    <div class="issue blocker">
+      <span class="tag block">חוסם · ISS-3</span>
+      <h4>החוקים בודקים זהות, לא צורת מסמך</h4>
+      <div class="row"><b>מה התגלה:</b> החוקים בדקו מי המשתמש אך לא את
+      <em>תוכן</em> המסמך — כך אפשר היה לכתוב שדות שמעלים הרשאות, לזייף
+      ביקורת, או להירשם כבעלים־של־כל־המכלים.</div>
+      <div class="row"><b>מי חשף:</b> צוות הביקורת (איכות/אבטחה).</div>
+      <div class="row"><b>הפתרון המנצח:</b> "חוקי אבטחה שמנים" שמאמתים גם את
+      צורת המסמך (validation), מצמידים זהות־ביקורת, מגבילים
+      <code>ownedCartIds ≤ 3</code>, ואוכפים תקינות כלי ומחיקה רק ממיקום מיוחד.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 11 — COUNCIL: THREE MINOR ISSUES ===================== -->
+<section class="chapter">
+  <div class="chnum">11</div>
+  <h2>שלוש הבעיות הנוספות — דיוק שמונע באגים שקטים</h2>
+  <p class="lead">לא חוסמות, אבל בדיוק הסוג של פגמים שגורמים ל"באגים שקטים"
+  שקשה לאתר בהמשך.</p>
+  <div class="prose">
+    <p>שלוש הבעיות הנותרות לא היו חוסמות, אך כל אחת מהן יכלה להוליד תקלה
+    מבלבלת בעתיד — התנגשות מזהים בריצה מקבילית, מספרים שלא מסתדרים, או החלטה
+    שמתבצעת פעמיים. דווקא אלה תוקנו ראשונות, כי הן היגיון טהור.</p>
+
+    <div class="issue">
+      <span class="tag minor">ISS-4</span>
+      <h4>התנגשות מזהים בין לקוחות</h4>
+      <div class="row"><b>מה התגלה:</b> מזהי <code>_seq</code> בזיכרון מתנגשים
+      בין לקוחות מקבילים; <code>loadDb</code> השמיט את מזהה המסמך; ומזהי
+      <code>UNL-</code> נכשלו ב־<code>isToolId</code>.</div>
+      <div class="row"><b>מי חשף:</b> צוות הקוד.</div>
+      <div class="row"><b>הפתרון המנצח:</b> מזהי auto-id של Firestore +
+      שטיחת <code>d.id</code> בטעינה + מזהה חתימה דטרמיניסטי
+      <code>cartId_date</code> + מזהי כלים־לא־ממוקמים תקינים־דקדוקית תחת
+      מכל/מגירה שמורים <code>C00</code> / <code>C00-UN</code>.</div>
+    </div>
+
+    <div class="issue">
+      <span class="tag minor">ISS-5</span>
+      <h4>סטיית אזור־זמן</h4>
+      <div class="row"><b>מה התגלה:</b> <code>model.js</code> פירש את
+      <code>calDate</code> בשעון <em>מקומי</em> בעוד <code>workflows.js</code>
+      פירש ב־<em>UTC</em> — אותו כלי יכל להיראות "פג" במודול אחד ו"בתוקף"
+      בשני.</div>
+      <div class="row"><b>מי חשף:</b> צוות QA (זו הבאג שכבר הציץ בפרק 8).</div>
+      <div class="row"><b>הפתרון המנצח:</b> מודול משותף <code>app/core/dates.js</code>
+      — מקור־אמת אחד לחישוב ימים, הכול ב־UTC.</div>
+    </div>
+
+    <div class="issue">
+      <span class="tag minor">ISS-6</span>
+      <h4>חור במכונת־המצבים של בקשה</h4>
+      <div class="row"><b>מה התגלה:</b> ל־<code>rejectRequest</code> לא היה
+      שומר־מצב (אפשר היה לדחות בקשה שכבר אושרה), והאישור לא היה ממוקד־מכל.</div>
+      <div class="row"><b>מי חשף:</b> צוות הקוד/QA.</div>
+      <div class="row"><b>הפתרון המנצח:</b> <code>decideRequest</code> אחד —
+      מכונת־מצבים יחידה עם אותו שומר־מצב־מוצא לכל החלטה, ואישור ממוקד־מכל.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 12 — FIXED & VERIFIED ===================== -->
+<section class="chapter">
+  <div class="chnum">12</div>
+  <h2>מה כבר תוקן ואומת — ומה נשאר לעשות בבטחה</h2>
+  <p class="lead">החלק שאפשר היה לתקן ולאמת מיד — לעומת החלק שמחייב את בעל
+  הכלים מחובר.</p>
+  <div class="prose">
+    <p>החלוקה הזו חשובה: כל מה שהוא <b>היגיון טהור</b> תוקן ואומת מיד בבדיקות.
+    כל מה שנוגע ל<b>גישה ולכתיבה לענן החי</b> נשמר לרגע שבו בעל הכלים מחובר —
+    כי בלי אמולטור, חוקים לא־בדוקים עלולים לנעול את המשתמש בחוץ.</p>
+
+    <h3>תוקן ואומת</h3>
+    <table>
+      <tr><th>בעיה</th><th>התיקון שהוחל</th></tr>
+      <tr><td><span class="em-green">ISS-5</span></td><td>נבנה
+        <code>dates.js</code> משותף (UTC אחיד). שני המודולים מצביעים לאותו
+        מקור — אינם יכולים עוד לסטות.</td></tr>
+      <tr><td><span class="em-green">ISS-6</span></td><td>נבנה
+        <code>decideRequest</code> — מכונת־מצבים יחידה; אישור ממוקד־מכל.
+        דחייה־אחרי־אישור הפכה בלתי־אפשרית מעצם המבנה.</td></tr>
+      <tr><td><span class="em-green">ISS-4 (חלקים טהורים)</span></td><td>מפעל
+        מזהים מוזרק (<code>db._mkId</code>); מזהה חתימה דטרמיניסטי
+        <code>cartId_date</code> ובדיקה <code>cartId_day</code>; כלים
+        לא־ממוקמים עם מזהים תקינים תחת <code>C00</code>/<code>C00-UN</code>;
+        <code>loadDb</code> שוטח <code>d.id</code> ונכשל־בקול.</td></tr>
+    </table>
+
+    <div class="card good">
+      <h4>מצב הבדיקות עכשיו</h4>
+      <p>אחרי התיקונים, חבילת הבדיקות עומדת על <span class="em-green">85 בדיקות,
+      כולן ירוקות</span> headless — ליבה, מודל, תהליכים, ובדיקות גבול
+      ייעודיות שמצמידות את <code>calibrationStatus</code> ואת
+      <code>calibrationEligible</code> לאותו יום־ייחוס, ומוכיחות שהבאג של
+      אזור־הזמן לא יכול לחזור.</p>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="n em-green">85</div><div class="l">בדיקות ירוקות</div></div>
+      <div class="stat"><div class="n">3</div><div class="l">בעיות תוקנו (ISS-4/5/6)</div></div>
+      <div class="stat"><div class="n em-amber">2</div><div class="l">נושאים פתוחים (עם בעל הכלים)</div></div>
+    </div>
+
+    <h3>נשאר לעשות — דורש את בעל הכלים מחובר לענן</h3>
+    <div class="card warn">
+      <p><b>ISS-1 · נתיב הכתיבה:</b> מימוש האפקטים והכתיבה ל־Firestore + חיווט
+      כפתורי הפעולה. צריך כתיבה אמיתית כדי לאמת.</p>
+      <p><b>ISS-2 + ISS-3 · שכתוב חוקי האבטחה:</b> ארבעת האוספים החסרים +
+      אימות צורה + הצמדת זהות־ביקורת + <code>ownedCartIds ≤ 3</code> + תקינות
+      כלי + מחיקה ממיקום מיוחד בלבד. חוקים לא־בדוקים עלולים לנעול את המשתמש —
+      לכן יאומתו רק כשהוא מחובר.</p>
+      <p>בנוסף: יש לזרוע את המכל השמור <code>C00</code> והמגירה
+      <code>C00-UN</code> עבור כלים לא־ממוקמים.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 13 — WHERE WE ARE & WHAT'S NEXT ===================== -->
+<section class="chapter">
+  <div class="chnum">13</div>
+  <h2>היכן אנחנו עכשיו — ומה הלאה</h2>
+  <p class="lead">המפה קדימה: הזנת נתונים, ייבוא בכמות, תמונה→סקיצה, בניית
+  הזמנות.</p>
+  <div class="prose">
+    <p>הבסיס יציב: אפליקציה חיה בענן, ליבה בדוקה, מנוע תהליכים, ומועצה
+    שהצביעה במדויק על מה לתקן. עכשיו עוברים לשלב ה"בשר" — הזנת המלאי האמיתי
+    ובניית מסכי הפעולה. המערכת תוכננה לשרת מהמעבדה הקטנה ועד היקפים
+    אסטרונומיים של כלים — הכמויות בכל מקום הן דוגמה בלבד.</p>
+
+    <h3>שכפול וגנרציות של מכלים</h3>
+    <p>מכלים זהים מקבלים <em>טיפוס/דור</em> ("דור א", "דור ב"). מגדירים פריסה
+    פעם אחת ומשכפלים ל־N מופעים זהים שנבדלים רק במספר — כך נמנעת הקלדה ידנית
+    חוזרת של אותו מבנה.</p>
+
+    <h3>היעד הקרוב: הזנת המלאי האמיתי</h3>
+    <p>המטרה לטעון את המלאי האמיתי מהר ונכון, בלי הקלדה ידנית של כל כלי.
+    השיטה: קודם מבנה (מכלים ומגירות עם מזהים), אחר־כך מילוי לפי המקור הזמין
+    לכל מכל (Excel ישיר / PDF→Excel / תמונות→זיהוי→Excel / בנייה משותפת),
+    ולבסוף רשימת הכיול הנפרדת.</p>
+
+    <div class="timeline">
+      <div class="tl-item next">
+        <h4>ייבוא בכמות (Excel/CSV)</h4>
+        <p>טעינת כמות גדולה של כלים בבת אחת דרך <code>bulkPut</code> (אצוות של 450).</p>
+      </div>
+      <div class="tl-item next">
+        <h4>תמונה → סקיצה</h4>
+        <p>זיהוי סוגי כלים מתמונות, ספירה, והכנת שורות; מק"ט יצרן שלרוב לא
+        נראה — מושלם/מאושר ע"י המשתמש. כל דבר לא ברור — שואלים לפני הכנסה.</p>
+      </div>
+      <div class="tl-item next">
+        <h4>מסכי פעולה</h4>
+        <p>חתימת "עגלה" וחתימת ארון (נפרדות), חלון בקשת כיול (תוקף +
+        בחר־הכול/רק־פוקעים), שבור, חוסר חיצוני, בדיקה, לוח התראות, כלים
+        לא־ממוקמים.</p>
+      </div>
+      <div class="tl-item next">
+        <h4>חלונות החלפה + הזמנות + חתימות + PWA</h4>
+        <p>החלפת חלונות בכפתור (ניהול / "המכל שלי" / פעולות מנהל מערכת), מסך
+        בחירת כלים לבניית הזמנה + ייצוא אקסל, דוח "מי חתם ומתי" שנה אחורה,
+        ומניפסט PWA + service worker.</p>
+      </div>
+      <div class="tl-item">
+        <h4>אפליקציות חנות — עתיד רחוק ואופציונלי</h4>
+        <p>עטיפה ל־native ופרסום בחנויות סומנו כיעד רחוק מאוד, לא לעכשיו.</p>
+      </div>
+    </div>
+
+    <figure>
+      <img src="../../lab/reports/win-admin.png" alt="מסך פעולה — מנהל המערכת">
+      <figcaption>מסך פעולה בתצוגת מנהל המערכת / בעל הכלים.</figcaption>
+    </figure>
+    <figure>
+      <img src="../../lab/reports/win-manager.png" alt="מסך פעולה — אחראי כלים">
+      <figcaption>מסך פעולה בתצוגת אחראי הכלים.</figcaption>
+    </figure>
+
+    <h3>סיכום המסע במשפט</h3>
+    <p>התחלנו מהבנת הצורך, חתכנו את ההחלטה הארכיטקטונית הנכונה, בנינו ליבה
+    טהורה ובדוקה, עלינו לאוויר בענן, הוספנו מנוע תהליכים תפעולי, ואז — במקום
+    להמשיך לבנות על בסיס שאולי סדוק — עצרנו, כינסנו מועצה כנה, תיקנו את מה
+    שאפשר בבטחה, ושמרנו את שכתוב האבטחה ונתיב־הכתיבה לרגע שבו בעל הכלים מחובר.
+    85 בדיקות ירוקות מאחורינו; המלאי האמיתי לפנינו.</p>
+  </div>
+
+  <div class="foot">
+    יומן הנדסי · ניהול כלים · פרויקט tools-251d3 · עודכן 2026-06-25 ·
+    מסמך פנימי
+  </div>
+</section>
+
+</div>
+</body>
+</html>

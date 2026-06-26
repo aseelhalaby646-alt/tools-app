@@ -1,0 +1,65 @@
+// import.js — bulk import of tools from a Hebrew CSV (the integration surface).
+// Carts/drawers must already exist; the import links each tool to a drawer and
+// classifies every row as created / duplicate / error (so the source can be fixed).
+import { addTool } from './model.js';
+
+// ---- CSV parsing (handles quoted fields with commas / escaped quotes) ------
+function splitLine(line) {
+  const out = []; let cur = '', q = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (q) { if (c === '"') { if (line[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { out.push(cur); cur = ''; }
+    else cur += c;
+  }
+  out.push(cur);
+  return out;
+}
+export function parseCSV(text) {
+  const lines = String(text).replace(/^﻿/, '').replace(/\r\n/g, '\n').split('\n').filter(l => l.trim().length);
+  if (!lines.length) return [];
+  const headers = splitLine(lines[0]).map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const cells = splitLine(line);
+    const o = {};
+    headers.forEach((h, i) => { o[h] = (cells[i] || '').trim(); });
+    return o;
+  });
+}
+
+// Hebrew column headers (matches spec/import_format.md)
+const H = {
+  drawer: 'מזהה מגירה', explicit: 'מזהה כלי', vendor: 'מקט יצרן', customer: 'מקט לקוח',
+  desc: 'תיאור', cal: 'כיול', calDate: 'תאריך כיול', calID: 'מזהה כיול', note: 'הערה',
+};
+const get = (row, key) => (row[key] || '').trim();
+
+// importTools(db, actor, rows) -> { created:[tool], duplicates:[{line,reason,id}], errors:[{line,reason}] }
+export function importTools(db, actor, rows) {
+  const result = { created: [], duplicates: [], errors: [] };
+  rows.forEach((row, i) => {
+    const line = i + 2; // human line number (row 1 is the header)
+    const drawerId = (get(row, H.drawer)).toUpperCase();
+    const vendor = get(row, H.vendor);
+    const desc = get(row, H.desc);
+    if (!vendor && !desc) return;                       // blank row — skip silently
+    if (!vendor || !desc) { result.errors.push({ line, reason: 'חסר מק"ט יצרן או תיאור' }); return; }
+    if (!drawerId) { result.errors.push({ line, reason: 'חסר מזהה מגירה' }); return; }
+    if (!db.drawers.some(d => d.id === drawerId)) { result.errors.push({ line, reason: `מגירה ${drawerId} לא קיימת` }); return; }
+    const payload = {
+      drawerId, vendor, desc, customer: get(row, H.customer),
+      cal: get(row, H.cal) === 'כן' ? 'כן' : 'לא', calDate: get(row, H.calDate),
+      calID: get(row, H.calID), note: get(row, H.note),
+      explicitId: (get(row, H.explicit) || get(row, 'מזהה')) || null,
+    };
+    try {
+      const r = addTool(db, actor, payload);
+      if (r.created) result.created.push(r.tool);
+      else result.duplicates.push({ line, reason: r.reason, id: r.tool && r.tool.id });
+    } catch (e) {
+      result.errors.push({ line, reason: e.message });
+    }
+  });
+  return result;
+}

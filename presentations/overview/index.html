@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מערכת ניהול כלים — סקירה</title>
+<style>
+  :root{
+    --bg:#0f1620; --s1:#18222f; --s2:#1f2c3c; --tx:#e7eef6; --mut:#9fb0c3;
+    --blue:#3b82f6; --green:#22c55e; --red:#ef4444; --amber:#f59e0b; --purple:#a78bfa;
+    --bd:#2a3a4d; --r:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg); color:var(--tx);
+    font-family:"Segoe UI","Arial Hebrew","Helvetica Neue",Arial,sans-serif;
+    line-height:1.65; -webkit-font-smoothing:antialiased;
+  }
+  .slide{
+    width:100%; padding:88px clamp(24px,6vw,120px);
+    border-bottom:1px solid var(--bd);
+    min-height:92vh; display:flex; flex-direction:column; justify-content:center;
+  }
+  .slide-inner{max-width:1280px; margin:0 auto; width:100%}
+  .kicker{
+    color:var(--blue); font-weight:700; letter-spacing:.12em;
+    font-size:.95rem; text-transform:uppercase; margin-bottom:18px;
+  }
+  h1{font-size:clamp(2.6rem,6vw,5rem); line-height:1.08; font-weight:800; letter-spacing:-.01em}
+  h2{font-size:clamp(2rem,4.4vw,3.4rem); line-height:1.12; font-weight:800; margin-bottom:14px}
+  h3{font-size:1.35rem; font-weight:700; margin-bottom:8px}
+  .lead{font-size:clamp(1.15rem,2.2vw,1.5rem); color:var(--mut); max-width:64ch; margin-top:14px}
+  p.body{font-size:1.1rem; color:var(--mut); max-width:72ch; margin-top:10px}
+  .grid{display:grid; gap:22px; margin-top:40px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:980px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  .card{
+    background:var(--s1); border:1px solid var(--bd); border-radius:var(--r);
+    padding:26px 24px;
+  }
+  .card .ic{font-size:1.6rem; margin-bottom:10px; display:block}
+  .card h3{margin-bottom:6px}
+  .card p{color:var(--mut); font-size:1.02rem}
+  .accent-b{border-top:3px solid var(--blue)}
+  .accent-g{border-top:3px solid var(--green)}
+  .accent-r{border-top:3px solid var(--red)}
+  .accent-a{border-top:3px solid var(--amber)}
+  .accent-p{border-top:3px solid var(--purple)}
+  /* table */
+  .matrix{width:100%; border-collapse:separate; border-spacing:0; margin-top:40px; font-size:1rem; background:var(--s1); border:1px solid var(--bd); border-radius:var(--r); overflow:hidden}
+  .matrix th,.matrix td{padding:14px 16px; text-align:center; border-bottom:1px solid var(--bd)}
+  .matrix thead th{background:var(--s2); font-size:1.05rem; font-weight:800}
+  .matrix tbody th{text-align:right; font-weight:600; color:var(--tx); background:rgba(255,255,255,.015)}
+  .matrix tbody tr:last-child th,.matrix tbody tr:last-child td{border-bottom:none}
+  .matrix .role-head{display:block; font-size:1.02rem}
+  .matrix .role-sub{display:block; font-size:.82rem; color:var(--mut); font-weight:500; margin-top:3px}
+  .yes{color:var(--green); font-weight:800; font-size:1.2rem}
+  .no{color:var(--red); font-weight:800; font-size:1.2rem; opacity:.85}
+  .note-cell{color:var(--amber); font-weight:700; font-size:.82rem}
+  .tbl-note{margin-top:18px; color:var(--mut); font-size:1rem; background:var(--s2); border-right:3px solid var(--amber); border-radius:10px; padding:14px 18px}
+  /* shots */
+  .shot{background:var(--s1); border:1px solid var(--bd); border-radius:var(--r); overflow:hidden}
+  .shot img{width:100%; height:auto; display:block; background:#0b1118}
+  .shot .cap{padding:14px 18px; border-top:1px solid var(--bd)}
+  .shot .cap h3{font-size:1.1rem; margin-bottom:2px}
+  .shot .cap p{color:var(--mut); font-size:.95rem; margin:0}
+  .pill{display:inline-block; background:var(--s2); border:1px solid var(--bd); color:var(--mut); border-radius:999px; padding:5px 14px; font-size:.85rem; font-weight:600; margin:0 0 0 8px}
+  .compare{display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:40px}
+  @media(max-width:980px){.compare{grid-template-columns:1fr}}
+  .compare .col{background:var(--s1); border:1px solid var(--bd); border-radius:var(--r); padding:28px 26px}
+  .compare .col.us{border-color:rgba(59,130,246,.5)}
+  .compare h3{margin-bottom:14px}
+  .compare ul{list-style:none}
+  .compare li{padding-right:28px; position:relative; margin-bottom:12px; color:var(--mut); font-size:1.05rem}
+  .compare .col.them li::before{content:"—"; position:absolute; right:0; color:var(--red); font-weight:800}
+  .compare .col.us li::before{content:"✓"; position:absolute; right:0; color:var(--green); font-weight:800}
+  .compare .col.us li{color:var(--tx)}
+  /* status palette */
+  .palette{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:40px}
+  @media(max-width:980px){.palette{grid-template-columns:1fr}}
+  .swatch{display:flex; align-items:center; gap:14px; background:var(--s1); border:1px solid var(--bd); border-radius:14px; padding:16px 18px}
+  .swatch .dot{width:22px; height:22px; border-radius:50%; flex:none}
+  .swatch .t{font-weight:700; font-size:1.05rem}
+  .swatch .d{display:block; color:var(--mut); font-size:.88rem; font-weight:400; margin-top:2px}
+  ul.checks{list-style:none; margin-top:26px; columns:2; column-gap:48px}
+  @media(max-width:980px){ul.checks{columns:1}}
+  ul.checks li{margin-bottom:14px; padding-right:30px; position:relative; color:var(--tx); font-size:1.05rem; break-inside:avoid}
+  ul.checks li::before{content:"✓"; position:absolute; right:0; top:0; color:var(--green); font-weight:800}
+  ul.checks li span{display:block; color:var(--mut); font-size:.95rem; font-weight:400}
+  .footer{color:var(--mut); font-size:.95rem; margin-top:48px; padding-top:20px; border-top:1px solid var(--bd)}
+  .badge-grad{background:linear-gradient(120deg,var(--blue),var(--purple)); -webkit-background-clip:text; background-clip:text; color:transparent}
+  .arch-flow{display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-top:34px}
+  .arch-node{background:var(--s2); border:1px solid var(--bd); border-radius:14px; padding:16px 22px; font-weight:700; text-align:center; min-width:150px}
+  .arch-node small{display:block; color:var(--mut); font-weight:400; font-size:.85rem; margin-top:4px}
+  .arch-arrow{color:var(--blue); font-size:1.6rem; font-weight:800}
+  @media(max-width:980px){.arch-flow{flex-direction:column}.arch-arrow{transform:rotate(90deg)}}
+  .timeline{margin-top:40px; display:grid; gap:18px}
+  .phase{display:grid; grid-template-columns:auto 1fr; gap:20px; align-items:start; background:var(--s1); border:1px solid var(--bd); border-radius:var(--r); padding:22px 24px}
+  .phase .tag{font-weight:800; font-size:.85rem; letter-spacing:.06em; padding:6px 14px; border-radius:999px; white-space:nowrap; align-self:start}
+  .tag-now{background:rgba(34,197,94,.14); color:var(--green); border:1px solid rgba(34,197,94,.4)}
+  .tag-next{background:rgba(59,130,246,.14); color:var(--blue); border:1px solid rgba(59,130,246,.4)}
+  .tag-far{background:rgba(159,176,195,.12); color:var(--mut); border:1px solid var(--bd)}
+  .phase h3{margin-bottom:4px}
+  .phase ul{margin:6px 22px 0 0; color:var(--mut)}
+  .phase li{margin-bottom:4px}
+  .scale-row{display:flex; flex-wrap:wrap; gap:18px; margin-top:36px}
+  .scale{background:var(--s2); border:1px solid var(--bd); border-radius:var(--r); padding:22px 28px; flex:1; min-width:220px}
+  .scale .big{font-size:1.5rem; font-weight:800; color:var(--blue); line-height:1.2}
+  .scale .lbl{color:var(--mut); margin-top:8px; font-size:1rem}
+</style>
+</head>
+<body>
+
+<!-- 1. TITLE -->
+<section class="slide" style="background:radial-gradient(1200px 600px at 80% 0%,rgba(59,130,246,.12),transparent),radial-gradient(900px 500px at 10% 100%,rgba(167,139,250,.10),transparent),var(--bg)">
+  <div class="slide-inner">
+    <div class="kicker">מערכת ענן · ניהול כלים מדויק · בזמן אמת</div>
+    <h1>מערכת ניהול כלים<br><span class="badge-grad">מקור אמת אחד, חי ונושם</span></h1>
+    <p class="lead">פלטפורמת ענן לניהול כלים בארגון — מאורגנת לפי מחלקה, עם סטטוס חי בכל רגע, אחריותיות ברורה ובקרת כיול מלאה. נוחה לעבודה מהמחשב ומהנייד, מהמשרד ומהשטח כאחד.</p>
+    <p class="body" style="margin-top:26px">המערכת מתאימה לכל סוג של עבודה ולכל מטרה — ערכה גדל ככל שמספר הכלים גדל. מבית מלאכה קטן ועד מערך כלים עצום.</p>
+    <p class="footer">סקירה כללית של המערכת ויכולותיה</p>
+  </div>
+</section>
+
+<!-- 2. WHY — EXCEL vs LIVE -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">למה מערכת ייעודית</div>
+    <h2>גיליון מנהל — אבל לא חי, לא נושם</h2>
+    <p class="lead">Excel יודע לרשום, אך הוא אינו חי: עדכון מסורבל, אין סטטוס בזמן אמת, וקל לאבד שליטה. המטרה שלנו — להפוך את ניהול הכלים לפשוט יותר, עם סטטוס אמיתי וחי בכל רגע.</p>
+    <div class="compare">
+      <div class="col them">
+        <h3>גיליון נתונים</h3>
+        <ul>
+          <li>נתונים שמתעדכנים ידנית — ולרוב לא בזמן</li>
+          <li>אין תמונת מצב חיה; כל אחד עם גרסה משלו</li>
+          <li>עבודה מסורבלת, קשה לעדכן מהשטח</li>
+          <li>ללא תיעוד דיגיטלי — הכל פרוץ</li>
+        </ul>
+      </div>
+      <div class="col us">
+        <h3>המערכת</h3>
+        <ul>
+          <li>סטטוס חי ומסונכרן בכל רגע, לכל המשתמשים</li>
+          <li>מקור אמת אחד בענן — בלי גרסאות מפוזרות</li>
+          <li>עדכון נוח ישירות מהנייד, מהשטח</li>
+          <li>כל פעולה מתועדת — שרשרת אחריות ברורה</li>
+        </ul>
+      </div>
+    </div>
+    <p class="body" style="margin-top:30px">כלי אבוד ללא תיעוד דיגיטלי משאיר את הארגון פרוץ — בלי שרשרת אחריות ובלי דרך לדעת מה קרה. המערכת נבנתה כדי לבצע את המשימה בכל מצב, ולא כדי לעבור ביקורת.</p>
+  </div>
+</section>
+
+<!-- 3. DEPARTMENT-CENTRIC MODEL -->
+<section class="slide" style="background:var(--s1)">
+  <div class="slide-inner">
+    <div class="kicker">מודל הארגון</div>
+    <h2>מאורגן לפי מחלקה — לא לפי מיקום פיזי</h2>
+    <p class="lead">הכלים מאורגנים תחת מחלקה, ללא תלות במקום הפיזי שבו יושב המכל. "מכל" הוא מושג כללי — הוא יכול להיות "עגלה", "ארון" או חלק מ"אזור עבודה".</p>
+    <div class="grid g3">
+      <div class="card accent-b"><span class="ic">🛒</span><h3>"עגלה" (C)</h3><p>מכל נייד. נדרשת לרוב חתימה יומית לפי הגדרה.</p></div>
+      <div class="card accent-p"><span class="ic">🗄️</span><h3>"ארון" (B)</h3><p>מנוהל מלאי כברירת מחדל; חתימה יומית רק כשמסומן לכך.</p></div>
+      <div class="card accent-a"><span class="ic">🧰</span><h3>"אזור עבודה"</h3><p>מכל כללי המקבץ כלים תחת אותו מודל אחריות.</p></div>
+    </div>
+    <p class="body" style="margin-top:30px">גם <strong>מנהל המערכת / בעל הכלים</strong> וגם <strong>אחראי כלים</strong> יכולים להחזיק מכל אחד או יותר (עגלות ו/או ארונות), עם מעבר מהיר לתצוגת המכל שלהם בלבד.</p>
+  </div>
+</section>
+
+<!-- 4. ROLES TABLE -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">תפקידים והרשאות</div>
+    <h2>שלוש רמות משתמש — מטריצת הרשאות</h2>
+    <p class="lead">כל משתמש רואה ועושה בדיוק את מה שתפקידו מתיר — שליטה מלאה למנהל המערכת / בעל הכלים, ניהול שוטף לאחראי הכלים, וצפייה מוגבלת לבעל העגלה.</p>
+    <table class="matrix">
+      <thead>
+        <tr>
+          <th style="text-align:right; min-width:240px">יכולת</th>
+          <th><span class="role-head">מנהל המערכת / בעל הכלים</span><span class="role-sub">שליטה מלאה</span></th>
+          <th><span class="role-head">אחראי כלים</span><span class="role-sub">ניהול שוטף</span></th>
+          <th><span class="role-head">בעל עגלה</span><span class="role-sub">צפייה בלבד</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><th>רואה הכל</th><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+        <tr><th>עריכת כלים ומיקומים</th><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+        <tr><th>בניית הזמנות</th><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+        <tr><th>הוספת משתמש</th><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+        <tr><th>מחיקת משתמש</th><td class="yes">✓</td><td><span class="note-cell">בכפוף לאישור מנהל המערכת</span></td><td class="no">✗</td></tr>
+        <tr><th>בקשת שדרוג הרשאה (בעל עגלה ← אחראי כלים)</th><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+        <tr><th>ניהול הרשאות מלא</th><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td></tr>
+        <tr><th>יומן ביקורת</th><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+        <tr><th>גרסאות ושחזור</th><td class="yes">✓</td><td class="no">✗</td><td class="no">✗</td></tr>
+        <tr><th>חתימת מכל</th><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+        <tr><th>בקשת כיול</th><td class="yes">✓</td><td class="yes">✓</td><td class="no">✗</td></tr>
+        <tr><th>צפייה במכל שלו בלבד</th><td class="no">✗</td><td class="no">✗</td><td class="yes">✓</td></tr>
+      </tbody>
+    </table>
+    <div class="tbl-note"><strong>שים לב:</strong> אחראי כלים יכול <strong>להוסיף</strong> משתמש ו<strong>לבקש שדרוג</strong> מבעל עגלה לאחראי כלים, אך פעולת <strong>מחיקת</strong> משתמש שהוא מבצע נשלחת ל<strong>מנהל המערכת / בעל הכלים</strong> לאישור וביצוע.</div>
+  </div>
+</section>
+
+<!-- 5. WINDOW SWITCHING UX -->
+<section class="slide" style="background:var(--s1)">
+  <div class="slide-inner">
+    <div class="kicker">חוויית עבודה</div>
+    <h2>מסך אחד · חלונות לפי תפקיד</h2>
+    <p class="lead">בכניסה, מנהל המערכת / בעל הכלים ואחראי הכלים נוחתים על אותו מסך ראשי. מעבר בין חלונות נעשה בלחיצת כפתור.</p>
+    <div class="grid g3" style="margin-top:34px">
+      <div class="card accent-b">
+        <h3>מנהל המערכת / בעל הכלים</h3>
+        <p style="margin-bottom:10px"><strong>3 חלונות</strong> (מעבר בכפתור):</p>
+        <p>1. מסך ניהול ראשי<br>2. תצוגת "המכל שלי"<br>3. פעולות ניהול מערכת (לפי הרשאה)</p>
+      </div>
+      <div class="card accent-p">
+        <h3>אחראי כלים</h3>
+        <p style="margin-bottom:10px"><strong>2 חלונות</strong> (מעבר בכפתור):</p>
+        <p>1. מסך ניהול ראשי<br>2. תצוגת "המכל שלי"</p>
+      </div>
+      <div class="card accent-g">
+        <h3>בעל עגלה</h3>
+        <p style="margin-bottom:10px"><strong>חלון יחיד:</strong></p>
+        <p>תצוגת המכל שלו בלבד (קריאה בלבד) ודוח המכל שלו.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. STATUS COLORS -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">סטטוס במבט אחד</div>
+    <h2>צבע אחד לכל סטטוס</h2>
+    <p class="lead">לכל סטטוס צבע ייחודי משלו — אין שני סטטוסים שונים שחולקים אותו צבע. כך המצב נקרא במבט אחד, בלי בלבול.</p>
+    <div class="palette">
+      <div class="swatch"><span class="dot" style="background:var(--green)"></span><span><span class="t">תקין</span><span class="d">כלי במיקומו, בתוקף, מוכן לעבודה</span></span></div>
+      <div class="swatch"><span class="dot" style="background:var(--amber)"></span><span><span class="t">לקראת כיול</span><span class="d">חלון 30 יום לפני פקיעת הכיול</span></span></div>
+      <div class="swatch"><span class="dot" style="background:var(--purple)"></span><span><span class="t">בכיול</span><span class="d">הכלי נשלח לכיול (צבע נפרד משבור)</span></span></div>
+      <div class="swatch"><span class="dot" style="background:var(--red)"></span><span><span class="t">שבור</span><span class="d">דווח כשבור (צבע נפרד מבכיול)</span></span></div>
+      <div class="swatch"><span class="dot" style="background:var(--blue)"></span><span><span class="t">חוסר מאושר</span><span class="d">אושר כחסר לשימוש מחוץ למחלקה</span></span></div>
+      <div class="swatch"><span class="dot" style="background:#94a3b8"></span><span><span class="t">מיקום לא ידוע</span><span class="d">כלי שאבד — מתועד, לא "נעלם"</span></span></div>
+    </div>
+    <p class="body" style="margin-top:30px">כלי שאינו בכיול תקף "מזייף" — השימוש בו כמוהו כעבודה ללא כלי מכויל, וגורם לאי-דיוק בעבודה ולנזק לציוד.</p>
+  </div>
+</section>
+
+<!-- 7. CLOUD ARCHITECTURE -->
+<section class="slide" style="background:var(--s1)">
+  <div class="slide-inner">
+    <div class="kicker">ארכיטקטורת ענן</div>
+    <h2>בנויה על ענן · חיה · ניידת</h2>
+    <p class="lead">מקור אמת אחד בענן. כל שינוי מסונכרן מיידית לכל המשתמשים, בכל מכשיר — מחשב או טלפון.</p>
+    <div class="arch-flow">
+      <div class="arch-node">משתמשים<small>מחשב · טלפון · שטח</small></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">שכבת אבטחה<small>הרשאות לפי תפקיד ולפי מכל</small></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node" style="border-color:var(--blue)">ענן<small>מקור אמת אחד · סנכרון חי</small></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">גיבוי ובקרה<small>היסטוריית גרסאות · שחזור</small></div>
+    </div>
+    <div class="grid g3" style="margin-top:38px">
+      <div class="card accent-b"><span class="ic">☁️</span><h3>מקור אמת אחד</h3><p>אין קבצים מפוזרים. כל הנתונים במקום אחד מאובטח בענן.</p></div>
+      <div class="card accent-g"><span class="ic">⚡</span><h3>סנכרון חי</h3><p>שינוי שנעשה במכל מופיע מיד אצל הניהול — ולהפך.</p></div>
+      <div class="card accent-p"><span class="ic">📱</span><h3>ידידותי לנייד</h3><p>נבנתה לעבודה נוחה מהטלפון, ישירות מהשטח.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 8. REAL SCREENS -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">המוצר · מסכים אמיתיים</div>
+    <h2>מסכים אמיתיים מתוך המערכת</h2>
+    <p class="lead">מסכים מהמערכת הפועלת — תצוגת ניהול מלאה, תצוגה ממוקדת לבעל העגלה, וחלונות עבודה לפי תפקיד.</p>
+    <div class="grid g2" style="margin-top:34px">
+      <div class="shot">
+        <img src="../../lab/reports/view-admin.png" alt="תצוגת ניהול מלאה">
+        <div class="cap"><h3>תצוגת ניהול <span class="pill">רואה הכל</span></h3><p>מבט-על על כל המכלים והכלים, סטטוס בצבע, והתראות בזמן אמת.</p></div>
+      </div>
+      <div class="shot">
+        <img src="../../lab/reports/view-owner.png" alt="תצוגת בעל עגלה">
+        <div class="cap"><h3>תצוגת בעל עגלה <span class="pill">ממוקד</span></h3><p>בעל העגלה רואה אך ורק את המכל שלו — פשוט, ברור וללא הסחות.</p></div>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:22px">
+      <div class="shot">
+        <img src="../../lab/reports/win-manager.png" alt="חלון עבודה — אחראי כלים">
+        <div class="cap"><h3>חלון עבודה — אחראי כלים <span class="pill">בקשת כיול</span></h3><p>פתיחת בקשת כיול, מעקב אחר סטטוס, ותיעוד מלא של התהליך.</p></div>
+      </div>
+      <div class="shot">
+        <img src="../../lab/reports/win-admin.png" alt="חלון עבודה — ניהול מערכת">
+        <div class="cap"><h3>חלון ניהול מערכת <span class="pill">ניהול משתמשים</span></h3><p>ניהול משתמשים והרשאות, ואישור פעולות רגישות — שליטה מרכזית.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9. WHAT THE SYSTEM COVERS -->
+<section class="slide" style="background:var(--s1)">
+  <div class="slide-inner">
+    <div class="kicker">היקף המערכת</div>
+    <h2>מה המערכת מכסה</h2>
+    <p class="lead">תהליך עבודה שלם מקצה לקצה — מבקרת כיול ועד אחריותיות שוטפת ובקרת מלאי.</p>
+    <ul class="checks">
+      <li>ענן כמקור אמת אחד <span>כל הנתונים במקום אחד, מסונכרן בזמן אמת</span></li>
+      <li>סטטוס כיול צבעוני <span>צבע ייחודי לכל סטטוס — מצב במבט אחד</span></li>
+      <li>חתימת מכל תפעולית <span>אחריותיות שוטפת — אילו מכלים לא נחתמו</span></li>
+      <li>חתימת "עגלה" נפרדת מחתימת "ארון" <span>זרימות נפרדות, בלי בלבול</span></li>
+      <li>בקשת כיול → אישור → "חוסר מאושר" → שליחה לכיול <span>תהליך מסודר ומתועד</span></li>
+      <li>דיווח כלי שבור עם התראות <span>כלי שבור מסומן ומדווח מיד</span></li>
+      <li>חוסר מאושר לשימוש מחוץ למחלקה <span>כלי שיצא מהמחלקה — מתועד ומאושר</span></li>
+      <li>ביקורת תקופתית <span>פג מועד → המכל מסומן באדום</span></li>
+      <li>מעקב כלים במיקום לא ידוע <span>שום כלי לא "נעלם" מהמערכת</span></li>
+      <li>שכפול מכלים זהים ודורות <span>הגדרת פריסה אחת → שכפול ל-N עותקים זהים</span></li>
+      <li>יומן ביקורת מלא <span>כל פעולה מתועדת — מי, מה ומתי</span></li>
+      <li>היסטוריית גרסאות ושחזור <span>אפשר תמיד לחזור אחורה בבטחה</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 10. SCALE -->
+<section class="slide">
+  <div class="slide-inner">
+    <div class="kicker">קנה מידה</div>
+    <h2>מהבית מלאכה ועד מספר עצום של כלים</h2>
+    <p class="lead">המערכת נבנתה לטפל במספר אסטרונומי של כלים, ובה במידה לשרת בתי מלאכה קטנים ומדויקים — עד לרמת סדנה ביתית. הערך גדל ככל שמספר הכלים גדל.</p>
+    <div class="scale-row">
+      <div class="scale"><div class="big">סדנה ביתית</div><div class="lbl">עשרות כלים — סדר, מיקום ותוקף כיול במקום אחד</div></div>
+      <div class="scale"><div class="big">מערך ארגוני</div><div class="lbl">מחלקות, מכלים מרובים ודורות שונים של ציוד</div></div>
+      <div class="scale"><div class="big">היקף עצום</div><div class="lbl">מספר אסטרונומי של כלים, נשלט מאותו מקור אמת</div></div>
+    </div>
+    <p class="body" style="margin-top:30px">כל הכמויות המוצגות בכל מקום הן דוגמה בלבד — המערכת אינה מוגבלת למספר מסוים של כלים, מכלים או מחלקות.</p>
+  </div>
+</section>
+
+<!-- 11. ROADMAP -->
+<section class="slide" style="background:var(--s1)">
+  <div class="slide-inner">
+    <div class="kicker">מפת דרכים</div>
+    <h2>הצעדים הבאים</h2>
+    <p class="lead">מיקוד בהשלמת הבסיס ובערך מיידי.</p>
+    <div class="timeline">
+      <div class="phase">
+        <span class="tag tag-now">בקרוב</span>
+        <div>
+          <h3>הפעלה מלאה וטעינת מלאי</h3>
+          <ul>
+            <li>חיווט נתיב הכתיבה לענן וכללי אבטחה מאומתים בזמן אמת</li>
+            <li>ייבוא מרוכז של המלאי האמיתי — מוכן להיקף עצום</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase">
+        <span class="tag tag-next">שלב הבא</span>
+        <div>
+          <h3>שיפורי פרודוקטיביות</h3>
+          <ul>
+            <li>צילום → סקיצת מגירה ב-PDF (תרשים סידור מתוך תמונה)</li>
+            <li>החלת כיולים, הזמנות והרחבת זרימות העבודה</li>
+          </ul>
+        </div>
+      </div>
+      <div class="phase">
+        <span class="tag tag-far">עתיד רחוק · אופציונלי</span>
+        <div>
+          <h3>אפליקציות ייעודיות בחנויות האפליקציות</h3>
+          <ul>
+            <li>שלב רחוק ואופציונלי בלבד — אינו תלוי בערך שהמערכת מספקת כבר היום דרך הדפדפן והנייד.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12. CLOSING -->
+<section class="slide" style="background:radial-gradient(1100px 600px at 50% 0%,rgba(34,197,94,.10),transparent),var(--bg)">
+  <div class="slide-inner" style="text-align:center">
+    <div class="kicker" style="justify-self:center">סיכום</div>
+    <h2 style="max-width:22ch; margin:0 auto"><span class="badge-grad">ניהול כלים חי ונושם — מקור אמת אחד</span></h2>
+    <p class="lead" style="margin:18px auto 0">מערכת ענן מאובטחת, מאורגנת לפי מחלקה, עם סטטוס חי בכל רגע, אחריותיות ברורה ובקרת כיול מלאה — מותאמת לכל היקף, מהסדנה ועד המערך העצום.</p>
+    <p class="footer" style="border:none; justify-self:center; margin-top:40px">תודה · נשמח לדיון ולשאלות</p>
+  </div>
+</section>
+
+</body>
+</html>

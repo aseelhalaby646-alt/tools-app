@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מדריך מנהל המערכת / בעל הכלים</title>
+<style>
+  :root{
+    --bg:#0f1620;
+    --surface:#18222f;
+    --surface2:#1f2c3c;
+    --text:#e7eef6;
+    --muted:#9fb0c3;
+    --blue:#3b82f6;
+    --green:#22c55e;
+    --red:#ef4444;
+    --amber:#f59e0b;
+    --purple:#a78bfa;
+    --teal:#2dd4bf;
+    --pink:#f472b6;
+    --gray:#94a3b8;
+    --border:#2a3a4d;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Segoe UI",Arial,sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    direction:rtl;
+  }
+  .slide{
+    min-height:100vh;
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:80px 40px;
+    border-bottom:1px solid var(--border);
+    position:relative;
+  }
+  .inner{width:100%;max-width:1100px;margin:0 auto}
+  .kicker{
+    display:inline-block;font-size:14px;font-weight:600;letter-spacing:1px;
+    color:var(--blue);background:rgba(59,130,246,.12);
+    border:1px solid rgba(59,130,246,.3);padding:6px 16px;
+    border-radius:999px;margin-bottom:24px;
+  }
+  .kicker.purple{color:var(--purple);background:rgba(167,139,250,.12);border-color:rgba(167,139,250,.3)}
+  .kicker.green{color:var(--green);background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3)}
+  .kicker.amber{color:var(--amber);background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.3)}
+  .kicker.red{color:var(--red);background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3)}
+  .kicker.teal{color:var(--teal);background:rgba(45,212,191,.12);border-color:rgba(45,212,191,.3)}
+  h1{font-size:62px;line-height:1.1;font-weight:800;letter-spacing:-1px;margin-bottom:20px}
+  h2{font-size:42px;line-height:1.15;font-weight:800;letter-spacing:-.5px;margin-bottom:16px}
+  h3{font-size:22px;font-weight:700;margin-bottom:10px}
+  .lead{font-size:22px;color:var(--muted);max-width:880px;margin-bottom:28px}
+  .sub{font-size:18px;color:var(--muted)}
+  p{font-size:17px;color:var(--text)}
+  .muted{color:var(--muted)}
+  .num-badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:46px;height:46px;border-radius:12px;
+    background:var(--surface2);border:1px solid var(--border);
+    font-size:20px;font-weight:800;color:var(--blue);margin-bottom:18px;
+  }
+  .grid{display:grid;gap:20px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:820px){
+    h1{font-size:42px}h2{font-size:30px}
+    .g2,.g3,.g4{grid-template-columns:1fr}
+    .slide{padding:56px 20px}
+    .split{grid-template-columns:1fr!important}
+  }
+  .card{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:26px;
+  }
+  .card.raised{background:var(--surface2)}
+  .card h3 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-inline-end:8px;vertical-align:middle}
+  .stat{
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius);padding:28px 24px;text-align:center;
+  }
+  .stat .num{font-size:46px;font-weight:800;line-height:1;letter-spacing:-1px}
+  .stat .lbl{font-size:15px;color:var(--muted);margin-top:10px}
+  .icon{font-size:30px;display:block;margin-bottom:12px}
+  ul.clean{list-style:none}
+  ul.clean li{position:relative;padding:9px 0;padding-inline-start:30px;font-size:17px;color:var(--text)}
+  ul.clean li::before{
+    content:"";position:absolute;inset-inline-start:0;top:17px;
+    width:9px;height:9px;border-radius:2px;background:var(--blue);
+  }
+  ul.bad li::before{background:var(--red)}
+  ul.good li::before{background:var(--green)}
+  ul.amber li::before{background:var(--amber)}
+  ol.steps{list-style:none;counter-reset:step}
+  ol.steps li{
+    position:relative;counter-increment:step;
+    padding:14px 0;padding-inline-start:54px;
+    border-bottom:1px solid var(--border);font-size:18px;
+  }
+  ol.steps li:last-child{border-bottom:none}
+  ol.steps li::before{
+    content:counter(step);position:absolute;inset-inline-start:0;top:12px;
+    width:34px;height:34px;border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(59,130,246,.14);border:1px solid rgba(59,130,246,.35);
+    color:var(--blue);font-weight:800;font-size:16px;
+  }
+  ol.steps li b{color:var(--text)}
+  ol.steps li .tip{display:block;font-size:14px;color:var(--muted);margin-top:4px}
+  table{width:100%;border-collapse:collapse;border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+  th,td{padding:14px 18px;text-align:start;border-bottom:1px solid var(--border);font-size:16px;vertical-align:top}
+  th{background:var(--surface2);font-weight:700;font-size:15px;color:var(--muted)}
+  .pill{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px}
+  .pill.ok{background:rgba(34,197,94,.14);color:#86efac;border:1px solid rgba(34,197,94,.3)}
+  .pill.no{background:rgba(239,68,68,.14);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+  .pill.amber{background:rgba(245,158,11,.14);color:#fcd34d;border:1px solid rgba(245,158,11,.3)}
+  .pill.blue{background:rgba(59,130,246,.14);color:#93c5fd;border:1px solid rgba(59,130,246,.3)}
+  .pill.purple{background:rgba(167,139,250,.14);color:#c4b5fd;border:1px solid rgba(167,139,250,.3)}
+  .pill.teal{background:rgba(45,212,191,.14);color:#5eead4;border:1px solid rgba(45,212,191,.3)}
+  .pill.pink{background:rgba(244,114,182,.14);color:#f9a8d4;border:1px solid rgba(244,114,182,.3)}
+  .pill.gray{background:rgba(148,163,184,.14);color:#cbd5e1;border:1px solid rgba(148,163,184,.3)}
+  .shot{width:100%;border-radius:var(--radius);border:1px solid var(--border);display:block;background:var(--surface)}
+  figure{margin:0}
+  figcaption{font-size:14px;color:var(--muted);margin-top:10px;text-align:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center}
+  .note{
+    border-inline-start:4px solid var(--amber);background:rgba(245,158,11,.08);
+    border-radius:10px;padding:16px 20px;font-size:16px;color:var(--text);
+  }
+  .note.blue{border-color:var(--blue);background:rgba(59,130,246,.08)}
+  .note.red{border-color:var(--red);background:rgba(239,68,68,.08)}
+  .note.green{border-color:var(--green);background:rgba(34,197,94,.08)}
+  .note.purple{border-color:var(--purple);background:rgba(167,139,250,.08)}
+  .note b{color:var(--text)}
+  .toc-row{
+    display:flex;align-items:center;gap:18px;padding:16px 20px;
+    border:1px solid var(--border);border-radius:12px;background:var(--surface);margin-bottom:12px;
+  }
+  .toc-row .n{
+    width:38px;height:38px;border-radius:10px;flex:none;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--surface2);color:var(--blue);font-weight:800;font-size:17px;
+  }
+  .toc-row .t{font-size:18px;font-weight:600}
+  .toc-row .d{font-size:14px;color:var(--muted);margin-inline-start:auto}
+  .badge-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+  kbd{
+    background:var(--surface2);border:1px solid var(--border);border-bottom-width:2px;
+    border-radius:7px;padding:2px 9px;font-family:inherit;font-size:14px;color:var(--text);font-weight:600;
+  }
+  .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+  .flow .step{
+    flex:1;min-width:150px;background:var(--surface);border:1px solid var(--border);
+    border-radius:12px;padding:18px;text-align:center;position:relative;
+  }
+  .flow .arrow{display:flex;align-items:center;justify-content:center;padding:0 10px;color:var(--muted);font-size:26px}
+  .flow .step .big{font-size:15px;font-weight:700;margin-bottom:6px}
+  .flow .step .sm{font-size:13px;color:var(--muted)}
+  .footer-note{position:absolute;bottom:24px;inset-inline-start:40px;font-size:13px;color:var(--muted)}
+  .page-tag{position:absolute;top:28px;inset-inline-end:40px;font-size:13px;color:var(--muted);letter-spacing:1px}
+  .tag-em{color:var(--blue);font-weight:700}
+  code.k{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 7px;font-size:14px;color:#93c5fd}
+  .winbtns{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 4px}
+  .winbtn{
+    display:flex;flex-direction:column;gap:2px;flex:1;min-width:200px;
+    border:1px solid var(--border);border-radius:12px;padding:14px 16px;background:var(--surface);
+  }
+  .winbtn .b{font-weight:700;font-size:16px}
+  .winbtn .s{font-size:13px;color:var(--muted)}
+  .winbtn.active{border-color:var(--blue);background:rgba(59,130,246,.10)}
+  .swatch{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:middle;margin-inline-end:8px}
+</style>
+</head>
+<body>
+
+<!-- 1 — TITLE -->
+<section class="slide" style="justify-content:center;background:radial-gradient(1200px 600px at 80% -10%,rgba(59,130,246,.10),transparent),radial-gradient(900px 500px at 10% 110%,rgba(167,139,250,.08),transparent)">
+  <span class="page-tag">1 / 14</span>
+  <div class="inner">
+    <span class="kicker">ניהול כלים · ענן חי · Firebase</span>
+    <h1>מדריך מנהל המערכת /<br>בעל הכלים</h1>
+    <p class="lead">מדריך הפעלה מקצה לקצה: שלושת חלונות העבודה והמעבר ביניהם, ניהול מכלים שבבעלותך, ניהול משתמשים והרשאות, אישורים שמורים למנהל המערכת, שכפול מכלים זהים, חתימות מחלקתיות, וכיול. שלב-אחר-שלב, עם צילומי מסך.</p>
+    <div class="badge-row">
+      <span class="pill blue">3 חלונות עבודה</span>
+      <span class="pill purple">מספר מכלים בבעלותך</span>
+      <span class="pill teal">מחלקתי · גנרי</span>
+      <span class="pill ok">עברית · RTL</span>
+    </div>
+  </div>
+  <div class="footer-note">המסמך כולל פעולות בעלות הרשאה מלאה</div>
+</section>
+
+<!-- 2 — TABLE OF CONTENTS -->
+<section class="slide">
+  <span class="page-tag">2 / 14</span>
+  <div class="inner">
+    <span class="kicker">מפת המדריך</span>
+    <h2>מה נלמד</h2>
+    <p class="lead">14 פרקים קצרים. כל פרק עומד בפני עצמו — אפשר לחזור לכל אחד בנפרד.</p>
+    <div class="grid g2">
+      <div>
+        <div class="toc-row"><span class="n">1</span><span class="t">תפקיד מנהל המערכת / בעל הכלים</span><span class="d">מי רשאי לעשות מה</span></div>
+        <div class="toc-row"><span class="n">2</span><span class="t">התחברות וזיהוי</span><span class="d">Google · זיהוי לפי מייל</span></div>
+        <div class="toc-row"><span class="n">3</span><span class="t">שלושת חלונות העבודה</span><span class="d">מעבר בלחיצת כפתור</span></div>
+        <div class="toc-row"><span class="n">4</span><span class="t">מודל מחלקתי ומכלים גנריים</span><span class="d">"עגלה" / ארון / אזור עבודה</span></div>
+        <div class="toc-row"><span class="n">5</span><span class="t">המכלים שבבעלותך</span><span class="d">חלון "המכל שלי"</span></div>
+        <div class="toc-row"><span class="n">6</span><span class="t">צבעי סטטוס — צבע לכל סטטוס</span><span class="d">הפרדה מלאה</span></div>
+        <div class="toc-row"><span class="n">7</span><span class="t">משתמשים והרשאות</span><span class="d">הוספה · שדרוג · מחיקה</span></div>
+      </div>
+      <div>
+        <div class="toc-row"><span class="n">8</span><span class="t">אישורי מנהל המערכת</span><span class="d">מחיקות ושדרוגים</span></div>
+        <div class="toc-row"><span class="n">9</span><span class="t">כלי ללא מיקום ידוע</span><span class="d">יצירה · החזרה · ביטול</span></div>
+        <div class="toc-row"><span class="n">10</span><span class="t">חתימות — "עגלה" מול ארון</span><span class="d">שני מסלולים נפרדים</span></div>
+        <div class="toc-row"><span class="n">11</span><span class="t">פיקוח על כיול</span><span class="d">חלון 30 יום · אישור</span></div>
+        <div class="toc-row"><span class="n">12</span><span class="t">שכפול מכלים וגרסאות (דורות)</span><span class="d">דור א' / דור ב'</span></div>
+        <div class="toc-row"><span class="n">13</span><span class="t">שגרת מנהל המערכת</span><span class="d">צ׳ק-ליסט</span></div>
+        <div class="toc-row"><span class="n">14</span><span class="t">סיכום ושאלות נפוצות</span><span class="d">פתרון תקלות</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 — THE ROLE -->
+<section class="slide">
+  <span class="page-tag">פרק 1 · <span class="tag-em">תפקיד</span></span>
+  <div class="inner">
+    <span class="kicker purple">פרק 1</span>
+    <h2>תפקיד מנהל המערכת / בעל הכלים</h2>
+    <p class="lead">מנהל המערכת / בעל הכלים הוא בעל ההרשאות הגבוהות ביותר. כל פעולה פתוחה בפניו — כולל פעולות ששום תפקיד אחר אינו יכול לבצע.</p>
+    <div class="grid g3">
+      <div class="card">
+        <span class="icon">🛡️</span>
+        <h3>רק למנהל המערכת</h3>
+        <ul class="clean good">
+          <li>יצירת כלי חדש ללא מיקום ידוע</li>
+          <li>ביטול כלי שאבד מעל חצי שנה</li>
+          <li>אישור מחיקת משתמשים</li>
+          <li>אישור שדרוג: בעל עגלה ← אחראי כלים</li>
+          <li>חלון פעולות מנהל המערכת</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="icon">🤝</span>
+        <h3>גם לאחראי כלים</h3>
+        <ul class="clean">
+          <li>צפייה בכל המכלים</li>
+          <li>עריכת כלים ומיקומים</li>
+          <li>בניית הזמנות וייצוא</li>
+          <li>הוספת משתמש; בקשת מחיקה</li>
+          <li>החזרת כלי שאבד למיקום ידוע</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="icon">👁️</span>
+        <h3>גם לבעל עגלה</h3>
+        <ul class="clean">
+          <li>צפייה במכל שלו בלבד (קריאה)</li>
+          <li>דוח על המכל שלו</li>
+          <li>חתימה על המכל (כשנדרש)</li>
+          <li>בקשת כיול / חוסר</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note blue" style="margin-top:24px"><b>חשוב:</b> תפקיד מנהל המערכת / בעל הכלים מזוהה לפי <b>כתובת המייל</b> — מוגדר מראש בכל מקום, כולל כללי האבטחה של Firestore. אין צורך ביצירת רשומת משתמש עבורו.</div>
+  </div>
+</section>
+
+<!-- 4 — LOGGING IN -->
+<section class="slide">
+  <span class="page-tag">פרק 2 · <span class="tag-em">התחברות</span></span>
+  <div class="inner">
+    <span class="kicker green">פרק 2</span>
+    <h2>התחברות וזיהוי</h2>
+    <div class="split">
+      <div>
+        <ol class="steps">
+          <li><b>פתח את כתובת המערכת</b> בדפדפן (מחשב או נייד).<span class="tip">המערכת היא PWA — אפשר להוסיף למסך הבית.</span></li>
+          <li><b>לחץ "התחבר עם Google".</b><span class="tip">זיהוי דרך Firebase Auth — אין סיסמה נפרדת.</span></li>
+          <li><b>בחר את חשבון מנהל המערכת</b> — כתובת מייל מורשית.</li>
+          <li><b>המערכת מזהה אותך אוטומטית</b> ופותחת את התצוגה המלאה עם כל חלונות העבודה.</li>
+        </ol>
+        <div class="note green" style="margin-top:18px"><b>זיהוי אוטומטי:</b> התחברות עם כתובת מנהל המערכת מעניקה הרשאות מלאות מיד, ללא הגדרה ידנית.</div>
+      </div>
+      <figure>
+        <img class="shot" src="../../lab/reports/live-login.png" alt="מסך התחברות">
+        <figcaption>מסך ההתחברות של המערכת</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- 5 — THREE WINDOWS -->
+<section class="slide">
+  <span class="page-tag">פרק 3 · <span class="tag-em">חלונות עבודה</span></span>
+  <div class="inner">
+    <span class="kicker teal">פרק 3</span>
+    <h2>שלושת חלונות העבודה</h2>
+    <p class="lead">בכניסה אתה ואחראי כלים נוחתים על <b>אותו מסך ראשי</b>. אצלך נוספים שני חלונות נוספים — והמעבר ביניהם הוא ב<b>לחיצת כפתור</b>.</p>
+    <div class="winbtns">
+      <div class="winbtn active">
+        <span class="b">① מסך ראשי</span>
+        <span class="s">ניהול כל המחלקות, המכלים והכלים — המסך המשותף לך ולאחראי כלים.</span>
+      </div>
+      <div class="winbtn">
+        <span class="b">② המכל שלי</span>
+        <span class="s">תצוגה ממוקדת של המכל/ים שבבעלותך בלבד — תפריט המכל שלך, מהיר.</span>
+      </div>
+      <div class="winbtn">
+        <span class="b">③ פעולות מנהל המערכת</span>
+        <span class="s">פעולות מוגנות בהרשאה: אישורי מחיקה ושדרוג, יצירת כלי ללא מיקום, ביטול אחרי חצי שנה.</span>
+      </div>
+    </div>
+    <div class="split" style="margin-top:24px">
+      <figure>
+        <img class="shot" src="../../lab/reports/win-admin.png" alt="חלון פעולות מנהל המערכת">
+        <figcaption>חלון ③ — פעולות מנהל המערכת</figcaption>
+      </figure>
+      <div>
+        <table>
+          <tr><th>תפקיד</th><th>חלונות</th></tr>
+          <tr><td><b>מנהל המערכת / בעל הכלים</b></td><td>3 חלונות — ראשי · המכל שלי · פעולות מנהל המערכת</td></tr>
+          <tr><td><b>אחראי כלים</b></td><td>2 חלונות — ראשי · המכל שלי</td></tr>
+          <tr><td><b>בעל עגלה</b></td><td>חלון אחד — המכל שלו בלבד (קריאה + דוח)</td></tr>
+        </table>
+        <div class="note teal" style="margin-top:16px">המעבר בין החלונות שומר על הקשר — אתה לא יוצא מהמערכת ולא נכנס מחדש, רק מחליף תצוגה.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 — DEPARTMENT MODEL & GENERIC CONTAINERS -->
+<section class="slide">
+  <span class="page-tag">פרק 4 · <span class="tag-em">מודל מחלקתי</span></span>
+  <div class="inner">
+    <span class="kicker">פרק 4</span>
+    <h2>מודל מחלקתי ומכלים גנריים</h2>
+    <p class="lead">הכלים מאורגנים <b>תחת מחלקה</b> — ללא תלות במיקום הפיזי שבו יושב המכל. ה"מכל" הוא גנרי.</p>
+    <div class="grid g3">
+      <div class="card raised">
+        <h3><span class="pill blue">C</span> "עגלה"</h3>
+        <p class="muted">מכל נייד. המונח מופיע במרכאות כי בפועל זה עשוי להיות ארון או אזור עבודה.</p>
+      </div>
+      <div class="card raised">
+        <h3><span class="pill teal">B</span> ארון</h3>
+        <p class="muted">מכל מחלקתי קבוע. כברירת מחדל מנוהל-מלאי ללא חתימה יומית (ראה פרק 10).</p>
+      </div>
+      <div class="card raised">
+        <h3><span class="pill purple">·</span> אזור עבודה</h3>
+        <p class="muted">חלק מאזור עבודה משותף. סמל הסוג טרם נסגר — מטופל כמכל לכל דבר.</p>
+      </div>
+    </div>
+    <div class="note blue" style="margin-top:22px">
+      <b>דקדוק מזהים:</b> מיקום <code class="k">L</code> (4 תווים) עם שם תצוגה בעברית · מכל <code class="k">C</code>/<code class="k">B</code> (4 תווים) · מגירה/מדף 2 תווים נושאים את מזהה המכל · כלי 4 תווים נושא את מזהה המגירה/המדף.
+    </div>
+    <div class="note green" style="margin-top:14px"><b>בעלות:</b> מנהל המערכת ואחראי כלים יכולים להחזיק כל אחד <b>מספר מכלים</b> ("עגלות" ו/או ארונות), עם מעבר מהיר לתצוגת המכל שלהם.</div>
+  </div>
+</section>
+
+<!-- 7 — MY CONTAINERS -->
+<section class="slide">
+  <span class="page-tag">פרק 5 · <span class="tag-em">המכל שלי</span></span>
+  <div class="inner">
+    <span class="kicker green">פרק 5</span>
+    <h2>המכלים שבבעלותך</h2>
+    <p class="lead">כבעל הכלים אתה עשוי להחזיק כמה מכלים. חלון "המכל שלי" נותן לך תצוגה ממוקדת, נקייה מרעש של שאר המחלקות.</p>
+    <div class="split">
+      <figure>
+        <img class="shot" src="../../lab/reports/view-owner.png" alt="תצוגת המכל שלי">
+        <figcaption>חלון ② — המכל/ים שבבעלותך</figcaption>
+      </figure>
+      <div>
+        <ul class="clean good">
+          <li>מעבר מהיר בין המכלים שבבעלותך</li>
+          <li>צפייה בכל הכלים והמגירות של המכל</li>
+          <li>חתימה על המכל כשהוא דורש זאת</li>
+          <li>הפקת דוח על המכל הספציפי</li>
+          <li>בקשות כיול / חוסר לכלים שבמכל</li>
+        </ul>
+        <div class="note" style="margin-top:16px">החזרה למסך הראשי — בלחיצת כפתור. כל חלון משרת מטרה אחת, בלי ערבוב.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 8 — STATUS COLORS -->
+<section class="slide">
+  <span class="page-tag">פרק 6 · <span class="tag-em">צבעי סטטוס</span></span>
+  <div class="inner">
+    <span class="kicker amber">פרק 6</span>
+    <h2>צבעי סטטוס — צבע לכל סטטוס</h2>
+    <p class="lead">לכל סטטוס <b>צבע ייחודי משלו</b>. אין שני סטטוסים שונים בעלי אותו צבע — בפרט <b>"בכיול" ו"שבור" חייבים להיות שונים</b>.</p>
+    <div class="split">
+      <div>
+        <table>
+          <tr><th>צבע</th><th>סטטוס</th><th>משמעות</th></tr>
+          <tr><td><span class="swatch" style="background:var(--green)"></span><span class="pill ok">ירוק</span></td><td>כיול בתוקף</td><td>תקין</td></tr>
+          <tr><td><span class="swatch" style="background:var(--amber)"></span><span class="pill amber">כתום</span></td><td>כיול מתקרב</td><td>בחלון 30 יום</td></tr>
+          <tr><td><span class="swatch" style="background:var(--red)"></span><span class="pill no">אדום</span></td><td>שבור</td><td>הוצא משימוש</td></tr>
+          <tr><td><span class="swatch" style="background:var(--purple)"></span><span class="pill purple">סגול</span></td><td>בכיול</td><td>נשלח / במעבדת כיול</td></tr>
+          <tr><td><span class="swatch" style="background:var(--teal)"></span><span class="pill teal">טורקיז</span></td><td>חוסר מאושר</td><td>במיקום חיצוני</td></tr>
+          <tr><td><span class="swatch" style="background:var(--pink)"></span><span class="pill pink">ורוד</span></td><td>ללא מיקום ידוע</td><td>אבד / טרם שובץ</td></tr>
+          <tr><td><span class="swatch" style="background:var(--gray)"></span><span class="pill gray">אפור</span></td><td>ללא דרישת כיול</td><td>לא רלוונטי לכיול</td></tr>
+        </table>
+      </div>
+      <div>
+        <div class="note red"><b>"בכיול" ≠ "שבור".</b> בעבר שניהם נטו לאותו גוון — עכשיו הם מופרדים לחלוטין: בכיול = <span class="pill purple">סגול</span>, שבור = <span class="pill no">אדום</span>.</div>
+        <div class="note green" style="margin-top:14px">הפרדת הצבעים מאפשרת לזהות כל מצב במבט אחד, בלי לפענח. זהו הבסיס ל"סטטוס חי" — בניגוד לגיליון שטוח.</div>
+        <div class="note purple" style="margin-top:14px"><b>כלי שאינו מכויל "מתחזה":</b> השימוש בו כמו שימוש בכלי לא-מכויל — גורם <b>לאי-דיוק בעבודה ולפגיעה בציוד</b>. לכן ההפרדה החזותית קריטית.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 — USERS & PERMISSIONS -->
+<section class="slide">
+  <span class="page-tag">פרק 7 · <span class="tag-em">משתמשים</span></span>
+  <div class="inner">
+    <span class="kicker purple">פרק 7</span>
+    <h2>משתמשים והרשאות</h2>
+    <p class="lead">אחראי כלים יכול <b>להוסיף</b> משתמש ולבקש שדרוג מוגבל. שינויי הרשאה ומחיקות סופיות עוברים דרכך.</p>
+    <div class="split">
+      <div>
+        <ol class="steps">
+          <li><b>פתח את מסך "משתמשים".</b></li>
+          <li><b>"הוסף משתמש"</b> והזן את כתובת המייל (חשבון Google).<span class="tip">אחראי כלים גם יכול להוסיף משתמש.</span></li>
+          <li><b>בחר תפקיד:</b> מנהל המערכת / אחראי כלים / בעל עגלה.</li>
+          <li><b>שייך מכל/ים</b> אם בחרת בעל עגלה.</li>
+          <li><b>שמור.</b> הרשומה נכתבת ל-Firestore.</li>
+        </ol>
+      </div>
+      <div>
+        <table>
+          <tr><th>פעולה</th><th>מבצע</th></tr>
+          <tr><td>הוספת משתמש</td><td>מנהל המערכת או אחראי כלים</td></tr>
+          <tr><td>בקשת שדרוג <span class="pill gray">בעל עגלה ← אחראי כלים</span></td><td>אחראי כלים מבקש</td></tr>
+          <tr><td><b>אישור</b> שדרוג</td><td><span class="pill purple">מנהל המערכת בלבד</span></td></tr>
+          <tr><td>בקשת מחיקת משתמש</td><td>אחראי כלים מבקש</td></tr>
+          <tr><td><b>אישור + ביצוע</b> מחיקה</td><td><span class="pill purple">מנהל המערכת בלבד</span></td></tr>
+        </table>
+        <div class="note red" style="margin-top:16px"><b>שדרוג מוגבל:</b> אחראי כלים רשאי לבקש שדרוג <i>רק</i> מ-בעל עגלה ל-אחראי כלים. כל שדרוג אחר אינו אפשרי דרכו.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 — ADMIN APPROVALS -->
+<section class="slide">
+  <span class="page-tag">פרק 8 · <span class="tag-em">אישורים</span></span>
+  <div class="inner">
+    <span class="kicker red">פרק 8</span>
+    <h2>אישורי מנהל המערכת</h2>
+    <p class="lead">חלק מהפעולות מתחילות אצל אחראי כלים אך <b>נסגרות רק אצלך</b>. הן מרוכזות בחלון פעולות מנהל המערכת.</p>
+    <div class="flow">
+      <div class="step"><div class="big">אחראי כלים יוזם</div><div class="sm">בקשת מחיקת משתמש / בקשת שדרוג</div></div>
+      <div class="arrow">←</div>
+      <div class="step"><div class="big">התראה אליך</div><div class="sm">הבקשה במצב "ממתין"</div></div>
+      <div class="arrow">←</div>
+      <div class="step"><div class="big">אתה בודק</div><div class="sm">בחלון פעולות מנהל המערכת</div></div>
+      <div class="arrow">←</div>
+      <div class="step"><div class="big">אישור + ביצוע</div><div class="sm">הפעולה מתבצעת בפועל</div></div>
+    </div>
+    <div class="grid g2" style="margin-top:24px">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--purple)"></span>שמור למנהל המערכת בלבד</h3>
+        <ul class="clean">
+          <li>אישור וביצוע מחיקת משתמש</li>
+          <li>אישור שדרוג בעל עגלה ← אחראי כלים</li>
+          <li>יצירת כלי חדש ללא מיקום ידוע (פרק 9)</li>
+          <li>ביטול כלי שאבד מעל חצי שנה (פרק 9)</li>
+          <li>הקצאת חתימת ארון לעובד (פרק 10)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--green)"></span>זוג עיניים שני</h3>
+        <p class="muted">בקשות כיול/חוסר יכולות להיות מאושרות גם בידי אדם נוסף (לא המבקש) — מנגנון ביקורת פנימית. כל אישור נרשם עם שם המאשר.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 — UNLOCATED TOOLS -->
+<section class="slide">
+  <span class="page-tag">פרק 9 · <span class="tag-em">ללא מיקום</span></span>
+  <div class="inner">
+    <span class="kicker amber">פרק 9</span>
+    <h2>כלי ללא מיקום ידוע</h2>
+    <p class="lead">למצב "ללא מיקום ידוע" יש כללי הרשאה מדויקים — חלקם שמורים רק לך.</p>
+    <div class="grid g3">
+      <div class="card">
+        <span class="num-badge" style="color:var(--purple)">1</span>
+        <h3>יצירה מאפס</h3>
+        <p class="muted">יצירת כלי חדש שמיקומו לא ידוע מלכתחילה.</p>
+        <div class="badge-row"><span class="pill purple">מנהל המערכת בלבד</span></div>
+      </div>
+      <div class="card">
+        <span class="num-badge" style="color:var(--blue)">2</span>
+        <h3>סימון ככלי שאבד והחזרה</h3>
+        <p class="muted">שינוי כלי קיים ל"ללא מיקום ידוע", וכן החזרתו למיקום ידוע ושיבוצו נכון.</p>
+        <div class="badge-row"><span class="pill blue">אחראי כלים</span> <span class="pill purple">מנהל המערכת</span></div>
+      </div>
+      <div class="card">
+        <span class="num-badge" style="color:var(--red)">3</span>
+        <h3>ביטול אחרי חצי שנה</h3>
+        <p class="muted">ביטול כלי שנשאר "ללא מיקום ידוע" מעל חצי שנה.</p>
+        <div class="badge-row"><span class="pill purple">מנהל המערכת בלבד</span></div>
+      </div>
+    </div>
+    <div class="note red" style="margin-top:22px"><b>חשוב:</b> ללא תיעוד דיגיטלי — הכול חשוף (פרוץ). מצב "ללא מיקום ידוע" שומר על שרשרת אחריות גם כשכלי אבד, ומונע היעלמות שקטה מהמערכת.</div>
+  </div>
+</section>
+
+<!-- 12 — SIGN-OFFS CART vs CLOSET -->
+<section class="slide">
+  <span class="page-tag">פרק 10 · <span class="tag-em">חתימות</span></span>
+  <div class="inner">
+    <span class="kicker green">פרק 10</span>
+    <h2>חתימות — "עגלה" מול ארון</h2>
+    <p class="lead">חתימה על "עגלה" וחתימה על ארון מחלקתי הן <b>שתי פעולות נפרדות</b>, בלי בלבול. תצוגת "מי לא חתם" היא <b>תפעולית</b> בלבד — איזה מכל לא נחתם, לא מי נכח.</p>
+    <div class="grid g2">
+      <div class="card">
+        <h3><span class="dot" style="background:var(--blue)"></span>חתימת "עגלה"</h3>
+        <ul class="clean">
+          <li>חתימה יומית על "עגלות" הדורשות זאת</li>
+          <li>בעל המכל / אחראי / מנהל המערכת חותם</li>
+          <li>מסלול חתימה ייעודי משלו</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3><span class="dot" style="background:var(--teal)"></span>חתימת ארון מחלקתי</h3>
+        <ul class="clean amber">
+          <li>ברירת מחדל: ניהול-מלאי <b>ללא</b> חתימה יומית</li>
+          <li>חלק מהארונות כן דורשים חתימה (דגל לכל מכל)</li>
+          <li>מסלול חתימה <b>נפרד</b> מ"עגלה"</li>
+          <li>אפשר להקצות לעובד מן השורה לבדוק ולחתום</li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:20px">
+      <div class="note teal"><b>הקצאת חתימת ארון:</b> מנהל המערכת או אחראי כלים שולחים <b>התראה</b> לעובד ספציפי לבדוק ולחתום על ארון מחלקתי. גם אחראי ומנהל המערכת יכולים לחתום בעצמם.</div>
+      <div class="note blue"><b>ימים נדרשים:</b> שישי ושבת — <b>אין</b> חתימה כלל. קיים דוח "מי חתם ומתי" עד <b>שנה אחורה</b>.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 13 — CALIBRATION OVERSIGHT -->
+<section class="slide">
+  <span class="page-tag">פרק 11 · <span class="tag-em">כיול</span></span>
+  <div class="inner">
+    <span class="kicker">פרק 11</span>
+    <h2>פיקוח על כיול</h2>
+    <p class="lead">המערכת צובעת כלים הדורשים כיול לפי קרבת התוקף ופותחת "חלון כיול" כשמתקרב המועד.</p>
+    <div class="split">
+      <div>
+        <ol class="steps">
+          <li><b>חלון 30 יום נפתח</b> כשתוקף כלי פג תוך 30 יום (כולל פגי-תוקף).<span class="tip">רק אז ניתן לשלוח בקשת כיול לאותו מכל.</span></li>
+          <li><b>בקשה ← אישור</b> — הבקשה מאושרת בידי אדם שני / מנהל המערכת.</li>
+          <li><b>"חוסר מאושר"</b> — הכלי נשלח לכיול ומסומן <span class="pill purple">בכיול</span>.</li>
+          <li><b>שליחה ישירה</b> — מנהל המערכת / אחראי כלים יכולים לשלוח לכיול בשלב אחד.</li>
+        </ol>
+      </div>
+      <div>
+        <h3>תפקידך בכיול</h3>
+        <ul class="clean amber">
+          <li>לעקוב אחר כלים כתומים (חלון 30 יום) בכל המכלים</li>
+          <li>לשלוח לכיול ישירות בלי להמתין לבעל המכל</li>
+          <li>לאשר בקשות כיול ממתינות</li>
+        </ul>
+        <div class="note purple" style="margin-top:14px"><b>למה זה קריטי:</b> כלי לא-מכויל "מתחזה" — השימוש בו גורם לאי-דיוק בעבודה ולפגיעה בציוד. הצבע הייעודי <span class="pill purple">סגול = בכיול</span> מבדיל אותו מ-<span class="pill no">אדום = שבור</span>.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 14 — CLONING / GENERATIONS -->
+<section class="slide">
+  <span class="page-tag">פרק 12 · <span class="tag-em">שכפול ודורות</span></span>
+  <div class="inner">
+    <span class="kicker teal">פרק 12</span>
+    <h2>שכפול מכלים וגרסאות (דורות)</h2>
+    <p class="lead">כשיש מכלים זהים — אין צורך לבנות כל אחד מאפס. מגדירים פריסה <b>פעם אחת</b> ומשכפלים ל-N עותקים זהים, הנבדלים רק במספר.</p>
+    <div class="split">
+      <div>
+        <ol class="steps">
+          <li><b>הגדר פריסה</b> של מכל אחד: מגירות, מדפים וכלים.</li>
+          <li><b>שכפל ל-N עותקים</b> זהים — נבדלים רק במספר המזהה.</li>
+          <li><b>שייך דור/גרסה</b> לכל מכל: <span class="pill blue">דור א'</span> / <span class="pill teal">דור ב'</span>.</li>
+        </ol>
+        <div class="note teal" style="margin-top:16px">דוגמה (להמחשה בלבד): כמה "עגלות" זהות בדור ב', וכמה זהות בדור א'. הכמויות הן <b>דוגמה</b>, לא מספר קבוע.</div>
+      </div>
+      <div class="card raised">
+        <h3>למה זה חשוב</h3>
+        <ul class="clean good">
+          <li>הקמה מהירה של מכלים זהים</li>
+          <li>עקביות מובטחת בין עותקים</li>
+          <li>הדור/גרסה מתועד לכל מכל</li>
+          <li>תחזוקה אחידה לכל המשפחה</li>
+        </ul>
+        <div class="note blue" style="margin-top:14px">המערכת בנויה לטפל ממספר עצום של כלים ועד לחנות דיוק קטנה / סדנת בית — אותם כלים, אותו דקדוק.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 15 — ROUTINE CHECKLIST -->
+<section class="slide">
+  <span class="page-tag">פרק 13 · <span class="tag-em">שגרה</span></span>
+  <div class="inner">
+    <span class="kicker green">פרק 13</span>
+    <h2>שגרת מנהל המערכת</h2>
+    <div class="grid g3">
+      <div class="card raised">
+        <h3>🗓️ יומי</h3>
+        <ul class="clean">
+          <li>בדיקת התראות חדשות</li>
+          <li>אישור בקשות ממתינות (מחיקה / שדרוג)</li>
+          <li>מבט על מכלים שלא נחתמו היום</li>
+          <li>טיפול בכלים שדווחו כשבורים</li>
+        </ul>
+      </div>
+      <div class="card raised">
+        <h3>📆 שבועי</h3>
+        <ul class="clean amber">
+          <li>סקירת כלים כתומים (חלון 30 יום)</li>
+          <li>מעקב אחר ארונות שדורשים חתימה</li>
+          <li>הקצאת חתימות ארון לעובדים</li>
+          <li>דוח כלים שבורים</li>
+        </ul>
+      </div>
+      <div class="card raised">
+        <h3>📊 תקופתי</h3>
+        <ul class="clean good">
+          <li>טיפול בכלים "ללא מיקום" מעל חצי שנה</li>
+          <li>סקירת דוח "מי חתם ומתי" (עד שנה)</li>
+          <li>שכפול / עדכון מכלים בדורות</li>
+          <li>ודאו הרשאות מעודכנות</li>
+        </ul>
+      </div>
+    </div>
+    <div class="note blue" style="margin-top:24px">המטרה: לבצע את המשימה בכל מצב — לא לעבור ביקורת. שגרה זו שומרת על סטטוס חי ומדויק בכל המכלים.</div>
+  </div>
+</section>
+
+<!-- 16 — SUMMARY / FAQ -->
+<section class="slide" style="background:radial-gradient(1000px 500px at 90% 110%,rgba(34,197,94,.08),transparent)">
+  <span class="page-tag">פרק 14 · <span class="tag-em">סיכום</span></span>
+  <div class="inner">
+    <span class="kicker">פרק 14</span>
+    <h2>סיכום ושאלות נפוצות</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>איך עוברים בין החלונות?</h3>
+        <p class="muted">בלחיצת כפתור. אצלך שלושה חלונות: ראשי · המכל שלי · פעולות מנהל המערכת. המעבר שומר על ההקשר.</p>
+      </div>
+      <div class="card">
+        <h3>מי יכול ליצור כלי ללא מיקום ידוע?</h3>
+        <p class="muted">יצירה מאפס — מנהל המערכת בלבד. סימון כלי קיים כאבוד והחזרתו — גם אחראי כלים.</p>
+      </div>
+      <div class="card">
+        <h3>"בכיול" ו"שבור" נראים אותו דבר?</h3>
+        <p class="muted">לא. לכל סטטוס צבע ייחודי. בכיול = סגול, שבור = אדום. אין שני סטטוסים באותו צבע.</p>
+      </div>
+      <div class="card">
+        <h3>מה ההבדל בחתימת "עגלה" וארון?</h3>
+        <p class="muted">שני מסלולים נפרדים. ארון לרוב ללא חתימה יומית, ואפשר להקצות עובד לחתום עליו.</p>
+      </div>
+    </div>
+    <div class="note green" style="margin-top:28px">
+      <b>הליבה שלך כמנהל המערכת / בעל הכלים:</b> שלושת החלונות נותנים שליטה מלאה · האישורים השמורים לך סוגרים מעגלי הרשאה · שכפול הדורות מקים מכלים זהים במהירות. ניהול כלים <b>חי</b> — לא גיליון שטוח, אלא סטטוס שמתעדכן בזמן אמת.
+    </div>
+    <p class="muted" style="margin-top:24px;text-align:center">ניהול כלים · מדריך מנהל המערכת / בעל הכלים · עברית RTL · ענן Firebase</p>
+  </div>
+</section>
+
+</body>
+</html>

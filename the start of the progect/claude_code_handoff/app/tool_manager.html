@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מערכת ניהול כלים — גרסה 1.0</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#F4F5F7;direction:rtl;color:#1A1A2E;min-height:100vh}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:215px;background:#1A1A2E;flex-shrink:0;display:flex;flex-direction:column}
+.sidebar-logo{text-align:center;padding:1.25rem 1rem;border-bottom:1px solid #333}
+.sidebar-logo .ico{font-size:2.2rem}
+.sidebar-logo .ttl{color:#fff;font-size:.95rem;font-weight:700;margin-top:.4rem}
+.sidebar-logo .ver{color:#555;font-size:.72rem;margin-top:.15rem}
+.nav-btn{display:block;width:100%;background:none;border:none;color:#bbb;font-size:.9rem;font-family:inherit;text-align:right;padding:.8rem 1.2rem;cursor:pointer}
+.nav-btn:hover,.nav-btn.active{background:#2E2E4E;color:#fff}
+.sb-footer{margin-top:auto;padding:.75rem 1rem;border-top:1px solid #333}
+.lock-lbl{color:#F44336;font-size:.78rem;text-align:center}
+.lock-lbl.open{color:#4CAF50}
+.lock-btn{width:100%;background:none;border:1px solid #444;color:#aaa;font-size:.78rem;font-family:inherit;padding:.35rem;cursor:pointer;border-radius:4px;margin-top:.35rem}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:#fff;border-bottom:1px solid #E0E0E0;padding:.7rem 1.2rem;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.topbar-title{font-size:1.1rem;font-weight:700;flex:1}
+.back-btn{background:none;border:1px solid #E0E0E0;border-radius:8px;padding:.35rem .85rem;cursor:pointer;font-size:.82rem;color:#888;font-family:inherit}
+.save-btn{background:#1A73E8;color:#fff;border:none;border-radius:8px;padding:.35rem .9rem;cursor:pointer;font-size:.82rem;font-weight:700;font-family:inherit}
+.content{flex:1;overflow-y:auto;padding:1rem}
+.screen{display:none}.screen.active{display:block}
+.card{background:#fff;border:1px solid #E0E0E0;border-radius:12px;padding:1.1rem;margin-bottom:.85rem}
+.card-title{font-size:.92rem;font-weight:700;margin-bottom:.85rem;color:#1A1A2E}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem;margin-bottom:.85rem}
+.stat{background:#fff;border:1px solid #E0E0E0;border-radius:10px;padding:.65rem .9rem;cursor:pointer;transition:transform .15s}
+.stat:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.09)}
+.stat .n{font-size:1.7rem;font-weight:700}.stat .l{font-size:.72rem;color:#888;margin-top:.15rem}.stat .h{font-size:.68rem;color:#bbb}
+.btn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.65rem;margin-bottom:.85rem}
+.btn-card{background:#fff;border:1px solid #E0E0E0;border-radius:12px;padding:.9rem;cursor:pointer;text-align:right;transition:all .15s;display:flex;flex-direction:column}
+.btn-card:hover{border-color:#1A73E8;box-shadow:0 3px 10px rgba(0,0,0,.07)}
+.bico{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.5rem}
+.blbl{font-size:.88rem;font-weight:700;color:#1A1A2E}.bsub{font-size:.72rem;color:#888;margin-top:.15rem}
+.form-row{margin-bottom:.75rem}
+.form-row label{display:block;font-size:.82rem;color:#666;font-weight:600;margin-bottom:.25rem}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:.5rem .8rem;border:1px solid #E0E0E0;border-radius:8px;font-size:.88rem;font-family:inherit;background:#fff;color:#1A1A2E;direction:rtl}
+.form-row input:focus,.form-row select:focus{outline:none;border-color:#1A73E8}
+.form-row textarea{min-height:65px;resize:vertical}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.65rem}
+.cal-fields{background:#FFF3E0;border-radius:8px;padding:.75rem;margin-top:.4rem}
+.id-preview{background:#E8F0FE;border:1px solid #1A73E8;border-radius:8px;padding:.55rem .9rem;font-weight:700;color:#1A73E8;font-size:.85rem;margin:.45rem 0}
+.info-box{border-radius:8px;padding:.55rem .85rem;font-size:.82rem;margin:.4rem 0}
+.info-blue{background:#E8F0FE;color:#1A1A2E}
+.info-red{background:#FCE4EC;color:#C62828}
+.info-amber{background:#FFF3E0;color:#E65100}
+.btn{border:none;border-radius:8px;padding:.45rem 1rem;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;transition:filter .15s}
+.btn:hover{filter:brightness(.9)}
+.btn-primary{background:#1A73E8;color:#fff}
+.btn-danger{background:#C62828;color:#fff}
+.btn-gray{background:#607D8B;color:#fff}
+.btn-green{background:#2E7D32;color:#fff}
+.btn-amber{background:#E65100;color:#fff}
+.btn-purple{background:#512DA8;color:#fff}
+.btn-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.85rem}
+.ss{position:relative;margin-bottom:.75rem}
+.ss label{display:block;font-size:.82rem;color:#666;font-weight:600;margin-bottom:.25rem}
+.ss input{width:100%;padding:.5rem .8rem;border:1px solid #E0E0E0;border-radius:8px;font-size:.88rem;font-family:inherit;direction:rtl}
+.ss input:focus{outline:none;border-color:#1A73E8}
+.ss-list{position:absolute;top:100%;right:0;left:0;background:#fff;border:1px solid #1A73E8;border-radius:8px;max-height:170px;overflow-y:auto;z-index:100;display:none;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.ss-list.show{display:block}
+.ss-item{padding:.45rem .8rem;cursor:pointer;font-size:.85rem;border-bottom:1px solid #f0f0f0;direction:rtl}
+.ss-item:hover,.ss-item.hi{background:#E8F0FE;color:#1A73E8}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+thead th{background:#1A1A2E;color:#fff;padding:.5rem .65rem;text-align:right;font-weight:600;white-space:nowrap}
+tbody tr{border-bottom:1px solid #f0f0f0}
+tbody tr:hover{background:#F0F4FF}
+tbody td{padding:.45rem .65rem;text-align:right;vertical-align:middle}
+.badge{display:inline-block;padding:.12rem .5rem;border-radius:5px;font-size:.72rem;font-weight:700}
+.b-cal{background:#FFF3E0;color:#E65100}
+.b-broken{background:#FCE4EC;color:#C62828}
+.b-sp{background:#EDE7F6;color:#512DA8}
+.row-exp td{color:#C62828;font-weight:600}
+.row-warn td{color:#E65100}
+.row-sp td{color:#512DA8}
+.fmt-btns{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.65rem}
+.fmt-btn{border:1px solid #E0E0E0;background:#fff;border-radius:7px;padding:.38rem .8rem;cursor:pointer;font-size:.82rem;font-family:inherit}
+.fmt-btn.active,.fmt-btn:hover{background:#1A73E8;color:#fff;border-color:#1A73E8}
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:200}
+.modal-ov.show{display:flex}
+.modal{background:#fff;border-radius:14px;padding:1.4rem;width:330px;max-width:96vw}
+.modal h3{font-size:.95rem;font-weight:700;margin-bottom:.85rem}
+.popup-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-start;justify-content:center;z-index:250;overflow-y:auto;padding:1rem}
+.popup-ov.show{display:flex}
+.popup-box{background:#fff;border-radius:14px;padding:1.25rem;width:920px;max-width:98vw;max-height:92vh;display:flex;flex-direction:column}
+.rep-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-start;justify-content:center;z-index:300;overflow-y:auto;padding:1rem}
+.rep-ov.show{display:flex}
+.rep-box{background:#fff;border-radius:14px;padding:1.25rem;width:940px;max-width:98vw;max-height:94vh;display:flex;flex-direction:column}
+.toast{position:fixed;bottom:1.4rem;left:50%;transform:translateX(-50%);background:#1A1A2E;color:#fff;padding:.6rem 1.3rem;border-radius:10px;font-size:.85rem;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.hier-badge{display:inline-block;padding:.1rem .45rem;border-radius:5px;font-size:.72rem;font-weight:700;margin-left:.25rem}
+.hb-loc{background:#E0F2F1;color:#00796B}
+.hb-cart{background:#E8F0FE;color:#1A73E8}
+.hb-drawer{background:#FFF3E0;color:#E65100}
+.hb-tool{background:#F3E5F5;color:#7B1FA2}
+@media(max-width:680px){.sidebar{display:none}.stat-grid{grid-template-columns:1fr 1fr}.btn-grid{grid-template-columns:1fr 1fr}.fg2{grid-template-columns:1fr}.fg3{grid-template-columns:1fr}}
+@media print{.sidebar,.topbar,.btn-row,.fmt-btns{display:none!important}}
+</style>
+</head>
+<body>
+
+<div class="modal-ov" id="pwdModal">
+  <div class="modal">
+    <h3>🔐 אימות סיסמה</h3>
+    <div class="form-row"><label>סיסמה</label><input type="password" id="pwdInput" placeholder="הכנס סיסמה"/></div>
+    <div class="btn-row"><button class="btn btn-gray" onclick="closePwd()">ביטול</button><button class="btn btn-primary" onclick="submitPwd()">אישור</button></div>
+  </div>
+</div>
+
+<div class="popup-ov" id="popupOv">
+  <div class="popup-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem;flex-wrap:wrap;gap:.4rem">
+      <span id="popupTitle" style="font-size:1rem;font-weight:700"></span>
+      <div style="display:flex;gap:.4rem">
+        <button class="btn btn-primary" onclick="exportPopupExcel()" style="font-size:.78rem;padding:.3rem .7rem">📊 Excel</button>
+        <button class="btn btn-gray" onclick="closePopup()" style="font-size:.78rem;padding:.3rem .7rem">סגור</button>
+      </div>
+    </div>
+    <div class="tbl-wrap" style="flex:1;overflow-y:auto"><table id="popupTable"><thead><tr><th>מזהה</th><th>מקט יצרן</th><th>תיאור</th><th>עגלה</th><th>מגירה</th><th>מיקום</th><th>כיול</th><th>תאריך כיול</th><th>מזהה כיול</th></tr></thead><tbody id="popupBody"></tbody></table></div>
+  </div>
+</div>
+
+<div class="rep-ov" id="repOv">
+  <div class="rep-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem;flex-wrap:wrap;gap:.4rem">
+      <span id="repTitle" style="font-size:1rem;font-weight:700"></span>
+      <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+        <div class="fmt-btns" style="margin:0">
+          <button class="fmt-btn active" id="rfv" onclick="setRepFmt('view')">👁 צפייה</button>
+          <button class="fmt-btn" id="rfp" onclick="setRepFmt('pdf')">📄 PDF</button>
+          <button class="fmt-btn" id="rfe" onclick="setRepFmt('excel')">📊 Excel</button>
+        </div>
+        <button class="btn btn-primary" onclick="downloadRep()" style="font-size:.78rem;padding:.3rem .7rem">⬇ הורד</button>
+        <button class="btn btn-gray" onclick="window.print()" style="font-size:.78rem;padding:.3rem .7rem">🖨️</button>
+        <button class="btn btn-gray" onclick="closeRep()" style="font-size:.78rem;padding:.3rem .7rem">סגור</button>
+      </div>
+    </div>
+    <div class="tbl-wrap" style="flex:1;overflow-y:auto" id="repContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- IMPORT DECISION MODAL -->
+<div class="rep-ov" id="impOv">
+  <div class="rep-box" style="width:640px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem">
+      <span style="font-size:1rem;font-weight:700">📥 סיכום ייבוא — החלט כיצד להמשיך</span>
+      <button class="btn btn-gray" onclick="closeImp()" style="font-size:.78rem;padding:.3rem .7rem">סגור</button>
+    </div>
+    <div id="impBody" style="flex:1;overflow-y:auto;margin-bottom:.75rem"></div>
+    <div class="btn-row" style="margin-top:0">
+      <button class="btn btn-green" id="impBtnNewOnly" onclick="applyImport('newonly')">ייבא חדשים בלבד</button>
+      <button class="btn btn-amber" id="impBtnAll" onclick="applyImport('update')">ייבא הכל + עדכן כפילויות</button>
+      <button class="btn btn-gray" id="impBtnSkip" onclick="applyImport('newonly')" style="display:none">דלג על קיימים</button>
+      <button class="btn btn-purple" id="impBtnReport" onclick="stopWithReport()">⬇ עצור והורד דוח בעיות</button>
+      <button class="btn btn-danger" id="impBtnStop" onclick="closeImp()">עצור / בטל</button>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="ico">🔧</div>
+    <div class="ttl">מערכת ניהול כלים</div>
+    <div class="ver">גרסה 1.0</div>
+  </div>
+  <button class="nav-btn active" id="nav-home" onclick="go('home')">🏠  דף בית</button>
+  <button class="nav-btn" id="nav-search" onclick="go('search')">🔍  חיפוש כלי</button>
+  <button class="nav-btn" id="nav-reports" onclick="go('reports')">📊  דוחות</button>
+  <button class="nav-btn" id="nav-admin" onclick="reqAdmin(()=>go('admin'))">🔐  ניהול ותכנון</button>
+  <div class="sb-footer">
+    <div class="lock-lbl" id="lockLbl">🔒 מנעול פעיל</div>
+    <button class="lock-btn" onclick="doLock()">🚪 נעל מחדש</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <button class="back-btn" id="backBtn" onclick="goBack()" style="display:none">◀ חזור</button>
+    <div class="topbar-title" id="topTitle">🔧 מערכת ניהול כלים</div>
+  </div>
+  <div class="content">
+
+  <div class="screen active" id="screen-home">
+    <div class="stat-grid" id="statGrid"></div>
+    <div class="btn-grid" id="homeGrid"></div>
+  </div>
+
+  <div class="screen" id="screen-search">
+    <div class="card"><div class="card-title">🔍 חיפוש — הקלד לסינון</div>
+      <div class="fg2">
+        <div id="ssi"></div><div id="ssv"></div>
+        <div id="ssd" style="grid-column:1/-1"></div>
+        <div id="ssc"></div><div id="ssdr"></div>
+        <div id="ssl"></div><div id="ssci"></div>
+      </div>
+      <div class="form-row"><label>כיול</label><select id="fcal" onchange="runSearch()"><option value="">הכל</option><option value="כן">כן</option><option value="לא">לא</option></select></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.65rem;flex-wrap:wrap;gap:.4rem">
+        <span class="card-title" style="margin:0" id="searchCnt">תוצאות</span>
+        <div style="display:flex;gap:.4rem">
+          <button class="btn btn-primary" onclick="expSearchExcel()" style="font-size:.78rem;padding:.3rem .7rem">📊 Excel</button>
+          <button class="btn btn-gray" onclick="expSearchPdf()" style="font-size:.78rem;padding:.3rem .7rem">📄 PDF</button>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th>מזהה</th><th>מקט יצרן</th><th>תיאור</th><th>עגלה</th><th>מגירה</th><th>מיקום</th><th>כיול</th><th>תאריך כיול</th><th>מזהה כיול</th></tr></thead><tbody id="searchRes"></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-reports">
+    <div class="card"><div class="card-title">📊 בחר פורמט</div>
+      <div class="fmt-btns">
+        <button class="fmt-btn active" id="gfv" onclick="setGF('view')">👁 צפייה בדפדפן</button>
+        <button class="fmt-btn" id="gfp" onclick="setGF('pdf')">📄 הורדה PDF</button>
+        <button class="fmt-btn" id="gfe" onclick="setGF('excel')">📊 הורדה Excel</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">דוחות קבועים</div>
+      <div class="btn-grid" style="grid-template-columns:1fr 1fr">
+        <button class="btn-card" onclick="doRep('all')"><div class="bico" style="background:#E8F0FE;color:#1A73E8">📋</div><div class="blbl">כל הכלים</div></button>
+        <button class="btn-card" onclick="doRep('cal')"><div class="bico" style="background:#FFF3E0;color:#E65100">🔧</div><div class="blbl">כלים מכויילים</div></button>
+        <button class="btn-card" onclick="doRep('exp')"><div class="bico" style="background:#FCE4EC;color:#C62828">⏰</div><div class="blbl">פגי תוקף 60 יום</div></button>
+        <button class="btn-card" onclick="doRep('sp')"><div class="bico" style="background:#EDE7F6;color:#512DA8">⭐</div><div class="blbl">מיקום מיוחד</div></button>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">דוח לפי מיקום</div>
+      <div class="form-row"><label>בחר מיקום</label><select id="repLoc"><option value="">-- בחר --</option></select></div>
+      <button class="btn btn-green" onclick="doRep('loc')">📍 הפק דוח מיקום</button>
+    </div>
+    <div class="card"><div class="card-title">דוח לפי עגלה</div>
+      <div class="form-row"><label>בחר עגלה</label><select id="repCart"><option value="">-- בחר --</option></select></div>
+      <button class="btn btn-amber" onclick="doRep('cart')">📦 הפק דוח עגלה</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen-admin">
+    <div class="btn-grid" id="adminGrid"></div>
+  </div>
+
+  <!-- ADD LOCATION -->
+  <div class="screen" id="screen-add-loc">
+    <div class="card"><div class="card-title">📍 הוספת מיקום / עגלה / מגירה</div>
+      <div class="form-row"><label>סוג</label>
+        <select id="locType" onchange="onLocTypeChange()">
+          <option value="loc">מיקום כללי</option>
+          <option value="cart">עגלה / ארון</option>
+          <option value="drawer">מגירה / מדף</option>
+        </select>
+      </div>
+      <div class="form-row"><label>שם</label><input id="locName" placeholder="דוג': חדר כלים, עגלה 06, מגירה עליונה"/></div>
+      <div class="form-row"><label>תיאור (אופציונלי)</label><input id="locDesc" placeholder="תיאור נוסף..."/></div>
+
+      <!-- LOC fields -->
+      <div id="fieldsLoc">
+        <div class="form-row"><label>מזהה מיקום (אות + 4 ספרות)</label>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <input id="locLetter" maxlength="1" placeholder="L" style="width:55px;text-align:center;text-transform:uppercase"/>
+            <input id="locNum" maxlength="4" placeholder="0042" style="width:80px;text-align:center"/>
+            <span style="font-size:.8rem;color:#888">דוג': L0042</span>
+          </div>
+        </div>
+        <div class="form-row"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer"><input type="checkbox" id="locSpecial" style="width:auto"/> ✅ מיקום מיוחד (כיול, שבור, וכו')</label></div>
+      </div>
+
+      <!-- CART fields -->
+      <div id="fieldsCart" style="display:none">
+        <div class="form-row"><label>מספר עגלה (2 ספרות)</label>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <span style="font-weight:700;font-size:1rem;color:#1A73E8">C</span>
+            <input id="cartNum" type="number" min="1" max="99" placeholder="01" style="width:70px;text-align:center" oninput="updateCartPreview()"/>
+            <span style="font-size:.8rem;color:#888">מזהה: C01</span>
+          </div>
+        </div>
+        <div class="form-row"><label>שייך למיקום</label><select id="cartLocParent"><option value="">-- בחר מיקום --</option></select></div>
+        <div class="id-preview" id="cartPreview">מזהה עגלה: הכנס מספר</div>
+      </div>
+
+      <!-- DRAWER fields -->
+      <div id="fieldsDrawer" style="display:none">
+        <div class="form-row"><label>שייך לעגלה</label><select id="drawerCartParent" onchange="updateDrawerPreview()"><option value="">-- בחר עגלה --</option></select></div>
+        <div class="form-row"><label>סיומת מגירה (עד 2 תווים: אות/מספר/שילוב)</label>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <input id="drawerNum" maxlength="2" placeholder="A1" style="width:70px;text-align:center;text-transform:uppercase;font-weight:700;font-size:1rem" oninput="updateDrawerPreview()"/>
+            <span style="font-size:.78rem;color:#888">דוג': A / A1 / AA / 1 / 11 / B2</span>
+          </div>
+        </div>
+        <div class="id-preview" id="drawerPreview">מזהה מגירה: בחר עגלה והכנס מספר</div>
+      </div>
+
+      <div style="font-size:.78rem;color:#888;margin-bottom:.5rem" id="locExisting"></div>
+      <div class="btn-row">
+        <button class="btn btn-gray" onclick="go('admin')">ביטול</button>
+        <button class="btn btn-primary" onclick="addLoc()">➕ הוסף</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT LOCATION -->
+  <div class="screen" id="screen-edit-loc">
+    <div class="card"><div class="card-title">✏️ עריכת מיקום קיים</div>
+      <div class="form-row"><label>בחר מיקום לעריכה</label>
+        <select id="editLocSel" onchange="onEditLocSel()"><option value="">-- בחר --</option></select>
+      </div>
+      <div id="editLocForm" style="display:none">
+        <div class="form-row"><label>שם</label><input id="editLocName"/></div>
+        <div class="form-row"><label>תיאור</label><input id="editLocDesc"/></div>
+        <div class="form-row"><label>מזהה</label><input id="editLocId" disabled style="background:#f5f5f5;color:#888"/></div>
+        <div class="form-row"><label style="display:flex;align-items:center;gap:.5rem;cursor:pointer"><input type="checkbox" id="editLocSpecial" style="width:auto"/> מיקום מיוחד</label></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-gray" onclick="go('admin')">ביטול</button>
+        <button class="btn btn-primary" onclick="saveEditLoc()">💾 שמור</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD TOOL -->
+  <div class="screen" id="screen-add-tool">
+    <div class="card"><div class="card-title">🔧 הוספת כלי חדש</div>
+      <div class="fg2">
+        <div class="form-row"><label>מקט יצרן *</label><input id="atV" oninput="updateToolPreview()"/></div>
+        <div class="form-row"><label>מקט לקוח</label><input id="atC"/></div>
+        <div class="form-row" style="grid-column:1/-1"><label>תיאור *</label><input id="atD"/></div>
+        <div class="form-row"><label>עגלה *</label><select id="atCart" onchange="updateToolDrawers();updateToolPreview()"><option value="">-- בחר עגלה --</option></select></div>
+        <div class="form-row"><label>מגירה *</label><select id="atDrawer" onchange="updateToolPreview()"><option value="">-- בחר מגירה --</option></select></div>
+        <div class="form-row"><label>דורש כיול?</label><select id="atCal" onchange="toggleCal('at')"><option value="לא">לא</option><option value="כן">כן</option></select></div>
+      </div>
+      <div id="at-cal-fields" style="display:none"><div class="cal-fields"><div class="fg2">
+        <div class="form-row"><label>מזהה כיול</label><input id="atCalId"/></div>
+        <div class="form-row"><label>תאריך כיול (YYYY-MM-DD)</label><input id="atCalDate" placeholder="2026-06-15"/></div>
+      </div></div></div>
+      <div class="form-row" style="margin-top:.4rem"><label>הערה</label><textarea id="atNote"></textarea></div>
+      <div class="id-preview" id="atPreview">מזהה: בחר עגלה ומגירה</div>
+      <div class="btn-row">
+        <button class="btn btn-gray" onclick="go('admin')">ביטול</button>
+        <button class="btn btn-primary" onclick="addTool()">➕ הוסף כלי</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT TOOL -->
+  <div class="screen" id="screen-edit-tool">
+    <div class="card"><div class="card-title">✏️ עריכת כלי קיים</div>
+      <div id="ss-et"></div>
+      <div class="info-box info-blue" id="etInfo" style="display:none"></div>
+    </div>
+    <div class="card" id="etForm" style="display:none"><div class="card-title">פרטי כלי</div>
+      <div class="fg2">
+        <div class="form-row"><label>מזהה</label><input id="etId" disabled style="background:#f5f5f5;color:#888"/></div>
+        <div class="form-row"><label>מקט יצרן</label><input id="etV"/></div>
+        <div class="form-row"><label>מקט לקוח</label><input id="etC"/></div>
+        <div class="form-row" style="grid-column:1/-1"><label>תיאור</label><input id="etD"/></div>
+        <div class="form-row"><label>מיקום</label><select id="etLoc"></select></div>
+        <div class="form-row"><label>דורש כיול?</label><select id="etCal" onchange="toggleCal('et')"><option value="לא">לא</option><option value="כן">כן</option></select></div>
+      </div>
+      <div id="et-cal-fields" style="display:none"><div class="cal-fields"><div class="fg2">
+        <div class="form-row"><label>מזהה כיול</label><input id="etCalId"/></div>
+        <div class="form-row"><label>תאריך כיול</label><input id="etCalDate"/></div>
+      </div></div></div>
+      <div class="form-row" style="margin-top:.4rem"><label>הערה</label><textarea id="etNote"></textarea></div>
+      <div class="btn-row">
+        <button class="btn btn-gray" onclick="go('admin')">ביטול</button>
+        <button class="btn btn-primary" onclick="saveEditTool()">💾 שמור שינויים</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REMOVE TOOL -->
+  <div class="screen" id="screen-rm-tool">
+    <div class="card"><div class="card-title">🗑️ הסרת כלי</div>
+      <div class="info-box info-amber" style="margin-bottom:.75rem">⚠️ לפני הסרה — הכלי חייב להיות במיקום מיוחד (כיול / שבור)</div>
+      <div id="ss-rm"></div>
+      <div class="info-box info-red" id="rmInfo" style="display:none"></div>
+      <div class="btn-row">
+        <button class="btn btn-gray" onclick="go('admin')">ביטול</button>
+        <button class="btn btn-danger" onclick="rmTool()">🗑️ הסר כלי</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOVE TOOL -->
+  <div class="screen" id="screen-move-tool">
+    <div class="card"><div class="card-title">↔️ העברת כלי / עגלה</div>
+      <div class="form-row"><label>מה להעביר?</label>
+        <select id="moveType" onchange="onMoveTypeChange()">
+          <option value="tool">כלי בודד</option>
+          <option value="cart">עגלה שלמה (עם כל הכלים)</option>
+        </select>
+      </div>
+      <div id="moveToolSS"><div id="ss-mv"></div></div>
+      <div id="moveCartSel" style="display:none">
+        <div class="form-row"><label>בחר עגלה</label><select id="mvCart"><option value="">-- בחר --</option></select></div>
+      </div>
+      <div class="info-box info-blue" id="mvInfo" style="display:none"></div>
+      <div class="form-row"><label>מיקום חדש</label><select id="mvLoc"><option value="">-- בחר מיקום --</option></select></div>
+      <div id="mvCalRow" style="display:none"><div class="form-row"><label>תאריך כיול הבא (אופציונלי)</label><input id="mvCalDate" placeholder="YYYY-MM-DD"/></div></div>
+      <div class="btn-row">
+        <button class="btn btn-gray" onclick="go('home')">ביטול</button>
+        <button class="btn btn-primary" onclick="doMove()">↔️ העבר</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BROKEN -->
+  <div class="screen" id="screen-broken">
+    <div class="card"><div class="card-title">⚠️ כלי שבור</div>
+      <div id="ss-br"></div>
+      <div class="info-box info-red" id="brInfo" style="display:none"></div>
+      <div class="form-row"><label>סיבה (אופציונלי)</label><textarea id="brReason"></textarea></div>
+      <div class="btn-row">
+        <button class="btn btn-gray" onclick="go('home')">ביטול</button>
+        <button class="btn btn-danger" onclick="markBroken()">⚠️ סמן כשבור</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- DELETE CART -->
+  <div class="screen" id="screen-del-cart">
+    <div class="card"><div class="card-title">🗑️ מחיקת עגלה</div>
+      <div class="info-box info-amber" style="margin-bottom:.75rem">⚠️ בחר מה לעשות עם הכלים שבעגלה לפני המחיקה</div>
+      <div class="form-row"><label>בחר עגלה למחיקה</label>
+        <select id="delCartSel" onchange="onDelCartSel()"><option value="">-- בחר --</option></select>
+      </div>
+      <div id="delCartInfo" class="info-box info-blue" style="display:none"></div>
+      <div id="delCartOptions" style="display:none">
+        <div style="font-weight:700;margin:.75rem 0 .4rem">מה לעשות עם הכלים?</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.75rem">
+          <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;font-size:.9rem">
+            <input type="radio" name="delCartAction" value="move" checked onchange="onDelCartAction()"/>
+            העבר את כל הכלים למיקום מיוחד
+          </label>
+          <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;font-size:.9rem">
+            <input type="radio" name="delCartAction" value="keep" onchange="onDelCartAction()"/>
+            השאר כלים במיקום הנוכחי (מחק עגלה בלבד)
+          </label>
+          <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;font-size:.9rem">
+            <input type="radio" name="delCartAction" value="delete" onchange="onDelCartAction()"/>
+            <span style="color:#C62828">מחק עגלה וכלים יחד ✓ (לא ניתן לביטול)</span>
+          </label>
+        </div>
+        <div id="delCartMoveTo" class="form-row">
+          <label>מיקום מיוחד ליעד</label>
+          <select id="delCartLocSel"><option value="">-- בחר מיקום מיוחד --</option></select>
+        </div>
+        <div class="info-box info-red" id="delCartWarn" style="display:none;margin-bottom:.5rem"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-gray" onclick="go('admin')">ביטול</button>
+        <button class="btn btn-danger" onclick="doDelCart()">🗑️ בצע מחיקה</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPORT -->
+  <div class="screen" id="screen-import">
+    <div class="card"><div class="card-title">📥 ייבוא / ייצוא</div>
+      <div style="margin-bottom:.85rem"><div style="font-weight:700;margin-bottom:.4rem">ייצוא:</div>
+        <div class="btn-row" style="margin-top:0">
+          <button class="btn btn-primary" onclick="expAllExcel()">📊 ייצא Excel (CSV)</button>
+          <button class="btn btn-gray" onclick="expAllPdf()">📄 ייצא PDF</button>
+        </div>
+      </div>
+      <div><div style="font-weight:700;margin-bottom:.4rem">ייבוא CSV:</div>
+        <input type="file" id="impFile" accept=".csv" onchange="importCSV(this)" style="font-size:.85rem"/>
+        <div style="font-size:.78rem;color:#888;margin-top:.35rem">
+          <strong>חשוב:</strong> בנה תחילה את העגלות והמגירות במערכת.<br>
+          עמודות הקובץ: <strong>מזהה מגירה</strong> (דוג' C01-A1), מקט יצרן, מקט לקוח, תיאור, כיול, תאריך כיול, מזהה כיול, הערה.<br>
+          המזהה של כל כלי ייווצר אוטומטית לפי המגירה. כלים ללא מגירה קיימת — ידולגו.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+const PWD='3527';
+let isAdmin=false,navStack=[],gFmt='view',repFmt='view';
+let curEditTool=null,curRmTool=null,curMvTool=null,curBrTool=null,curEditLoc=null;
+
+let db={tools:[],locations:[],location_ids:{},location_descs:{},special_locations:[],carts:[],drawers:[],report_files:{}};
+
+function save(){localStorage.setItem('tmv1',JSON.stringify(db));}
+function load(){const s=localStorage.getItem('tmv1');if(s)try{db=JSON.parse(s);['tools','locations','location_ids','location_descs','special_locations','carts','drawers','report_files'].forEach(k=>{if(!db[k])db[k]=Array.isArray([])&&k!=='location_ids'&&k!=='location_descs'&&k!=='report_files'?[]:{}});}catch(e){}}
+
+// ── ID helpers ───────────────────────────────────────────────────
+function cartIdStr(n){return 'C'+String(n).padStart(2,'0');}
+function drawerIdStr(cartId,suffix){return cartId+'-'+String(suffix).toUpperCase().slice(0,2);}
+function toolIdStr(drawerId,seq){return drawerId+'-'+String(seq).padStart(4,'0');}
+function nextToolSeq(drawerId){
+  const prefix=drawerId+'-';
+  let max=0;
+  db.tools.forEach(t=>{if(t.id&&t.id.startsWith(prefix)){const parts=t.id.split('-');const s=parseInt(parts[parts.length-1])||0;if(s>max)max=s;}});
+  return max+1;
+}
+
+// ── Toast ────────────────────────────────────────────────────────
+function toast(m,c){const t=document.getElementById('toast');t.textContent=m;t.style.background=c||'#1A1A2E';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+
+// ── Auth ─────────────────────────────────────────────────────────
+let pwdCb=null;
+function reqAdmin(cb){if(isAdmin){cb();return;}pwdCb=cb;document.getElementById('pwdInput').value='';document.getElementById('pwdModal').classList.add('show');setTimeout(()=>document.getElementById('pwdInput').focus(),100);}
+function submitPwd(){const v=document.getElementById('pwdInput').value;if(v===PWD){isAdmin=true;document.getElementById('lockLbl').textContent='🔓 מנהל מחובר';document.getElementById('lockLbl').classList.add('open');document.getElementById('pwdModal').classList.remove('show');if(pwdCb)pwdCb();pwdCb=null;}else{document.getElementById('pwdInput').value='';toast('סיסמה שגויה','#C62828');}}
+function closePwd(){document.getElementById('pwdModal').classList.remove('show');pwdCb=null;}
+document.getElementById('pwdInput').addEventListener('keydown',e=>{if(e.key==='Enter')submitPwd();});
+function doLock(){isAdmin=false;document.getElementById('lockLbl').textContent='🔒 מנעול פעיל';document.getElementById('lockLbl').classList.remove('open');toast('🔒 ננעל');go('home');}
+
+// ── Navigation ───────────────────────────────────────────────────
+const titles={'home':'🔧 מערכת ניהול כלים','search':'🔍 חיפוש כלי','reports':'📊 דוחות','admin':'🔐 ניהול ותכנון','add-loc':'📍 הוספת מיקום','edit-loc':'✏️ עריכת מיקום','add-tool':'🔧 הוספת כלי','edit-tool':'✏️ עריכת כלי','rm-tool':'🗑️ הסרת כלי','move-tool':'↔️ העברת כלי / עגלה','broken':'⚠️ כלי שבור','import':'📥 ייבוא / ייצוא','del-cart':'🗑️ מחיקת עגלה'};
+function go(name,push=true){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('screen-'+name);if(el)el.classList.add('active');
+  if(push)navStack.push(name);
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const nb=document.getElementById('nav-'+name);if(nb)nb.classList.add('active');
+  document.getElementById('topTitle').textContent=titles[name]||'';
+  document.getElementById('backBtn').style.display=name==='home'?'none':'';
+  if(name==='home')initHome();
+  if(name==='search')initSearch();
+  if(name==='reports')initReports();
+  if(name==='admin')initAdmin();
+  if(name==='add-loc')initAddLoc();
+  if(name==='edit-loc')initEditLoc();
+  if(name==='add-tool')initAddTool();
+  if(name==='edit-tool')initEditTool();
+  if(name==='rm-tool')initRmTool();
+  if(name==='move-tool')initMoveTool();
+  if(name==='broken')initBroken();
+}
+function goBack(){if(navStack.length>=2){navStack.pop();go(navStack.pop(),false);}else go('home',false);}
+
+// ── Stats helpers ────────────────────────────────────────────────
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function daysLeft(d){if(!d)return null;return Math.round((new Date(d)-new Date(todayStr()))/(864e5));}
+function getSp(){return db.tools.filter(t=>db.special_locations.includes(t.loc));}
+function getExp(days=60){return db.tools.filter(t=>{const d=daysLeft(t.calDate);return d!==null&&d<=days;}).sort((a,b)=>a.calDate.localeCompare(b.calDate));}
+function getCal(){return db.tools.filter(t=>t.cal==='כן');}
+
+// ── Row helpers ──────────────────────────────────────────────────
+function rowCls(t){const d=daysLeft(t.calDate);if(db.special_locations.includes(t.loc))return 'row-sp';if(d!==null&&d<0)return 'row-exp';if(d!==null&&d<=60)return 'row-warn';return '';}
+function hlDate(cd){const d=daysLeft(cd);if(d===null)return cd||'';if(d<0)return '<span style="color:#C62828;font-weight:700">'+cd+' (פג!)</span>';if(d<=60)return '<span style="color:#E65100;font-weight:700">'+cd+' ('+d+'י)</span>';return cd;}
+function locBadge(loc){if(loc==='כיול')return '<span class="badge b-cal">כיול</span>';if(loc==='שבור')return '<span class="badge b-broken">שבור</span>';if(db.special_locations.includes(loc))return '<span class="badge b-sp">'+loc+'</span>';return loc||'';}
+function fillTbl(tbodyId,tools){
+  const tb=document.getElementById(tbodyId);if(!tb)return;
+  if(!tools.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;padding:1rem;color:#bbb">לא נמצאו תוצאות</td></tr>';return;}
+  tb.innerHTML=tools.slice(0,500).map(t=>'<tr class="'+rowCls(t)+'"><td>'+t.id+'</td><td><strong>'+t.vendor+'</strong>'+(t.customer?'<br><small style="color:#aaa">'+t.customer+'</small>':'')+'</td><td>'+t.desc+'</td><td>'+t.cart+'</td><td>'+t.drawer+'</td><td>'+locBadge(t.loc)+'</td><td>'+(t.cal==='כן'?'<span class="badge b-cal">כן</span>':'')+'</td><td style="font-size:.78rem">'+hlDate(t.calDate)+'</td><td style="font-size:.78rem">'+t.calID+'</td></tr>').join('');
+}
+
+// ── HOME ─────────────────────────────────────────────────────────
+function initHome(){
+  const sp=getSp(),exp=getExp(),cal=getCal(),all=db.tools;
+  const stats=[
+    {n:all.length,l:'סה"כ כלים',bg:'#E8F0FE',fg:'#1A73E8',idx:0,title:'כל הכלים'},
+    {n:cal.length,l:'דורשים כיול',bg:'#FFF3E0',fg:'#E65100',idx:1,title:'כלים מכויילים'},
+    {n:exp.length,l:'פגי תוקף/קרובים',bg:'#FCE4EC',fg:'#C62828',idx:2,title:'פגי תוקף ב-60 יום'},
+    {n:sp.length,l:'במיקום מיוחד',bg:'#EDE7F6',fg:'#512DA8',idx:3,title:'במיקום מיוחד'},
+  ];
+  window._statData=[all,cal,exp,sp];
+  document.getElementById('statGrid').innerHTML=stats.map(s=>'<div class="stat" style="background:'+s.bg+'" onclick="openPopup(\''+s.title+'\','+s.idx+')"><div class="n" style="color:'+s.fg+'">'+s.n+'</div><div class="l" style="color:'+s.fg+'">'+s.l+'</div><div class="h" style="color:'+s.fg+'">לחץ לפרטים</div></div>').join('');
+  document.getElementById('homeGrid').innerHTML=[
+    {ico:'🔍',l:'חיפוש כלי',s:'חיפוש חכם',bg:'#E8F0FE',fg:'#1A73E8',fn:"go('search')"},
+    {ico:'↔️',l:'העברת כלי / עגלה',s:'שנה מיקום',bg:'#EDE7F6',fg:'#512DA8',fn:"reqAdmin(()=>go('move-tool'))"},
+    {ico:'📊',l:'דוחות',s:'צפייה, PDF, Excel',bg:'#E0F2F1',fg:'#00796B',fn:"go('reports')"},
+    {ico:'🔐',l:'ניהול ותכנון',s:'הוסף, ערוך, הגדר',bg:'#ECEFF1',fg:'#37474F',fn:"reqAdmin(()=>go('admin'))"},
+    {ico:'⚠️',l:'כלי שבור',s:'סמן כלי כשבור',bg:'#FCE4EC',fg:'#C62828',fn:"reqAdmin(()=>go('broken'))"},
+    {ico:'📥',l:'ייבוא / ייצוא',s:'CSV ו-Excel',bg:'#E8F5E9',fg:'#2E7D32',fn:"reqAdmin(()=>go('import'))"},
+  ].map(b=>'<div class="btn-card" onclick="'+b.fn+'"><div class="bico" style="background:'+b.bg+';color:'+b.fg+'">'+b.ico+'</div><div class="blbl">'+b.l+'</div><div class="bsub">'+b.s+'</div></div>').join('');
+}
+
+// ── POPUP ────────────────────────────────────────────────────────
+function openPopup(title,idx){window._popTools=window._statData[idx];document.getElementById('popupTitle').textContent=title+' ('+window._popTools.length+')';fillTbl('popupBody',window._popTools);document.getElementById('popupOv').classList.add('show');}
+function closePopup(){document.getElementById('popupOv').classList.remove('show');}
+function exportPopupExcel(){if(window._popTools)doExportExcel(document.getElementById('popupTitle').textContent,window._popTools);}
+
+// ── SMART SEARCH ─────────────────────────────────────────────────
+function mkSS(cid,label,getItems,onChange){
+  const c=document.getElementById(cid);if(!c)return null;
+  const uid='ss_'+cid;
+  c.innerHTML='<div class="ss"><label>'+label+'</label><input id="'+uid+'_i" autocomplete="off" placeholder="הקלד לסינון..."/><div class="ss-list" id="'+uid+'_l"></div></div>';
+  const inp=document.getElementById(uid+'_i'),lst=document.getElementById(uid+'_l');
+  function refresh(){
+    const items=getItems(),q=inp.value.toLowerCase();
+    const fil=q?items.filter(i=>String(i).toLowerCase().includes(q)):items;
+    lst.innerHTML=fil.slice(0,60).map(i=>'<div class="ss-item" onclick="ssPick(\''+uid+'\',\''+String(i).replace(/'/g,"\\'")+'\')">'+(i||'—')+'</div>').join('');
+    lst.classList.toggle('show',fil.length>0&&document.activeElement===inp);
+  }
+  inp.addEventListener('input',()=>{refresh();if(onChange)onChange();});
+  inp.addEventListener('focus',refresh);
+  inp.addEventListener('blur',()=>setTimeout(()=>lst.classList.remove('show'),200));
+  inp.addEventListener('keydown',e=>{
+    const items=lst.querySelectorAll('.ss-item'),hi=lst.querySelector('.ss-item.hi');
+    if(e.key==='ArrowDown'){e.preventDefault();const nx=hi?hi.nextElementSibling:items[0];if(nx){if(hi)hi.classList.remove('hi');nx.classList.add('hi');}}
+    else if(e.key==='ArrowUp'){e.preventDefault();if(hi){hi.classList.remove('hi');const pv=hi.previousElementSibling;if(pv)pv.classList.add('hi');}}
+    else if(e.key==='Enter'){e.preventDefault();const h=lst.querySelector('.hi')||items[0];if(h)h.click();}
+    else if(e.key==='Escape')lst.classList.remove('show');
+  });
+  return{get:()=>inp.value,set:(v)=>{inp.value=v;},refresh};
+}
+function ssPick(uid,val){const i=document.getElementById(uid+'_i');if(i){i.value=val;document.getElementById(uid+'_l').classList.remove('show');}}
+
+// ── SEARCH ───────────────────────────────────────────────────────
+let ssRefs={};
+function initSearch(){
+  ssRefs.id=mkSS('ssi','מזהה כלי:',()=>[''].concat([...new Set(db.tools.map(t=>t.id).filter(Boolean))].sort()),runSearch);
+  ssRefs.v=mkSS('ssv','מקט יצרן:',()=>[''].concat([...new Set(db.tools.map(t=>t.vendor).filter(Boolean))].sort()),runSearch);
+  ssRefs.d=mkSS('ssd','תיאור:',()=>[''].concat([...new Set(db.tools.map(t=>t.desc).filter(Boolean))].sort()),runSearch);
+  ssRefs.c=mkSS('ssc','עגלה:',()=>[''].concat([...new Set(db.tools.map(t=>t.cart).filter(Boolean))].sort()),runSearch);
+  ssRefs.dr=mkSS('ssdr','מגירה:',()=>[''].concat([...new Set(db.tools.map(t=>t.drawer).filter(Boolean))].sort()),runSearch);
+  ssRefs.l=mkSS('ssl','מיקום נוכחי:',()=>[''].concat([...new Set(db.tools.map(t=>t.loc).filter(Boolean))].sort()),runSearch);
+  ssRefs.ci=mkSS('ssci','מזהה כיול:',()=>[''].concat([...new Set(db.tools.map(t=>t.calID).filter(Boolean))].sort()),runSearch);
+  runSearch();
+}
+function runSearch(){
+  const g=k=>ssRefs[k]?ssRefs[k].get().toLowerCase():'';
+  const vCal=document.getElementById('fcal')?.value||'';
+  window._searchRes=db.tools.filter(t=>
+    (!g('id')||t.id.toLowerCase().includes(g('id')))&&
+    (!g('v')||t.vendor.toLowerCase().includes(g('v')))&&
+    (!g('d')||(t.desc||'').toLowerCase().includes(g('d')))&&
+    (!g('c')||t.cart.toLowerCase().includes(g('c')))&&
+    (!g('dr')||t.drawer.toLowerCase().includes(g('dr')))&&
+    (!g('l')||t.loc.toLowerCase().includes(g('l')))&&
+    (!g('ci')||(t.calID||'').toLowerCase().includes(g('ci')))&&
+    (!vCal||t.cal===vCal));
+  document.getElementById('searchCnt').textContent='תוצאות — נמצאו '+window._searchRes.length+' כלים';
+  fillTbl('searchRes',window._searchRes);
+}
+function expSearchExcel(){if(window._searchRes)doExportExcel('תוצאות חיפוש',window._searchRes);}
+function expSearchPdf(){if(window._searchRes)doExportPdf('תוצאות חיפוש',window._searchRes);}
+
+// ── REPORTS ──────────────────────────────────────────────────────
+function initReports(){
+  const locs=[...new Set(db.tools.map(t=>t.loc).filter(Boolean))].sort();
+  const carts=[...new Set(db.tools.map(t=>t.cart).filter(Boolean))].sort();
+  document.getElementById('repLoc').innerHTML='<option value="">-- בחר --</option>'+locs.map(l=>'<option>'+l+'</option>').join('');
+  document.getElementById('repCart').innerHTML='<option value="">-- בחר --</option>'+carts.map(c=>'<option>'+c+'</option>').join('');
+}
+function setGF(f){gFmt=f;['view','pdf','excel'].forEach(x=>{const el=document.getElementById('gf'+x[0]);if(el)el.classList.toggle('active',x===f);});}
+function setRepFmt(f){repFmt=f;['view','pdf','excel'].forEach(x=>{const el=document.getElementById('rf'+x[0]);if(el)el.classList.toggle('active',x===f);});}
+function doRep(type){
+  let tools=[],title='';
+  if(type==='all'){tools=db.tools;title='כל הכלים';}
+  else if(type==='cal'){tools=getCal();title='כלים מכויילים';}
+  else if(type==='exp'){tools=getExp();title='פגי תוקף (60 יום)';}
+  else if(type==='sp'){tools=getSp();title='במיקום מיוחד';}
+  else if(type==='loc'){const v=document.getElementById('repLoc').value;if(!v){toast('בחר מיקום','#E65100');return;}tools=db.tools.filter(t=>t.loc===v||t.cart===v);title='מיקום: '+v;}
+  else if(type==='cart'){const v=document.getElementById('repCart').value;if(!v){toast('בחר עגלה','#E65100');return;}tools=db.tools.filter(t=>t.cart===v);title='עגלה: '+v;}
+  if(gFmt==='view')showRep(title,tools);
+  else if(gFmt==='pdf')doExportPdf(title,tools);
+  else doExportExcel(title,tools);
+}
+function showRep(title,tools){
+  window._repTools=tools;window._repTitle=title;
+  document.getElementById('repTitle').textContent=title+' ('+tools.length+' כלים)';
+  document.getElementById('repContent').innerHTML='<table><thead><tr><th>מזהה</th><th>מקט יצרן</th><th>תיאור</th><th>עגלה</th><th>מגירה</th><th>מיקום</th><th>כיול</th><th>תאריך כיול</th><th>מזהה כיול</th></tr></thead><tbody>'+tools.slice(0,1000).map(t=>'<tr class="'+rowCls(t)+'"><td>'+t.id+'</td><td>'+t.vendor+'</td><td>'+t.desc+'</td><td>'+t.cart+'</td><td>'+t.drawer+'</td><td>'+locBadge(t.loc)+'</td><td>'+(t.cal==='כן'?'כן':'')+'</td><td>'+t.calDate+'</td><td>'+t.calID+'</td></tr>').join('')+'</tbody></table>';
+  document.getElementById('repOv').classList.add('show');
+}
+function closeRep(){document.getElementById('repOv').classList.remove('show');}
+function downloadRep(){if(repFmt==='pdf')doExportPdf(window._repTitle,window._repTools);else if(repFmt==='excel')doExportExcel(window._repTitle,window._repTools);else window.print();}
+
+// ── EXPORT ───────────────────────────────────────────────────────
+function doExportExcel(title,tools){
+  const h=['מזהה','מקט יצרן','מקט לקוח','תיאור','עגלה','מגירה','מיקום','כיול','תאריך כיול','מזהה כיול','הערה'];
+  const rows=tools.map(t=>[t.id,t.vendor,t.customer,t.desc,t.cart,t.drawer,t.loc,t.cal,t.calDate,t.calID,t.note].map(v=>'"'+(v||'').replace(/"/g,'""')+'"').join(','));
+  const csv='\uFEFF'+[h.join(','),...rows].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=(title.replace(/[\\/:*?"<>|]/g,'-'))+'_'+new Date().toLocaleDateString('he-IL').replace(/\//g,'-')+'.csv';
+  a.click();toast('✓ מוריד — פתח ב-Excel');
+}
+function doExportPdf(title,tools){
+  const win=window.open('','_blank');
+  win.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>'+title+'</title><style>body{font-family:Arial;font-size:11px;direction:rtl;margin:1cm}h2{font-size:14px;margin-bottom:.4rem}.meta{color:#666;font-size:10px;margin-bottom:.6rem}table{width:100%;border-collapse:collapse;font-size:10px}th{background:#1A1A2E;color:#fff;padding:4px 6px;text-align:right}td{padding:3px 6px;border-bottom:1px solid #eee;text-align:right}tr:nth-child(even) td{background:#f8f8f8}@page{margin:1cm}</style></head><body><h2>'+title+'</h2><div class="meta">'+tools.length+' כלים | '+new Date().toLocaleDateString('he-IL')+'</div><table><thead><tr><th>מזהה</th><th>מקט יצרן</th><th>מקט לקוח</th><th>תיאור</th><th>עגלה</th><th>מגירה</th><th>מיקום</th><th>כיול</th><th>תאריך כיול</th><th>מזהה כיול</th><th>הערה</th></tr></thead><tbody>'+tools.map(t=>'<tr><td>'+t.id+'</td><td>'+t.vendor+'</td><td>'+t.customer+'</td><td>'+t.desc+'</td><td>'+t.cart+'</td><td>'+t.drawer+'</td><td>'+t.loc+'</td><td>'+t.cal+'</td><td>'+t.calDate+'</td><td>'+t.calID+'</td><td>'+t.note+'</td></tr>').join('')+'</tbody></table><script>window.onload=function(){window.print()}<\/script></body></html>');
+  win.document.close();
+}
+function expAllExcel(){doExportExcel('כל הכלים',db.tools);}
+function expAllPdf(){doExportPdf('כל הכלים',db.tools);}
+
+// ── ADMIN ────────────────────────────────────────────────────────
+function initAdmin(){
+  document.getElementById('adminGrid').innerHTML=[
+    {ico:'🔧',l:'הוספת כלי',s:'מזהה אוטומטי',bg:'#E8F0FE',fg:'#1A73E8',fn:"go('add-tool')"},
+    {ico:'✏️',l:'עריכת כלי',s:'ערוך פרטים',bg:'#EDE7F6',fg:'#512DA8',fn:"go('edit-tool')"},
+    {ico:'🗑️',l:'הסרת כלי',s:'חייב במיקום מיוחד',bg:'#FCE4EC',fg:'#C62828',fn:"go('rm-tool')"},
+    {ico:'📍',l:'הוספת מיקום',s:'מיקום, עגלה, מגירה',bg:'#E0F2F1',fg:'#00796B',fn:"go('add-loc')"},
+    {ico:'✏️',l:'עריכת מיקום',s:'שנה שם ותיאור',bg:'#FFF3E0',fg:'#E65100',fn:"go('edit-loc')"},
+    {ico:'📥',l:'ייבוא / ייצוא',s:'CSV ו-Excel',bg:'#E8F5E9',fg:'#2E7D32',fn:"go('import')"},
+    {ico:'🗑️',l:'מחיקת עגלה',s:'עם אפשרויות לכלים',bg:'#FCE4EC',fg:'#C62828',fn:"go('del-cart')"},
+  ].map(b=>'<div class="btn-card" onclick="'+b.fn+'"><div class="bico" style="background:'+b.bg+';color:'+b.fg+'">'+b.ico+'</div><div class="blbl">'+b.l+'</div><div class="bsub">'+b.s+'</div></div>').join('');
+}
+
+// ── ADD LOCATION ─────────────────────────────────────────────────
+function initAddLoc(){
+  ['locName','locDesc','locLetter','locNum'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('locLetter').value='L';
+  document.getElementById('locSpecial').checked=false;
+  document.getElementById('locType').value='loc';
+  onLocTypeChange(); refreshLocExisting();
+}
+
+function onLocTypeChange(){
+  const t=document.getElementById('locType').value;
+  document.getElementById('fieldsLoc').style.display=t==='loc'?'':'none';
+  document.getElementById('fieldsCart').style.display=t==='cart'?'':'none';
+  document.getElementById('fieldsDrawer').style.display=t==='drawer'?'':'none';
+  if(t==='cart'){
+    // Populate location parents
+    const sel=document.getElementById('cartLocParent');
+    sel.innerHTML='<option value="">-- בחר מיקום --</option>'+db.locations.map(l=>'<option value="'+l+'">'+l+' ['+db.location_ids[l]+']'+'</option>').join('');
+  }
+  if(t==='drawer'){
+    // Populate cart parents
+    const sel=document.getElementById('drawerCartParent');
+    sel.innerHTML='<option value="">-- בחר עגלה --</option>'+db.carts.map(c=>'<option value="'+c.id+'">'+c.name+' ['+c.id+']'+'</option>').join('');
+  }
+}
+
+function updateCartPreview(){
+  const n=parseInt(document.getElementById('cartNum').value)||0;
+  const prev=document.getElementById('cartPreview');
+  if(n) prev.textContent='מזהה עגלה: '+cartIdStr(n);
+  else prev.textContent='מזהה עגלה: הכנס מספר';
+}
+
+function updateDrawerPreview(){
+  const cartId=document.getElementById('drawerCartParent').value;
+  const suffix=document.getElementById('drawerNum').value.trim().toUpperCase();
+  const prev=document.getElementById('drawerPreview');
+  if(cartId&&suffix) prev.textContent='מזהה מגירה: '+drawerIdStr(cartId,suffix);
+  else prev.textContent='מזהה מגירה: בחר עגלה והכנס סיומת';
+}
+
+function refreshLocExisting(){
+  const el=document.getElementById('locExisting');
+  if(!el)return;
+  const locs=db.locations.map(l=>{const id=db.location_ids[l]||'?';const sp=db.special_locations.includes(l)?'★':'';return l+'['+id+']'+sp;});
+  const carts=db.carts.map(c=>c.name+'['+c.id+']');
+  const drawers=db.drawers.map(d=>d.name+'['+d.id+']');
+  el.textContent=(locs.length?'מיקומים: '+locs.join(' | ')+' ':'')+
+                 (carts.length?'| עגלות: '+carts.join(' | ')+' ':'')+
+                 (drawers.length?'| מגירות: '+drawers.join(' | '):'');
+}
+
+function addLoc(){
+  const type=document.getElementById('locType').value;
+  const name=document.getElementById('locName').value.trim();
+  if(!name){toast('הכנס שם','#C62828');return;}
+  const desc=document.getElementById('locDesc').value.trim();
+
+  if(type==='loc'){
+    const letter=document.getElementById('locLetter').value.trim().toUpperCase();
+    const num=document.getElementById('locNum').value.trim();
+    if(!/^[A-Z]$/.test(letter)){toast('אות אחת A-Z','#C62828');return;}
+    if(!/^\d{1,4}$/.test(num)){toast('1-4 ספרות','#C62828');return;}
+    const lid=letter+String(parseInt(num)).padStart(4,'0');
+    if(Object.values(db.location_ids).includes(lid)){toast('מזהה '+lid+' קיים','#C62828');return;}
+    if(!db.locations.includes(name)){db.locations.push(name);db.location_ids[name]=lid;db.location_descs[name]=desc;}
+    if(document.getElementById('locSpecial').checked&&!db.special_locations.includes(name))db.special_locations.push(name);
+    save();toast('✓ מיקום '+name+' ['+lid+'] נוסף');
+
+  } else if(type==='cart'){
+    const n=parseInt(document.getElementById('cartNum').value)||0;
+    const parent=document.getElementById('cartLocParent').value;
+    if(!n){toast('הכנס מספר עגלה','#C62828');return;}
+    if(!parent){toast('בחר מיקום אב','#C62828');return;}
+    const cid=cartIdStr(n);
+    if(db.carts.find(c=>c.id===cid)){toast('עגלה '+cid+' קיימת','#C62828');return;}
+    db.carts.push({id:cid,name,desc,locationId:parent});
+    save();toast('✓ עגלה '+name+' ['+cid+'] נוספה');
+
+  } else if(type==='drawer'){
+    const parentCartId=document.getElementById('drawerCartParent').value;
+    const suffix=document.getElementById('drawerNum').value.trim().toUpperCase();
+    if(!parentCartId){toast('בחר עגלה','#C62828');return;}
+    if(!suffix||suffix.length>2||!/^[A-Z0-9]{1,2}$/.test(suffix)){toast('הכנס 1-2 תווים (אות או מספר)','#C62828');return;}
+    const did=drawerIdStr(parentCartId,suffix);
+    if(db.drawers.find(d=>d.id===did)){toast('מגירה '+did+' קיימת','#C62828');return;}
+    db.drawers.push({id:did,name,desc,cartId:parentCartId});
+    save();toast('✓ מגירה '+name+' ['+did+'] נוספה');
+  }
+
+  initAddLoc();
+}
+
+// ── EDIT LOCATION ────────────────────────────────────────────────
+function initEditLoc(){
+  const sel=document.getElementById('editLocSel');
+  const allLocs=[
+    ...db.locations.map(l=>({type:'loc',key:l,label:l+' ['+db.location_ids[l]+']'})),
+    ...db.carts.map(c=>({type:'cart',key:c.id,label:c.name+' ['+c.id+']'})),
+    ...db.drawers.map(d=>({type:'drawer',key:d.id,label:d.name+' ['+d.id+']'})),
+  ];
+  sel.innerHTML='<option value="">-- בחר --</option>'+allLocs.map((l,i)=>'<option value="'+i+'">'+l.label+'</option>').join('');
+  window._editLocs=allLocs;
+  document.getElementById('editLocForm').style.display='none';
+}
+
+function onEditLocSel(){
+  const idx=parseInt(document.getElementById('editLocSel').value);
+  if(isNaN(idx)){document.getElementById('editLocForm').style.display='none';return;}
+  const item=window._editLocs[idx];
+  curEditLoc=item;
+  document.getElementById('editLocForm').style.display='';
+  if(item.type==='loc'){
+    document.getElementById('editLocName').value=item.key;
+    document.getElementById('editLocDesc').value=db.location_descs[item.key]||'';
+    document.getElementById('editLocId').value=db.location_ids[item.key]||'';
+    document.getElementById('editLocSpecial').checked=db.special_locations.includes(item.key);
+  } else if(item.type==='cart'){
+    const c=db.carts.find(x=>x.id===item.key);
+    document.getElementById('editLocName').value=c?c.name:'';
+    document.getElementById('editLocDesc').value=c?c.desc||'':'';
+    document.getElementById('editLocId').value=item.key;
+    document.getElementById('editLocSpecial').checked=false;
+  } else {
+    const d=db.drawers.find(x=>x.id===item.key);
+    document.getElementById('editLocName').value=d?d.name:'';
+    document.getElementById('editLocDesc').value=d?d.desc||'':'';
+    document.getElementById('editLocId').value=item.key;
+    document.getElementById('editLocSpecial').checked=false;
+  }
+}
+
+function saveEditLoc(){
+  if(!curEditLoc){toast('לא נבחר מיקום','#C62828');return;}
+  const newName=document.getElementById('editLocName').value.trim();
+  const newDesc=document.getElementById('editLocDesc').value.trim();
+  if(!newName){toast('הכנס שם','#C62828');return;}
+  if(curEditLoc.type==='loc'){
+    const old=curEditLoc.key;
+    if(old!==newName){
+      const idx=db.locations.indexOf(old);
+      if(idx>=0)db.locations[idx]=newName;
+      db.location_ids[newName]=db.location_ids[old];delete db.location_ids[old];
+      db.location_descs[newName]=newDesc;delete db.location_descs[old];
+      if(db.special_locations.includes(old)){const si=db.special_locations.indexOf(old);db.special_locations[si]=newName;}
+    } else {
+      db.location_descs[old]=newDesc;
+    }
+    if(document.getElementById('editLocSpecial').checked){if(!db.special_locations.includes(newName))db.special_locations.push(newName);}
+    else {const si=db.special_locations.indexOf(newName);if(si>=0)db.special_locations.splice(si,1);}
+  } else if(curEditLoc.type==='cart'){
+    const c=db.carts.find(x=>x.id===curEditLoc.key);
+    if(c){c.name=newName;c.desc=newDesc;}
+  } else {
+    const d=db.drawers.find(x=>x.id===curEditLoc.key);
+    if(d){d.name=newName;d.desc=newDesc;}
+  }
+  save();toast('✓ עודכן בהצלחה');initEditLoc();
+}
+
+// ── ADD TOOL ─────────────────────────────────────────────────────
+function initAddTool(){
+  ['atV','atC','atD','atCalId','atCalDate','atNote'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('atCal').value='לא';
+  document.getElementById('at-cal-fields').style.display='none';
+  // Populate cart select
+  const cartSel=document.getElementById('atCart');
+  cartSel.innerHTML='<option value="">-- בחר עגלה --</option>'+db.carts.map(c=>'<option value="'+c.id+'">'+c.name+' ['+c.id+']</option>').join('');
+  document.getElementById('atDrawer').innerHTML='<option value="">-- בחר מגירה --</option>';
+  document.getElementById('atPreview').textContent='מזהה: בחר עגלה ומגירה';
+}
+function updateToolDrawers(){
+  const cartId=document.getElementById('atCart').value;
+  const drawers=db.drawers.filter(d=>d.cartId===cartId);
+  document.getElementById('atDrawer').innerHTML='<option value="">-- בחר מגירה --</option>'+drawers.map(d=>'<option value="'+d.id+'">'+d.name+' ['+d.id+']</option>').join('');
+  updateToolPreview();
+}
+function updateToolPreview(){
+  const cartId=document.getElementById('atCart').value;
+  const drawerId=document.getElementById('atDrawer').value;
+  const prev=document.getElementById('atPreview');
+  if(cartId&&drawerId){
+    const seq=nextToolSeq(drawerId);
+    prev.textContent='מזהה שיוצר: '+toolIdStr(drawerId,seq);
+  } else prev.textContent='מזהה: בחר עגלה ומגירה';
+}
+function toggleCal(pfx){const v=document.getElementById(pfx+'Cal').value;document.getElementById(pfx+'-cal-fields').style.display=v==='כן'?'':'none';if(v!=='כן'){['CalId','CalDate'].forEach(s=>{const el=document.getElementById(pfx+s);if(el)el.value='';});}}
+function addTool(){
+  const cartId=document.getElementById('atCart').value;
+  const drawerId=document.getElementById('atDrawer').value;
+  const vendor=document.getElementById('atV').value.trim();
+  const desc=document.getElementById('atD').value.trim();
+  if(!vendor||!desc){toast('מלא מקט יצרן ותיאור','#C62828');return;}
+  if(!cartId||!drawerId){toast('בחר עגלה ומגירה','#C62828');return;}
+  const seq=nextToolSeq(drawerId);
+  const id=toolIdStr(drawerId,seq);
+  const cart=db.carts.find(c=>c.id===cartId);
+  const drawer=db.drawers.find(d=>d.id===drawerId);
+  const cal=document.getElementById('atCal').value;
+  db.tools.push({
+    id,vendor,customer:document.getElementById('atC').value.trim(),
+    desc,cart:cart?cart.name:cartId,drawer:drawer?drawer.name:drawerId,
+    cartId,drawerId,loc:cart?cart.name:cartId,
+    cal,calDate:cal==='כן'?document.getElementById('atCalDate').value:'',
+    calID:cal==='כן'?document.getElementById('atCalId').value.trim():'',
+    note:document.getElementById('atNote').value.trim()
+  });
+  save();toast('✓ הכלי נוסף | מזהה: '+id);initAddTool();
+}
+
+// ── EDIT TOOL ────────────────────────────────────────────────────
+function initEditTool(){
+  curEditTool=null;
+  document.getElementById('etForm').style.display='none';
+  document.getElementById('etInfo').style.display='none';
+  mkSS('ss-et','חיפוש לפי מזהה / מקט יצרן:',
+    ()=>[''].concat([...new Set([...db.tools.map(t=>t.id),...db.tools.map(t=>t.vendor)].filter(Boolean))].sort()),
+    ()=>{
+      const v=document.getElementById('ss_ss-et_i')?.value||'';
+      const t=db.tools.find(x=>x.id===v||x.vendor===v||(v.length>2&&x.id.toLowerCase().includes(v.toLowerCase())));
+      if(t)loadEtForm(t);
+    });
+}
+function loadEtForm(t){
+  curEditTool=t;
+  document.getElementById('etInfo').style.display='';
+  document.getElementById('etInfo').textContent=t.vendor+' — '+t.desc+' | '+t.cart+' | '+t.drawer;
+  document.getElementById('etForm').style.display='';
+  document.getElementById('etId').value=t.id||'';
+  document.getElementById('etV').value=t.vendor||'';
+  document.getElementById('etC').value=t.customer||'';
+  document.getElementById('etD').value=t.desc||'';
+  document.getElementById('etCalId').value=t.calID||'';
+  document.getElementById('etCalDate').value=t.calDate||'';
+  document.getElementById('etNote').value=t.note||'';
+  const locs=[...new Set([...db.locations,...db.carts.map(c=>c.name),...db.special_locations])];
+  document.getElementById('etLoc').innerHTML=locs.map(l=>'<option'+(l===t.loc?' selected':'')+'>'+l+'</option>').join('');
+  document.getElementById('etCal').value=t.cal||'לא';
+  document.getElementById('et-cal-fields').style.display=t.cal==='כן'?'':'none';
+}
+function saveEditTool(){
+  if(!curEditTool){toast('לא נבחר כלי','#C62828');return;}
+  const t=curEditTool;
+  t.vendor=document.getElementById('etV').value.trim();
+  t.customer=document.getElementById('etC').value.trim();
+  t.desc=document.getElementById('etD').value.trim();
+  t.loc=document.getElementById('etLoc').value;
+  t.cal=document.getElementById('etCal').value;
+  t.calID=t.cal==='כן'?document.getElementById('etCalId').value.trim():'';
+  t.calDate=t.cal==='כן'?document.getElementById('etCalDate').value:'';
+  t.note=document.getElementById('etNote').value.trim();
+  save();toast('✓ הכלי עודכן');
+}
+
+// ── REMOVE TOOL ──────────────────────────────────────────────────
+function initRmTool(){
+  curRmTool=null;document.getElementById('rmInfo').style.display='none';
+  mkSS('ss-rm','מזהה כלי:',()=>[''].concat(db.tools.map(t=>t.id).filter(Boolean).sort()),()=>{
+    const v=document.getElementById('ss_ss-rm_i')?.value||'';
+    const t=db.tools.find(x=>x.id===v);
+    if(t){curRmTool=t;document.getElementById('rmInfo').style.display='';document.getElementById('rmInfo').textContent=t.vendor+' — '+t.desc+' | מיקום: '+t.loc;}
+  });
+}
+function rmTool(){
+  if(!curRmTool){toast('לא נבחר כלי','#C62828');return;}
+  if(!db.special_locations.includes(curRmTool.loc)){toast('הכלי חייב להיות במיקום מיוחד (כיול/שבור) לפני הסרה','#C62828');return;}
+  if(!confirm('למחוק?\n'+curRmTool.vendor+' — '+curRmTool.desc+'\n\nלא ניתן לביטול!'))return;
+  db.tools=db.tools.filter(t=>t.id!==curRmTool.id);
+  save();toast('✓ '+curRmTool.id+' הוסר');curRmTool=null;document.getElementById('rmInfo').style.display='none';
+}
+
+// ── MOVE TOOL/CART ───────────────────────────────────────────────
+function initMoveTool(){
+  curMvTool=null;
+  document.getElementById('mvInfo').style.display='none';
+  document.getElementById('mvCalDate').value='';
+  document.getElementById('mvCalRow').style.display='none';
+  document.getElementById('moveType').value='tool';
+  onMoveTypeChange();
+  const allLocs=[...new Set([...db.locations,...db.carts.map(c=>c.name),...db.special_locations])];
+  document.getElementById('mvLoc').innerHTML='<option value="">-- בחר מיקום --</option>'+allLocs.map(l=>'<option>'+l+'</option>').join('');
+  const cartSel=document.getElementById('mvCart');
+  cartSel.innerHTML='<option value="">-- בחר עגלה --</option>'+db.carts.map(c=>'<option value="'+c.id+'">'+c.name+' ['+c.id+']</option>').join('');
+  mkSS('ss-mv','מזהה כלי:',()=>[''].concat(db.tools.map(t=>t.id).filter(Boolean).sort()),()=>{
+    const v=document.getElementById('ss_ss-mv_i')?.value||'';
+    const t=db.tools.find(x=>x.id===v);
+    if(t){curMvTool=t;document.getElementById('mvInfo').style.display='';document.getElementById('mvInfo').textContent=t.vendor+' — '+t.desc+' | '+t.drawer+' | מיקום: '+t.loc;document.getElementById('mvCalRow').style.display=t.cal==='כן'?'':'none';}
+  });
+}
+function onMoveTypeChange(){
+  const t=document.getElementById('moveType').value;
+  document.getElementById('moveToolSS').style.display=t==='tool'?'':'none';
+  document.getElementById('moveCartSel').style.display=t==='cart'?'':'none';
+  document.getElementById('mvInfo').style.display='none';
+}
+function doMove(){
+  const type=document.getElementById('moveType').value;
+  const newLoc=document.getElementById('mvLoc').value;
+  if(!newLoc){toast('בחר מיקום חדש','#C62828');return;}
+  if(type==='tool'){
+    if(!curMvTool){toast('לא נבחר כלי','#C62828');return;}
+    const t=db.tools.find(x=>x.id===curMvTool.id);
+    if(!t){toast('הכלי לא נמצא','#C62828');return;}
+    t.loc=newLoc;
+    const cd=document.getElementById('mvCalDate').value;
+    if(cd)t.calDate=cd;
+    save();toast('✓ '+t.id+' הועבר ל: '+newLoc);go('home');
+  } else {
+    const cartId=document.getElementById('mvCart').value;
+    if(!cartId){toast('בחר עגלה','#C62828');return;}
+    const cart=db.carts.find(c=>c.id===cartId);
+    if(cart){
+      // Update all tools in this cart
+      db.tools.filter(t=>t.cartId===cartId).forEach(t=>t.loc=newLoc);
+      save();toast('✓ עגלה '+cart.name+' הועברה ל: '+newLoc+' עם כל הכלים');go('home');
+    }
+  }
+}
+
+// ── BROKEN ───────────────────────────────────────────────────────
+function initBroken(){
+  curBrTool=null;document.getElementById('brInfo').style.display='none';document.getElementById('brReason').value='';
+  mkSS('ss-br','מזהה כלי:',()=>[''].concat(db.tools.map(t=>t.id).filter(Boolean).sort()),()=>{
+    const v=document.getElementById('ss_ss-br_i')?.value||'';
+    const t=db.tools.find(x=>x.id===v);
+    if(t){curBrTool=t;document.getElementById('brInfo').style.display='';document.getElementById('brInfo').textContent=t.vendor+' — '+t.desc+' | '+t.drawer+' | מיקום: '+t.loc;}
+  });
+}
+function markBroken(){
+  if(!curBrTool){toast('לא נבחר כלי','#C62828');return;}
+  const t=db.tools.find(x=>x.id===curBrTool.id);if(!t)return;
+  const reason=document.getElementById('brReason').value.trim();
+  t.loc='שבור';t.note=(reason||'שבור')+' | '+new Date().toLocaleDateString('he-IL');
+  if(!db.special_locations.includes('שבור'))db.special_locations.push('שבור');
+  save();toast('✓ '+t.id+' סומן כשבור');go('home');
+}
+
+// ── IMPORT ───────────────────────────────────────────────────────
+function parseCSVLine(line){
+  const out=[];let cur='';let inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){ if(inQ&&line[i+1]==='"'){cur+='"';i++;} else inQ=!inQ; }
+    else if(ch===','&&!inQ){ out.push(cur);cur=''; }
+    else cur+=ch;
+  }
+  out.push(cur);
+  return out.map(s=>s.trim());
+}
+
+let pendingImport=null; // holds parsed rows awaiting user decision
+
+function importCSV(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const lines=e.target.result.replace(/^\uFEFF/,'').split(/\r?\n/);
+    const headers=parseCSVLine(lines[0]).map(h=>h.replace(/^"|"$/g,'').trim());
+    const newRows=[],dupRows=[],errRows=[];
+    for(let i=1;i<lines.length;i++){
+      if(!lines[i].trim())continue;
+      const cols=parseCSVLine(lines[i]).map(c=>c.replace(/^"|"$/g,'').trim());
+      const obj={};headers.forEach((h,idx)=>obj[h]=cols[idx]||'');
+      const vendor=obj['מקט יצרן']||'';
+      const desc=obj['תיאור']||'';
+      const drawerIdIn=(obj['מזהה מגירה']||'').toUpperCase().trim();
+      if(!vendor||!desc)continue;
+      if(!drawerIdIn){errRows.push({line:i+1,reason:'חסר מזהה מגירה',vendor,desc});continue;}
+      const drawer=db.drawers.find(d=>d.id===drawerIdIn);
+      if(!drawer){errRows.push({line:i+1,reason:'מגירה '+drawerIdIn+' לא קיימת',vendor,desc});continue;}
+      const cart=db.carts.find(c=>c.id===drawer.cartId);
+      const cal=obj['כיול']||'לא';
+      // OPTIONAL: explicit tool ID from the file (e.g. engraved C99-01-0007)
+      const explicitId=(obj['מזהה כלי']||obj['מזהה']||'').toUpperCase().trim();
+      const rowData={vendor,customer:obj['מקט לקוח']||'',desc,drawerIdIn,drawer,cart,cal,
+        explicitId,
+        calDate:cal==='כן'?obj['תאריך כיול']||'':'',
+        calID:cal==='כן'?obj['מזהה כיול']||'':'',note:obj['הערה']||''};
+      // validate explicit ID belongs to this drawer
+      if(explicitId&&!explicitId.startsWith(drawerIdIn+'-')){
+        errRows.push({line:i+1,reason:'מזהה כלי '+explicitId+' לא תואם למגירה '+drawerIdIn,vendor,desc,drawerIdIn});
+        continue;
+      }
+      // DUPLICATE CHECK: explicit ID match OR same vendor+desc+drawer
+      let existing;
+      if(explicitId) existing=db.tools.find(t=>t.id===explicitId);
+      if(!existing) existing=db.tools.find(t=>t.vendor===vendor&&t.desc===desc&&t.drawerId===drawerIdIn);
+      if(existing){rowData.existingId=existing.id;dupRows.push(rowData);}
+      else newRows.push(rowData);
+    }
+    pendingImport={newRows,dupRows,errRows};
+    showImportDecision();
+    input.value='';
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+function showImportDecision(){
+  const {newRows,dupRows,errRows}=pendingImport;
+  const ov=document.getElementById('impOv');
+  const body=document.getElementById('impBody');
+  let html='<div style="margin-bottom:.75rem;font-size:.9rem">';
+  html+='<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.5rem">';
+  html+='<span class="badge" style="background:#E8F5E9;color:#2E7D32">חדשים: '+newRows.length+'</span>';
+  html+='<span class="badge" style="background:#FFF3E0;color:#E65100">כפילויות: '+dupRows.length+'</span>';
+  html+='<span class="badge" style="background:#FCE4EC;color:#C62828">שגיאות: '+errRows.length+'</span>';
+  html+='</div></div>';
+
+  if(dupRows.length){
+    html+='<div style="font-weight:700;margin:.5rem 0;color:#E65100">⚠️ כלים שכבר קיימים (אותו מקט + תיאור + מגירה):</div>';
+    html+='<div class="tbl-wrap" style="max-height:180px;overflow-y:auto;margin-bottom:.5rem"><table><thead><tr><th>מקט יצרן</th><th>תיאור</th><th>מגירה</th><th>מזהה קיים</th></tr></thead><tbody>';
+    html+=dupRows.map(r=>'<tr><td>'+r.vendor+'</td><td>'+r.desc+'</td><td>'+r.drawerIdIn+'</td><td>'+r.existingId+'</td></tr>').join('');
+    html+='</tbody></table></div>';
+  }
+  if(errRows.length){
+    html+='<div style="font-weight:700;margin:.5rem 0;color:#C62828">❌ שורות עם שגיאה (ידולגו):</div>';
+    html+='<div class="tbl-wrap" style="max-height:120px;overflow-y:auto;margin-bottom:.5rem"><table><thead><tr><th>שורה</th><th>מקט</th><th>סיבה</th></tr></thead><tbody>';
+    html+=errRows.map(r=>'<tr><td>'+r.line+'</td><td>'+r.vendor+'</td><td style="color:#C62828">'+r.reason+'</td></tr>').join('');
+    html+='</tbody></table></div>';
+  }
+  body.innerHTML=html;
+
+  // Show/hide buttons based on what's present
+  document.getElementById('impBtnSkip').style.display=dupRows.length?'':'none';
+  document.getElementById('impBtnStop').style.display='';
+  document.getElementById('impBtnAll').style.display=dupRows.length?'':'none';
+  document.getElementById('impBtnNewOnly').style.display=newRows.length?'':'none';
+  // If no duplicates and no errors, auto-message
+  if(!dupRows.length&&!errRows.length){
+    document.getElementById('impBtnNewOnly').textContent='✓ ייבא '+newRows.length+' כלים';
+  } else {
+    document.getElementById('impBtnNewOnly').textContent='ייבא חדשים בלבד ('+newRows.length+')';
+  }
+  ov.classList.add('show');
+}
+
+function closeImp(){document.getElementById('impOv').classList.remove('show');pendingImport=null;}
+
+function stopWithReport(){
+  if(!pendingImport){closeImp();return;}
+  const {newRows,dupRows,errRows}=pendingImport;
+  // Build a CSV report describing every problem row
+  const h=['סטטוס','מקט יצרן','תיאור','מזהה מגירה','מזהה כלי קיים','שורה בקובץ','סיבה'];
+  const lines=[h.join(',')];
+  dupRows.forEach(r=>{
+    lines.push(['כפילות - כבר קיים',r.vendor,r.desc,r.drawerIdIn,r.existingId||'','','אותו מקט+תיאור+מגירה כבר במערכת']
+      .map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(','));
+  });
+  errRows.forEach(r=>{
+    lines.push(['שגיאה - לא יובא',r.vendor||'',r.desc||'',r.drawerIdIn||'','',r.line||'',r.reason||'']
+      .map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(','));
+  });
+  newRows.forEach(r=>{
+    lines.push(['חדש - מוכן להוספה',r.vendor,r.desc,r.drawerIdIn,'','','כלי שלא קיים עדיין']
+      .map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(','));
+  });
+  const csv='\uFEFF'+lines.join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='דוח_ייבוא_'+new Date().toLocaleDateString('he-IL').replace(/\//g,'-')+'.csv';
+  a.click();
+  toast('⬇ דוח ייבוא ירד — '+dupRows.length+' כפילויות, '+errRows.length+' שגיאות');
+  closeImp();
+}
+
+function applyImport(mode){
+  // mode: 'newonly' = skip dups, add new | 'update' = update dups + add new | 'stop' = cancel
+  if(!pendingImport)return;
+  const {newRows,dupRows}=pendingImport;
+  let added=0,updated=0;
+  // Add new
+  newRows.forEach(r=>{
+    let id;
+    if(r.explicitId){ id=r.explicitId; }  // use engraved ID as-is
+    else { const seq=nextToolSeq(r.drawerIdIn); id=toolIdStr(r.drawerIdIn,seq); }
+    db.tools.push({id,vendor:r.vendor,customer:r.customer,desc:r.desc,
+      cart:r.cart?r.cart.name:r.drawer.cartId,drawer:r.drawer.name,
+      cartId:r.drawer.cartId,drawerId:r.drawerIdIn,
+      loc:r.cart?r.cart.name:r.drawer.cartId,
+      cal:r.cal,calDate:r.calDate,calID:r.calID,note:r.note});
+    added++;
+  });
+  // Handle duplicates
+  if(mode==='update'){
+    dupRows.forEach(r=>{
+      const t=db.tools.find(x=>x.id===r.existingId);
+      if(t){t.customer=r.customer;t.cal=r.cal;t.calDate=r.calDate;t.calID=r.calID;t.note=r.note;updated++;}
+    });
+  }
+  // mode==='newonly' → duplicates skipped entirely
+  save();
+  let msg='✓ נוספו '+added+' כלים';
+  if(updated)msg+=' | עודכנו '+updated;
+  if(mode==='newonly'&&dupRows.length)msg+=' | דולגו '+dupRows.length;
+  toast(msg);
+  closeImp();
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+load();
+initHome();
+</script>
+</body>
+</html>

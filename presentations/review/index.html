@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>סקירת מועצה — ניהול כלים</title>
+<style>
+  :root{
+    --bg:#0f1620; --surface:#18222f; --surface2:#1f2c3c;
+    --text:#e7eef6; --muted:#9fb0c3;
+    --blue:#3b82f6; --green:#22c55e; --red:#ef4444; --amber:#f59e0b; --purple:#a78bfa;
+    --border:#2a3a4d; --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:"Segoe UI","Arial",-apple-system,system-ui,sans-serif;
+    line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .slide{
+    width:100%; min-height:100vh; padding:80px 7vw;
+    display:flex; flex-direction:column; justify-content:center;
+    border-bottom:1px solid var(--border); position:relative;
+  }
+  .slide:nth-child(even){background:linear-gradient(160deg,var(--bg),#0c121a)}
+  .kicker{
+    color:var(--blue); font-weight:700; letter-spacing:.12em;
+    text-transform:uppercase; font-size:.85rem; margin-bottom:18px;
+    display:inline-block;
+  }
+  h1{font-size:clamp(2.6rem,6vw,5rem); line-height:1.08; font-weight:800; letter-spacing:-.02em}
+  h2{font-size:clamp(2rem,4.5vw,3.4rem); line-height:1.12; font-weight:800; letter-spacing:-.01em; margin-bottom:14px}
+  h3{font-size:1.5rem; font-weight:700; margin-bottom:10px}
+  .lead{font-size:clamp(1.1rem,2vw,1.5rem); color:var(--muted); max-width:60ch; margin-top:22px}
+  p{color:var(--muted); font-size:1.05rem}
+  .grid{display:grid; gap:22px; margin-top:40px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .card{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:28px; position:relative; overflow:hidden;
+  }
+  .card.alt{background:var(--surface2)}
+  .card h3{color:var(--text)}
+  .card p{font-size:.98rem}
+  .stat{font-size:clamp(2.4rem,5vw,3.6rem); font-weight:800; line-height:1}
+  .stat.blue{color:var(--blue)} .stat.green{color:var(--green)}
+  .stat.red{color:var(--red)} .stat.amber{color:var(--amber)} .stat.purple{color:var(--purple)}
+  .tag{
+    display:inline-block; font-size:.78rem; font-weight:700; padding:4px 12px;
+    border-radius:999px; margin-bottom:14px; letter-spacing:.03em;
+  }
+  .tag.blocker{background:rgba(239,68,68,.16); color:#fca5a5; border:1px solid rgba(239,68,68,.4)}
+  .tag.major{background:rgba(245,158,11,.16); color:#fcd34d; border:1px solid rgba(245,158,11,.4)}
+  .tag.win{background:rgba(34,197,94,.16); color:#86efac; border:1px solid rgba(34,197,94,.4)}
+  .pill-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px}
+  .pill{background:var(--surface2); border:1px solid var(--border); border-radius:999px; padding:6px 16px; font-size:.85rem; color:var(--muted)}
+  .barline{height:5px; border-radius:999px; margin-top:24px; width:90px}
+  .b-red{background:var(--red)} .b-amber{background:var(--amber)} .b-green{background:var(--green)}
+  .b-blue{background:var(--blue)} .b-purple{background:var(--purple)}
+  ul.clean{list-style:none; margin-top:18px}
+  ul.clean li{padding:10px 0; border-bottom:1px solid var(--border); color:var(--muted); font-size:1rem; display:flex; gap:12px; align-items:flex-start}
+  ul.clean li::before{content:"›"; color:var(--blue); font-weight:800; font-size:1.2rem; line-height:1.3}
+  ul.clean li:last-child{border-bottom:none}
+  .check::before{content:"✓"!important; color:var(--green)!important}
+  .cross::before{content:"✕"!important; color:var(--red)!important}
+  .shots{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:40px}
+  .shot{border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; background:var(--surface)}
+  .shot img{width:100%; display:block; background:#0c121a}
+  .shot .cap{padding:14px 18px; font-size:.9rem; color:var(--muted); border-top:1px solid var(--border)}
+  .issref{font-family:"Consolas",monospace; font-size:.8rem; color:var(--blue); font-weight:700}
+  .winrow{display:grid; grid-template-columns:auto 1fr; gap:26px; align-items:start; padding:26px 0; border-bottom:1px solid var(--border)}
+  .winrow:last-child{border-bottom:none}
+  .winid{font-family:"Consolas",monospace; font-weight:800; font-size:1.1rem; color:var(--purple); background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px 18px; white-space:nowrap; align-self:start}
+  .winbody h3{font-size:1.2rem; color:var(--green); margin-bottom:6px}
+  .winbody p{font-size:.95rem}
+  .num{position:absolute; top:30px; left:7vw; font-family:"Consolas",monospace; color:var(--border); font-size:1rem; font-weight:700}
+  .footnote{margin-top:30px; font-size:.85rem; color:#6b7d92}
+  .accent-top{position:absolute; top:0; right:0; left:0; height:4px}
+  code{background:var(--surface2); border:1px solid var(--border); border-radius:6px; padding:2px 7px; font-family:"Consolas",monospace; font-size:.85em; color:#cbd5e1}
+  .hero-glow{position:absolute; top:-20%; left:-10%; width:55%; height:120%; background:radial-gradient(circle,rgba(59,130,246,.14),transparent 65%); pointer-events:none}
+</style>
+</head>
+<body>
+
+<!-- 1 — HERO -->
+<section class="slide" style="justify-content:center">
+  <div class="hero-glow"></div>
+  <span class="kicker">סקירת מועצה · בעלי עניין פנימיים</span>
+  <h1>ניהול כלים<br><span style="color:var(--blue)">סקירה והכרעות צוות</span></h1>
+  <p class="lead">מערכת מלאי ענן חיה לתפעול עגלות כלים בתעשייה האווירית — 11 עגלות, אלפי כלים, 77 מכוילים. סיכום ממצאי הצוותים וההכרעות שהתקבלו.</p>
+  <div class="pill-row" style="margin-top:34px">
+    <span class="pill">Firebase · Firestore · Auth</span>
+    <span class="pill">עברית RTL</span>
+    <span class="pill">3 תפקידים</span>
+    <span class="pill">PWA · עתידי native</span>
+  </div>
+  <div class="footnote">24 ביוני 2026 · צוות התיעוד</div>
+</section>
+
+<!-- 2 — מצב המוצר -->
+<section class="slide">
+  <span class="num">02</span>
+  <span class="kicker">תמונת מצב</span>
+  <h2>מה נבנה — ומה הפער</h2>
+  <p class="lead">רשימת היכולות עשירה, אך הצוותים אימתו פער מבני יסודי בין הטענות לבין מה שפועל בפועל בענן.</p>
+  <div class="grid g4">
+    <div class="card"><div class="stat blue">11</div><p style="margin-top:10px">עגלות בתפעול</p></div>
+    <div class="card"><div class="stat green">72</div><p style="margin-top:10px">בדיקות עוברות (בזיכרון)</p></div>
+    <div class="card"><div class="stat red">3</div><p style="margin-top:10px">חוסמים מאומתים</p></div>
+    <div class="card"><div class="stat amber">3</div><p style="margin-top:10px">ליקויים מרכזיים</p></div>
+  </div>
+  <ul class="clean" style="margin-top:34px">
+    <li>סטטוס-צבע כיול · חתימת עגלה יומית + נוכחות · ביקורת רבעונית של אחראי</li>
+    <li>בקשת כיול (אישור דו-שלבי) / שליחה ישירה · שימוש חיצוני · הצהרת שבור + דוח</li>
+    <li>כלים בלוקיישן לא ידוע · בעל ראשי · יומן ביקורת · גרסאות · חוקי אבטחה לפי עגלה</li>
+  </ul>
+</section>
+
+<!-- 3 — מסכי המוצר החי -->
+<section class="slide">
+  <span class="num">03</span>
+  <span class="kicker">המוצר החי</span>
+  <h2>שלושה תפקידים, מסך אחד</h2>
+  <p class="lead">מנהל (admin) · אחראי כלים (manager) · בעל עגלה (cart_owner — צפייה בלבד בעגלה שלו).</p>
+  <div class="shots">
+    <div class="shot"><img src="../../lab/reports/view-admin.png" alt="תצוגת מנהל"><div class="cap">תצוגת מנהל — שליטה מלאה</div></div>
+    <div class="shot"><img src="../../lab/reports/view-owner.png" alt="תצוגת בעל עגלה"><div class="cap">תצוגת בעל עגלה — צפייה בלבד</div></div>
+    <div class="shot"><img src="../../lab/reports/live-login.png" alt="התחברות חיה"><div class="cap">התחברות חיה — Firebase Auth</div></div>
+  </div>
+</section>
+
+<!-- 4 — ISS-1 -->
+<section class="slide">
+  <div class="accent-top b-red"></div>
+  <span class="num">04</span>
+  <span class="tag blocker">חוסם · ISS-1</span>
+  <h2>האפליקציה החיה היא מציג בלבד</h2>
+  <p class="lead">אף mutation של מודל או workflow לא נכתב אי-פעם ל-Firestore, ויומן הביקורת לעולם אינו נשמר.</p>
+  <div class="grid g3">
+    <div class="card alt"><h3>מה שאומת</h3><p><code>bootLive()</code> רק טוען DB ומציג dashboard. <code>FirebaseAdapter</code> ב-storage.js עדיין stub שזורק חריגה.</p></div>
+    <div class="card alt"><h3>אפקט נטו</h3><p>כל workflow מהמפרט — חתימה, ביקורת, כיול, חוסר חיצוני, שבור, הוספת כלי — לא ניתן לבצע או לתעד בפרודקשן.</p></div>
+    <div class="card alt"><h3>השורה התחתונה</h3><p>המוצר כפי שנפרס הוא מציג ענן, לא כלי ניהול. זה הפער הגדול ביותר בין הטענות למציאות.</p></div>
+  </div>
+  <p class="footnote">אזור: ארכיטקטורה / שלמות מודל הנתונים — app.js · firebase-adapter.js · storage.js · workflows.js</p>
+</section>
+
+<!-- 5 — ISS-1 winner -->
+<section class="slide">
+  <div class="accent-top b-green"></div>
+  <span class="num">05</span>
+  <span class="tag win">ההכרעה · ISS-1</span>
+  <h2>B · change-set מפורש לכל פעולה</h2>
+  <p class="lead">כל פונקציה מחזירה "תיק שינויים" (effects) — נכתב ל-Firestore ב-<code>writeBatch</code> אחד אטומי לכל פעולה.</p>
+  <div class="grid g2">
+    <div class="card">
+      <h3 style="color:var(--green)">למה B מנצח</h3>
+      <ul class="clean">
+        <li class="check">Workflows משנים שדות בכלי במקום — diff של מערכים (A) עיוור לשינוי skalar</li>
+        <li class="check">חוקים per-doc: שמירת DB שלם (C) נדחית עבור cart_owner שפעולותיו חייבות להצליח</li>
+        <li class="check">batch יחיד מחייב שכלי + ביקורת + התראה ינחתו יחד או בכלל לא</li>
+      </ul>
+    </div>
+    <div class="card alt">
+      <h3>השפעה</h3>
+      <p>~20 פונקציות + 72 בדיקות, אך תחום. הבדיקות הקיימות מאמתות על ה-DB המשתנה ונשמרות — רק מוסיפים assertions על ה-effects.</p>
+      <div class="barline b-green"></div>
+      <p style="margin-top:18px"><strong style="color:var(--text)">תנאי הכרחי:</strong> יש להוסיף חוקי Firestore per-collection ל-signoffs/inspections/requests/notifications — אחרת הכתיבה נדחית היום ללא קשר.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 — ISS-2 -->
+<section class="slide">
+  <div class="accent-top b-red"></div>
+  <span class="num">06</span>
+  <span class="tag blocker">חוסם · ISS-2</span>
+  <h2>החוקים חוסמים את כל ה-workflow</h2>
+  <p class="lead">signoffs · inspections · requests · notifications — אין להם match block, אז כולם פוגעים ב-default-deny, ו-<code>loadDb</code> בולע את הדחייה בשתיקה.</p>
+  <div class="grid g2">
+    <div class="card alt"><h3>הדחייה הסמויה</h3><p>try/catch לכל collection מציב <code>db[name]=[]</code> בכל שגיאה — דחייה, תקלת רשת ונפילה נראות זהות למפעיל לא-טכני.</p></div>
+    <div class="card alt"><h3>אין רשת ביטחון</h3><p>72 הבדיקות עוברות רק כי הן רצות על LocalAdapter בזיכרון — לעולם לא מול החוקים. אין emulator / rules-harness כלל.</p></div>
+  </div>
+</section>
+
+<!-- 7 — ISS-2 winner -->
+<section class="slide">
+  <div class="accent-top b-green"></div>
+  <span class="num">07</span>
+  <span class="tag win">ההכרעה · ISS-2</span>
+  <h2>חוקים ממוקדים per-collection + loadDb שנכשל בקול</h2>
+  <p class="lead">דפוס 1 — שינוי קטן ונאמן, חוזר על דפוס המלאי הקיים, מצמיד היקף per-cart/per-role בלי תלויות חדשות.</p>
+  <div class="grid g3">
+    <div class="card"><h3 style="color:var(--green)">נבחר</h3><p>מנצל כל helper קיים (isAdmin/ownsCart/canEdit), מתחבר נקי ל-ISS-1, משחרר את כל חמשת ה-workflows בבת אחת.</p></div>
+    <div class="card alt"><h3 class="cross-h">לא emulator-first</h3><p>הרשת לרגרסיה נכונה לטווח ארוך — אך חסומה על מכונת Application-Control הנעולה (אין Node/CLI). follow-up, לא ה-unblock.</p></div>
+    <div class="card alt"><h3 class="cross-h">לא signed-in גס</h3><p><code>if signedIn()</code> הוא נסיגת אבטחה — כל משתמש מאומת קורא ומאשר הכל. "זמני" מתאבן.</p></div>
+  </div>
+  <p class="footnote">דיוק: requests.by ו-signoffs.uid שומרים UID (נכון), אך inspections.by שומר EMAIL — לעולם אין למפתח בדיקת בעלות עליו.</p>
+</section>
+
+<!-- 8 — ISS-3 -->
+<section class="slide">
+  <div class="accent-top b-red"></div>
+  <span class="num">08</span>
+  <span class="tag blocker">חוסם · ISS-3</span>
+  <h2>החוקים מאמתים זהות — לא צורת מסמך</h2>
+  <p class="lead">כל כתיבת מלאי היא <code>if canEdit()</code> בלבד, ללא ולידציה של <code>request.resource.data</code>.</p>
+  <div class="grid g2">
+    <div class="card alt">
+      <h3>מה ניתן לעשות היום</h3>
+      <ul class="clean">
+        <li class="cross">אחראי מעביר כלי בין עגלות (cartId), דורס cal/calDate</li>
+        <li class="cross">כתיבת request עם status='approved' ישירות</li>
+        <li class="cross">cart_owner צופה-בלבד מזייף יומן ביקורת בשם admin</li>
+        <li class="cross">אחראי יוצר owner שמחזיק כל עגלה (אין הגבלת ownedCartIds)</li>
+      </ul>
+    </div>
+    <div class="card alt"><h3>למה זה קריטי</h3><p>ערובות המודל (מיקום מיוחד לפני מחיקה · נורמליזציה · "זוג עיניים שני") הן JS דפדפן טהור — נעקפות בטריוויאליות בכתיבה ישירה ל-Firestore. עבור מלאי-של-רשומה זהו גבול האבטחה האמיתי, והוא כמעט לא אכוף ולא נבדק.</p></div>
+  </div>
+</section>
+
+<!-- 9 — ISS-3 winner -->
+<section class="slide">
+  <div class="accent-top b-green"></div>
+  <span class="num">09</span>
+  <span class="tag win">ההכרעה · ISS-3</span>
+  <h2>A · חוקים "שמנים" — כל invariant ב-firestore.rules</h2>
+  <p class="lead">הסטאק הוא client טהור + Firestore CDN ESM ללא build, ללא Cloud Functions וללא Blaze. גבול האמון הוא firestore.rules — נקודה.</p>
+  <div class="grid g3">
+    <div class="card"><h3 style="color:var(--green)">נבחר</h3><p>סוגר את הגבול היום, מתאים לסטאק בלי re-architecture. ולידציית צורה + invariant + הגבלת ownedCartIds + ייחוס זהות ל-audit.</p></div>
+    <div class="card alt"><h3 class="cross-h">לא B (Functions)</h3><p>דורש Blaze + deploy + cold starts, ושובר את bulkPut של 450 כלים. השפעה גדולה ביותר (4-6 ימים) לחוסם שצריך הגנה עכשיו.</p></div>
+    <div class="card alt"><h3 class="cross-h">לא C (קוד-מחולל)</h3><p>generator הוא קוד net-new שעלול להחליש אבטחה בשקט, ומניח build שאינו קיים. הפשטה מוקדמת לחנות 11 עגלות.</p></div>
+  </div>
+  <p class="footnote">מאמץ 1.5-2.5 ימים, קובץ אחד נפרס. החוקים client-agnostic — מגנים גם על יעד ה-PWA/native בחינם. עם harness של @firebase/rules-unit-testing המוכיח שארבע ההסלמות נדחות.</p>
+</section>
+
+<!-- 10 — ISS-4 -->
+<section class="slide">
+  <div class="accent-top b-amber"></div>
+  <span class="num">10</span>
+  <span class="tag major">מרכזי · ISS-4</span>
+  <h2>מזהי workflow מ-counter בזיכרון</h2>
+  <p class="lead"><code>nextId()</code> טובע מזהים מ-<code>db._seq</code> שלעולם אינו נשמר — בריבוי לקוחות בענן: התנגשויות ודריסות מובטחות.</p>
+  <div class="grid g3">
+    <div class="card alt"><h3>התנגשות</h3><p>שני לקוחות במקביל מייצרים SGN-1/REQ-1/NTF-1 — <code>setDoc</code> דורס זה את זה.</p></div>
+    <div class="card alt"><h3>מזהים פסולים</h3><p><code>UNL-1</code> נכשל ב-isToolId() ו-cartId='' — בלתי נראה לכל חוק/שאילתה לפי עגלה.</p></div>
+    <div class="card alt"><h3>זהות אבודה</h3><p><code>loadDb</code> זורק את <code>d.id</code> — כל <code>.find(x=>x.id===…)</code> נשבר.</p></div>
+  </div>
+</section>
+
+<!-- 11 — ISS-4 winner -->
+<section class="slide">
+  <div class="accent-top b-green"></div>
+  <span class="num">11</span>
+  <span class="tag win">ההכרעה · ISS-4</span>
+  <h2>1 · auto-IDs של Firestore + spread d.id בטעינה</h2>
+  <p class="lead">auto-ids מסירים את מחלקת ההתנגשות בעצם הבנייה. תיקון שורה אחת ב-loadDb (<code>{id:d.id,...}</code>) מתקן את כל עשרת ה-collections בבת אחת.</p>
+  <div class="grid g2">
+    <div class="card">
+      <h3 style="color:var(--green)">למה זול כאן</h3>
+      <ul class="clean">
+        <li class="check">UI הפעולות עדיין לא מחווט — putEntity/bulkPut ללא קוראים — הרגע האידיאלי לשנות זהות</li>
+        <li class="check">72 הבדיקות מאמתות על <code>.id</code> המוחזר, לא על מחרוזות 'SGN-1' — הזרקת id-factory לא שוברת</li>
+      </ul>
+    </div>
+    <div class="card alt">
+      <h3>תובנת דפוס 2 מקופלת פנימה</h3>
+      <p>signoffs (ו-inspections) מקבלים מפתח טבעי דטרמיניסטי <code>${cartId}_${date}</code> — create-if-absent הופך את ה-dedup הקיים ל-invariant אכוף-ענן נגד double-tap/offline-replay.</p>
+      <div class="barline b-green"></div>
+      <p style="margin-top:16px">דפוס 3 (counter נשמר) נדחה: hot-doc בעומס הבוקר, הופך הכל ל-async, ושובר את יעד ה-offline/PWA.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 12 — ISS-5 -->
+<section class="slide">
+  <div class="accent-top b-amber"></div>
+  <span class="num">12</span>
+  <span class="tag major">מרכזי · ISS-5</span>
+  <h2>סטיית אזור-זמן</h2>
+  <p class="lead">model.js מפענח calDate כחצות מקומי · workflows.js מפענח כ-UTC — צבע ה-dashboard יכול לחלוק על זכאות הכיול/סטטוס-אדום ביום שלם.</p>
+  <div class="grid g2">
+    <div class="card alt"><h3>הסתירה</h3><p>בישראל (UTC+2/+3) ליד גבול היום, אותו calDate מתויג 'פג' בצבע אך מסווג אחרת ב-calibrationEligible — סטטוס אדום וזכאות לבקשת כיול סותרים זה את זה.</p></div>
+    <div class="card alt"><h3>למה לא נתפס</h3><p>כל 72 הבדיקות רצות באזור-זמן אחד; אף בדיקה לא מצמידה את שתי הפונקציות לאותו יום-גבול.</p></div>
+  </div>
+</section>
+
+<!-- 13 — ISS-5 winner -->
+<section class="slide">
+  <div class="accent-top b-green"></div>
+  <span class="num">13</span>
+  <span class="tag win">ההכרעה · ISS-5</span>
+  <h2>1 · helpers משותפים ל-UTC ב-app/core/dates.js</h2>
+  <p class="lead">מודול pure יחיד — <code>toDay</code>/<code>today</code>/<code>daysBetween</code> — נצרך גם ע"י model.js וגם workflows.js. השינוי הקטן ביותר שסוגר את הבאג במלואו.</p>
+  <div class="grid g3">
+    <div class="card"><h3 style="color:var(--green)">נבחר</h3><p>מתאים לסטאק vanilla-ES ללא build, מבטל את כפילות isoDay הקיימת, ניתן-לבדיקה דטרמיניסטית עם clock מוזרק.</p></div>
+    <div class="card alt"><h3 class="cross-h">לא 2 (today מוזרק)</h3><p>superset של עבודת דפוס 1 אך מוסיף שינוי חתימה שובר ב-app.js/seed.js/בדיקות. תועלת שולית. hardening מאוחר.</p></div>
+    <div class="card alt"><h3 class="cross-h">לא 3 (שדה epoch)</h3><p>הכי מסוכן תפעולית — שדה נגזר, backfill חי על אלפי מסמכים, סקירת חוקים. סיכון עצום לבאג פענוח מחרוזת.</p></div>
+  </div>
+  <p class="footnote">תנאי: על ה-harness לכפות אזור-זמן לא-UTC (TZ=Asia/Jerusalem) כדי שבדיקות הגבול ב-offsets ‎-1/0/30/31/60/61‎ יתרגלו את הסטייה שהסוויטה חד-ה-TZ מסתירה.</p>
+</section>
+
+<!-- 14 — ISS-6 -->
+<section class="slide">
+  <div class="accent-top b-amber"></div>
+  <span class="num">14</span>
+  <span class="tag major">מרכזי · ISS-6</span>
+  <h2>rejectRequest ללא שמירת מצב + אישור לא מוגבל-עגלה</h2>
+  <p class="lead">שני פערי state-machine, אפס כיסוי בדיקות.</p>
+  <div class="grid g2">
+    <div class="card alt"><h3>1 · דחיית מאושר</h3><p>ל-approveRequest יש guard 'אם לא pending — זרוק'; ל-rejectRequest אין. ניתן "לדחות" בקשה מאושרת — הכלים נשארים תקועים ב-כיול ולעולם לא חוזרים.</p></div>
+    <div class="card alt"><h3>2 · אישור חוצה-עגלות</h3><p>canApprove נותן לכל cart_owner עם uid≠by לאשר — ללא בדיקת ownedCartIds. בעל C05 מאשר בקשה ל-C01, ו-loc מוגדר ל-reason שהתוקף סיפק.</p></div>
+  </div>
+  <p class="footnote">בנוסף: inspectionOverdue ברירת-מחדל 90 יום בעוד spec-workflows.md §2 מחייב 60 — הפרת מפרט ישירה בפיצ'ר ציות.</p>
+</section>
+
+<!-- 15 — ISS-6 winner -->
+<section class="slide">
+  <div class="accent-top b-green"></div>
+  <span class="num">15</span>
+  <span class="tag win">ההכרעה · ISS-6</span>
+  <h2>2 · state-machine יחיד decideRequest עם טבלת מעברים</h2>
+  <p class="lead">שורש הבאג הוא אסימטריה מבנית — approve ו-reject כל אחד ממש מחדש את התנאים שלו. guard אחד ו-authorize() אחד משותפים לכל החלטה.</p>
+  <div class="grid g2">
+    <div class="card">
+      <h3 style="color:var(--green)">למה הגובה הנכון</h3>
+      <ul class="clean">
+        <li class="check">הופך את מחלקת הבאג לבלתי-אפשרית בבנייה — guard from-state יחיד</li>
+        <li class="check">סלוט ברור למעברי return/cancel החסרים (החזרה מכיול)</li>
+        <li class="check">API ציבורי נשמר כ-wrappers דקים — app.js/seed.js/72 בדיקות ללא נגיעה</li>
+      </ul>
+    </div>
+    <div class="card alt">
+      <h3>תיקון מפרט + תיקון בדיקות</h3>
+      <p>90→60 יום. שינוי זה שובר גם את הבדיקה בשורות 147-152 ('overdue אחרי 90') — תחת 60, 80 יום כבר overdue. יש לשכתב ל-50&lt;60 / 70&gt;60.</p>
+      <div class="barline b-green"></div>
+      <p style="margin-top:16px">דפוס 3 (Cloud Function) נדחה לכאן — היקף שגוי למערכת חיה. נכון כ-follow-up שמשתמש מחדש ב-authorize() כמפרט.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 16 — סיכום הכרעות -->
+<section class="slide">
+  <span class="num">16</span>
+  <span class="kicker">סינתזה</span>
+  <h2>לוח ההכרעות</h2>
+  <div style="margin-top:30px">
+    <div class="winrow"><div class="winid">ISS-1</div><div class="winbody"><h3>B · change-set מפורש</h3><p>effects bag לכל פעולה · writeBatch אטומי יחיד · כלי+ביקורת+התראה ביחד או בכלל לא</p></div></div>
+    <div class="winrow"><div class="winid">ISS-2</div><div class="winbody"><h3>חוקים per-collection + loadDb נכשל-בקול</h3><p>match block לכל collection · בליעת permission-denied בלבד, שאר השגיאות מבעבעות לעברית</p></div></div>
+    <div class="winrow"><div class="winid">ISS-3</div><div class="winbody"><h3>A · חוקים שמנים</h3><p>ולידציית צורה + invariant בחוקים · ייחוס זהות ל-audit · הגבלת ownedCartIds · harness לבדיקת הסלמות</p></div></div>
+    <div class="winrow"><div class="winid">ISS-4</div><div class="winbody"><h3>1 · auto-IDs + spread d.id</h3><p>מזהי Firestore אוטומטיים · signoffs במפתח טבעי <code>${cartId}_${date}</code> · create-if-absent</p></div></div>
+    <div class="winrow"><div class="winid">ISS-5</div><div class="winbody"><h3>1 · dates.js משותף ל-UTC</h3><p>toDay/today/daysBetween אחד לשני המודולים · בדיקות גבול תחת TZ=Asia/Jerusalem</p></div></div>
+    <div class="winrow"><div class="winid">ISS-6</div><div class="winbody"><h3>2 · decideRequest state-machine</h3><p>guard from-state יחיד + authorize() · אישור מוגבל-עגלה · תיקון מפרט 90→60</p></div></div>
+  </div>
+</section>
+
+<!-- 17 — דרך קדימה -->
+<section class="slide" style="justify-content:center">
+  <div class="hero-glow"></div>
+  <span class="kicker">הצעדים הבאים</span>
+  <h2>מ-מציג ל-מערכת ניהול</h2>
+  <p class="lead">שלושת החוסמים חולקים תלות אחת: לחווט כתיבה אמיתית מאחורי חוקים אכופים, עם רשת ביטחון לבדיקות. ההכרעות עוצבו לנחות יחד.</p>
+  <div class="grid g3" style="margin-top:44px">
+    <div class="card"><div class="stat blue">1</div><h3 style="margin-top:14px">לחווט כתיבה</h3><p>effects + persist (ISS-1) מאחורי חוקי per-collection (ISS-2)</p></div>
+    <div class="card"><div class="stat purple">2</div><h3 style="margin-top:14px">לאכוף את הגבול</h3><p>חוקים שמנים (ISS-3) + auto-IDs (ISS-4) + harness של rules-unit-testing</p></div>
+    <div class="card"><div class="stat green">3</div><h3 style="margin-top:14px">לתקן נכונות</h3><p>UTC משותף (ISS-5) + state-machine + מפרט 60 יום (ISS-6)</p></div>
+  </div>
+  <div class="footnote">דחויים ידועים: מסכי פעולה/עריכה · ייבוא Excel/PDF · בניית הזמנות · קטלוגים · PWA manifest+SW · UI התראות.</div>
+</section>
+
+</body>
+</html>

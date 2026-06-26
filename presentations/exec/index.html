@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ניהול כלים — מערכת ניהול מלאי כלים</title>
+<style>
+  :root{
+    --bg:#0f1620;
+    --surface:#18222f;
+    --surface2:#1f2c3c;
+    --text:#e7eef6;
+    --muted:#9fb0c3;
+    --blue:#3b82f6;
+    --green:#22c55e;
+    --red:#ef4444;
+    --amber:#f59e0b;
+    --purple:#a78bfa;
+    --border:#2a3a4d;
+    --radius:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Segoe UI",Arial,sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    direction:rtl;
+  }
+  .slide{
+    min-height:100vh;
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:80px 40px;
+    border-bottom:1px solid var(--border);
+  }
+  .inner{
+    width:100%;
+    max-width:1000px;
+    margin:0 auto;
+  }
+  .kicker{
+    display:inline-block;
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:1px;
+    color:var(--blue);
+    background:rgba(59,130,246,.12);
+    border:1px solid rgba(59,130,246,.3);
+    padding:6px 16px;
+    border-radius:999px;
+    margin-bottom:24px;
+  }
+  h1{font-size:64px;line-height:1.1;font-weight:800;letter-spacing:-1px;margin-bottom:20px}
+  h2{font-size:42px;line-height:1.15;font-weight:800;letter-spacing:-.5px;margin-bottom:16px}
+  h3{font-size:22px;font-weight:700;margin-bottom:10px}
+  .lead{font-size:22px;color:var(--muted);max-width:760px;margin-bottom:28px}
+  .sub{font-size:18px;color:var(--muted)}
+  p{font-size:17px;color:var(--text)}
+  .muted{color:var(--muted)}
+
+  .grid{display:grid;gap:20px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:820px){
+    h1{font-size:42px}h2{font-size:32px}
+    .g2,.g3,.g4{grid-template-columns:1fr}
+    .slide{padding:60px 22px}
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:26px;
+  }
+  .card.raised{background:var(--surface2)}
+
+  .stat{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:28px 24px;
+    text-align:center;
+  }
+  .stat .num{font-size:50px;font-weight:800;line-height:1;letter-spacing:-1px}
+  .stat .lbl{font-size:15px;color:var(--muted);margin-top:10px}
+
+  .icon{font-size:30px;display:block;margin-bottom:12px}
+
+  ul.clean{list-style:none}
+  ul.clean li{
+    position:relative;
+    padding:8px 0 8px 0;
+    padding-inline-start:30px;
+    font-size:17px;
+    color:var(--text);
+  }
+  ul.clean li::before{
+    content:"";
+    position:absolute;
+    inset-inline-start:0;
+    top:16px;
+    width:9px;height:9px;border-radius:2px;
+    background:var(--blue);
+  }
+  ul.bad li::before{background:var(--red)}
+  ul.good li::before{background:var(--green)}
+
+  table{width:100%;border-collapse:collapse;border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+  th,td{padding:16px 18px;text-align:start;border-bottom:1px solid var(--border);font-size:16px;vertical-align:top}
+  th{background:var(--surface2);font-weight:700;font-size:15px;color:var(--muted)}
+  td.old{color:var(--muted)}
+  .pill{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px}
+  .pill.no{background:rgba(239,68,68,.14);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+  .pill.yes{background:rgba(34,197,94,.14);color:#86efac;border:1px solid rgba(34,197,94,.3)}
+
+  .role{border-top:4px solid var(--blue)}
+  .role.admin{border-top-color:var(--blue)}
+  .role.manager{border-top-color:var(--amber)}
+  .role.owner{border-top-color:var(--green)}
+  .role .tag{font-size:13px;font-weight:700;color:var(--muted)}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px}
+  .chip{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:8px 14px}
+  .dot{width:12px;height:12px;border-radius:50%}
+  .d-red{background:var(--red)}.d-amber{background:var(--amber)}.d-purple{background:var(--purple)}.d-green{background:var(--green)}
+
+  figure{margin:0}
+  .shot{
+    width:100%;
+    border-radius:14px;
+    border:1px solid var(--border);
+    display:block;
+    background:var(--surface2);
+  }
+  figcaption{font-size:14px;color:var(--muted);margin-top:12px;text-align:center}
+  .shot-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .shot-head .badge{font-size:13px;font-weight:700;padding:4px 12px;border-radius:999px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);color:#93c5fd}
+  .shot-head .badge.green{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.3);color:#86efac}
+
+  .timeline{display:grid;gap:18px}
+  .step{display:flex;gap:18px;align-items:flex-start}
+  .step .n{flex:0 0 auto;width:42px;height:42px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--blue)}
+
+  .accent-green{color:var(--green)}
+  .accent-blue{color:var(--blue)}
+  .accent-amber{color:var(--amber)}
+  .accent-purple{color:var(--purple)}
+  .accent-red{color:var(--red)}
+
+  .footer-note{font-size:14px;color:var(--muted);margin-top:40px;text-align:center}
+  .divider{height:1px;background:var(--border);margin:26px 0}
+</style>
+</head>
+<body>
+
+<!-- 1. TITLE -->
+<section class="slide" style="text-align:center">
+  <div class="inner">
+    <span class="kicker">מערכת ייצור · גרסה חדשה</span>
+    <h1>ניהול כלים<br><span class="accent-blue">מערכת ניהול מלאי כלים</span></h1>
+    <p class="lead" style="margin-inline:auto">פתרון ענן מקצועי לניהול עגלות הכלים במחלקת התעופה והתעשייה —
+      מעקב מלא, הרשאות, כיול ובקרה, בזמן אמת, ממחשב ומהטלפון.</p>
+    <div class="grid g3" style="margin-top:36px">
+      <div class="stat"><div class="num accent-blue">2,000</div><div class="lbl">כלים בניהול</div></div>
+      <div class="stat"><div class="num accent-green">11</div><div class="lbl">עגלות כלים</div></div>
+      <div class="stat"><div class="num accent-purple">3</div><div class="lbl">רמות הרשאה</div></div>
+    </div>
+    <p class="footer-note">מוצר חי, נבדק ומאובטח — בנוי לתפעול יומיומי בקנה מידה ארגוני.</p>
+  </div>
+</section>
+
+<!-- 2. THE CHALLENGE -->
+<section class="slide">
+  <div class="inner">
+    <span class="kicker" style="color:#fca5a5;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3)">האתגר · למה הניסיון הקודם נכשל</span>
+    <h2>הפתרון הקודם לא היה מערכת — היה קובץ</h2>
+    <p class="lead">הניסיון הקודם היה קובץ <strong>HTML יחיד</strong> שרץ מקומית ושמר את כל הנתונים
+      <strong>בתוך הדפדפן בלבד</strong> (localStorage). זה נראה כמו פתרון — אבל לא עמד בדרישות של מערכת ייצור.</p>
+    <div class="grid g2">
+      <div class="card">
+        <h3 class="accent-red">פערים מהותיים</h3>
+        <ul class="clean bad">
+          <li>אין ריבוי משתמשים אמיתי — כל מחשב היה "אי" נפרד</li>
+          <li>הנתונים נשמרו רק בדפדפן — ניקוי דפדפן = מחיקת הכול</li>
+          <li>אין ענן, אין מקור אמת אחד, אין סנכרון בין משתמשים</li>
+          <li>אין אבטחה ואין הרשאות — כל מי שפתח ראה ועשה הכול</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="accent-red">סיכונים תפעוליים</h3>
+        <ul class="clean bad">
+          <li>אין רמות תפקיד — אין הפרדה בין מנהל, אחראי ובעל עגלה</li>
+          <li>אין גיבוי, אין היסטוריית גרסאות, אין שחזור</li>
+          <li>אין בדיקות אוטומטיות — שינוי אחד יכול לשבור הכול</li>
+          <li>אין מובייל אמיתי, אין יומן שינויים, אין בקרה</li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-note">המסקנה: צריך מערכת אמיתית — לא קובץ. הגרסה החדשה נבנתה בדיוק לכך.</p>
+  </div>
+</section>
+
+<!-- 3. NEW ARCHITECTURE -->
+<section class="slide">
+  <div class="inner">
+    <span class="kicker">הארכיטקטורה החדשה</span>
+    <h2>אפליקציית ענן אמיתית — מקור אמת אחד</h2>
+    <p class="lead">המערכת החדשה בנויה על תשתית ענן מובילה (Firebase): הזדהות מאובטחת,
+      מסד נתונים בזמן אמת, וחוקי אבטחה ברמת השרת. הכול מסונכרן, חי, וזמין מכל מכשיר.</p>
+    <div class="grid g3">
+      <div class="card">
+        <span class="icon">☁️</span>
+        <h3>ענן ראשון</h3>
+        <p class="muted">הנתונים נשמרים בענן ולא בדפדפן. מקור אמת יחיד שכולם רואים — בזמן אמת.</p>
+      </div>
+      <div class="card">
+        <span class="icon">🔄</span>
+        <h3>סנכרון חי</h3>
+        <p class="muted">Firestore — מסד נתונים בזמן אמת. שינוי אצל אחד מתעדכן מיד אצל כולם.</p>
+      </div>
+      <div class="card">
+        <span class="icon">🔐</span>
+        <h3>הזדהות מאובטחת</h3>
+        <p class="muted">Firebase Auth — כניסה מאומתת לכל משתמש, עם חוקי אבטחה ברמת המסד.</p>
+      </div>
+      <div class="card">
+        <span class="icon">📱</span>
+        <h3>טלפון ומחשב</h3>
+        <p class="muted">עובד מלא בדפדפן בכל מכשיר — בקצה העגלה, במשרד או בשטח.</p>
+      </div>
+      <div class="card">
+        <span class="icon">⬇️</span>
+        <h3>ניתנת להתקנה (PWA)</h3>
+        <p class="muted">מותקנת כאפליקציה על מסך הבית, ללא חנות — חוויית אפליקציה מלאה.</p>
+      </div>
+      <div class="card">
+        <span class="icon">🚀</span>
+        <h3>אפליקציות נייטיב בהמשך</h3>
+        <p class="muted">תשתית מוכנה לאפליקציות iOS ו‑Android ייעודיות בהמשך הדרך.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. SECURITY & ROLES -->
+<section class="slide">
+  <div class="inner">
+    <span class="kicker">אבטחה והרשאות</span>
+    <h2>שלוש רמות תפקיד — מופרדות ברמת המסד</h2>
+    <p class="lead">לכל משתמש תפקיד מוגדר. הבידוד בין עגלות נאכף <strong>בתוך מסד הנתונים עצמו</strong>
+      (אבטחה ברמת השורה) — לא רק מוסתר בממשק. בעל עגלה פשוט לא יכול להגיע לנתונים שאינם שלו.</p>
+    <div class="grid g3">
+      <div class="card raised role admin">
+        <span class="tag">רמה מלאה</span>
+        <h3>👑 מנהל</h3>
+        <p class="muted">שליטה מלאה: עריכה, בנייה, מחיקה, הרשאות, גרסאות, גיבויים ושחזור.</p>
+      </div>
+      <div class="card raised role manager">
+        <span class="tag">רמה תפעולית</span>
+        <h3>🛠️ אחראי כלים</h3>
+        <p class="muted">עריכה, בנייה וייצוא דוחות. <strong>ללא</strong> מחיקה, ניהול הרשאות או גרסאות.</p>
+      </div>
+      <div class="card raised role owner">
+        <span class="tag">צפייה בלבד</span>
+        <h3>📋 בעל עגלה</h3>
+        <p class="muted">צפייה בעגלה <strong>שלו בלבד</strong> והפקת דוח. ללא יכולת עריכה כלל.</p>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:22px">
+      <div class="card">
+        <h3 class="accent-green">🧱 בידוד פר‑עגלה ברמת המסד</h3>
+        <p class="muted">חוקי האבטחה במסד מבטיחים שכל בעל עגלה ניגש רק לרשומות של העגלה שלו —
+          אכיפה אמיתית, לא הסתרה ויזואלית.</p>
+      </div>
+      <div class="card">
+        <h3 class="accent-blue">✉️ שיתוף והזמנות לפי אימייל</h3>
+        <p class="muted">הוספת משתמשים והקצאת עגלות מתבצעת לפי כתובת אימייל —
+          פשוט, מאובטח ומבוקר על ידי המנהל.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. RELIABILITY / ENGINEERING -->
+<section class="slide">
+  <div class="inner">
+    <span class="kicker">איכות הנדסית ואמינות</span>
+    <h2>נבנתה לסטנדרט של מערכת ייצור</h2>
+    <div class="grid g4" style="margin-bottom:8px">
+      <div class="stat"><div class="num accent-green">52+</div><div class="lbl">בדיקות אוטומטיות עוברות</div></div>
+      <div class="stat"><div class="num accent-blue">3</div><div class="lbl">גרסאות לשחזור לאחור</div></div>
+      <div class="stat"><div class="num accent-purple">2</div><div class="lbl">יעדי גיבוי ענן נוספים</div></div>
+      <div class="stat"><div class="num accent-amber">100%</div><div class="lbl">תיעוד שינויים</div></div>
+    </div>
+    <div class="grid g2" style="margin-top:18px">
+      <div class="card">
+        <ul class="clean good">
+          <li><strong>52+ בדיקות אוטומטיות</strong> שעוברות בדפדפן אמיתי — כל שינוי נבדק לפני שהוא חי</li>
+          <li><strong>יומן ביקורת</strong> מלא — מי שינה, מה שינה ומתי</li>
+          <li><strong>היסטוריית גרסאות</strong> עם שחזור של עד 3 גרסאות אחורה (למנהל בלבד)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <ul class="clean good">
+          <li><strong>"בסיס אלפא" נעול</strong> — תצלום מצב קבוע שתמיד אפשר לחזור אליו</li>
+          <li><strong>גיבויי ענן אוטומטיים</strong> — ללא תלות בפעולה ידנית</li>
+          <li>הגיבויים <strong>משוכפלים ל‑OneDrive ול‑Google Drive</strong> — עותקים נוספים מחוץ למערכת</li>
+        </ul>
+      </div>
+    </div>
+    <p class="footer-note">המשמעות: הנתונים מוגנים בכמה שכבות, וכל שינוי הפיך ומתועד.</p>
+  </div>
+</section>
+
+<!-- 6. KEY OPERATIONAL FEATURES -->
+<section class="slide">
+  <div class="inner">
+    <span class="kicker">יכולות תפעוליות מרכזיות</span>
+    <h2>בנויה סביב העבודה האמיתית בשטח</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>🎨 מעקב כיול בקידוד צבעים</h3>
+        <p class="muted">מצב הכיול של כל כלי גלוי במבט אחד:</p>
+        <div class="legend">
+          <span class="chip"><span class="dot d-red"></span>פג תוקף</span>
+          <span class="chip"><span class="dot d-amber"></span>עד 60 יום לפקיעה</span>
+          <span class="chip"><span class="dot d-purple"></span>בכיול / תקול</span>
+          <span class="chip"><span class="dot d-green"></span>תקין</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>✅ חתימת עגלה יומית</h3>
+        <p class="muted">בעל העגלה חותם על העגלה מדי יום — אישור שהכול תקין,
+          וגם איתות נוכחות אוטומטי.</p>
+      </div>
+      <div class="card">
+        <h3>🔁 בקשת כיול ואישור</h3>
+        <p class="muted">תהליך מסודר: בקשת כיול → אישור → סימון כ<strong>"חוסר מאושר"</strong>.
+          המלאי משקף את המציאות גם כשכלי בכיול.</p>
+      </div>
+      <div class="card">
+        <h3>🚨 הצהרת כלי תקול</h3>
+        <p class="muted">דיווח על כלי תקול מפעיל <strong>התראה לאחראי</strong> ומופיע בדוח —
+          שום תקלה לא נופלת בין הכיסאות.</p>
+      </div>
+      <div class="card">
+        <h3>📆 בדיקת עגלה דו‑חודשית</h3>
+        <p class="muted">האחראי מבצע בדיקת עגלה כל חודשיים. איחור בבדיקה —
+          <strong class="accent-red">העגלה נצבעת באדום</strong> עד לטיפול.</p>
+      </div>
+      <div class="card">
+        <h3>📍 כלים במיקום לא ידוע</h3>
+        <p class="muted">כלי שמיקומו אינו ידוע מעל שנה <strong>מסומן אוטומטית</strong>
+          לבירור — ניקיון מלאי מתמשך.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 7. THE PRODUCT, REAL -->
+<section class="slide">
+  <div class="inner">
+    <span class="kicker">המוצר, באמת</span>
+    <h2>מודל ההרשאות עובד — הוכחה חיה</h2>
+    <p class="lead">אותה מערכת, שני משתמשים שונים. המנהל רואה תמונת על מלאה;
+      בעל העגלה רואה <strong>רק את העגלה שלו</strong>, בצפייה בלבד.</p>
+    <div class="grid g2">
+      <figure>
+        <div class="shot-head"><span class="badge">👑 תצוגת מנהל</span><span class="muted">160 כלים · 5 עגלות</span></div>
+        <img class="shot" src="../../lab/reports/view-admin.png" alt="תצוגת מנהל — מבט על כל העגלות">
+        <figcaption>המנהל רואה את כלל העגלות והכלים, עם שליטה מלאה.</figcaption>
+      </figure>
+      <figure>
+        <div class="shot-head"><span class="badge green">📋 תצוגת בעל עגלה</span><span class="muted">32 כלים · עגלה אחת · צפייה בלבד</span></div>
+        <img class="shot" src="../../lab/reports/view-owner.png" alt="תצוגת בעל עגלה — עגלה אחת בלבד">
+        <figcaption>בעל העגלה רואה רק את העגלה שלו — בידוד אמיתי ברמת המסד.</figcaption>
+      </figure>
+    </div>
+    <p class="footer-note">לא צילום מסך מעוצב — אלו צילומים אמיתיים מתוך המערכת הפועלת.</p>
+  </div>
+</section>
+
+<!-- 8. OLD VS NEW COMPARISON -->
+<section class="slide">
+  <div class="inner">
+    <span class="kicker">פער הדורות</span>
+    <h2>אז מול עכשיו</h2>
+    <table>
+      <thead>
+        <tr><th>יכולת</th><th>הפתרון הקודם</th><th>המערכת החדשה</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>אחסון נתונים</td><td class="old">בדפדפן בלבד (localStorage)</td><td>ענן (Firestore) · מקור אמת אחד</td></tr>
+        <tr><td>ריבוי משתמשים</td><td class="old"><span class="pill no">אין</span></td><td><span class="pill yes">בזמן אמת</span></td></tr>
+        <tr><td>אבטחה והרשאות</td><td class="old"><span class="pill no">אין</span></td><td>3 תפקידים · אכיפה ברמת המסד</td></tr>
+        <tr><td>גיבוי ושחזור</td><td class="old"><span class="pill no">אין</span></td><td>גיבוי אוטומטי + OneDrive + Google Drive</td></tr>
+        <tr><td>היסטוריית גרסאות</td><td class="old"><span class="pill no">אין</span></td><td>שחזור עד 3 גרסאות + בסיס נעול</td></tr>
+        <tr><td>בדיקות אוטומטיות</td><td class="old"><span class="pill no">אין</span></td><td><span class="pill yes">52+ עוברות</span></td></tr>
+        <tr><td>יומן ביקורת</td><td class="old"><span class="pill no">אין</span></td><td>תיעוד מלא של כל שינוי</td></tr>
+        <tr><td>מובייל</td><td class="old"><span class="pill no">לא אמיתי</span></td><td>PWA להתקנה · נייטיב בהמשך</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 9. ROADMAP -->
+<section class="slide">
+  <div class="inner">
+    <span class="kicker">מפת דרכים</span>
+    <h2>מה הלאה</h2>
+    <p class="lead">המערכת כבר בייצור — והיא ממשיכה לגדול. השלבים הבאים מקצרים עוד את העבודה הידנית.</p>
+    <div class="timeline">
+      <div class="step">
+        <div class="n">1</div>
+        <div><h3>ייבוא בכמות מ‑Excel ו‑PDF</h3>
+          <p class="muted">העלאת מלאי שלם ממקור קיים — קליטה מהירה במקום הקלדה ידנית.</p></div>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <div><h3>זיהוי כלים מתמונה</h3>
+          <p class="muted">צילום מדף או עגלה → המערכת מזהה את הכלים אוטומטית.</p></div>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <div><h3>בניית הזמנות מקטלוגים</h3>
+          <p class="muted">הרכבת הזמנות רכש ישירות מתוך קטלוגי ספקים.</p></div>
+      </div>
+      <div class="step">
+        <div class="n">4</div>
+        <div><h3>אפליקציות בחנויות</h3>
+          <p class="muted">אפליקציות iOS ו‑Android ייעודיות ב‑App Store וב‑Google Play.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10. CLOSE -->
+<section class="slide" style="text-align:center">
+  <div class="inner">
+    <span class="kicker">סיכום</span>
+    <h2>זו מערכת ברמה אחרת לגמרי</h2>
+    <p class="lead" style="margin-inline:auto">לא קובץ — מערכת. נבדקת, מאובטחת, מבוססת ענן, ועובדת על כל מכשיר.
+      בנויה לסטנדרט תעשייתי, ומוכנה לפריסה רוחבית בכל החברה.</p>
+    <div class="grid g4" style="margin-top:14px">
+      <div class="stat"><div class="num accent-green">✓</div><div class="lbl">נבדקת · 52+ בדיקות</div></div>
+      <div class="stat"><div class="num accent-blue">✓</div><div class="lbl">מאובטחת · 3 תפקידים</div></div>
+      <div class="stat"><div class="num accent-purple">✓</div><div class="lbl">ענן · מקור אמת אחד</div></div>
+      <div class="stat"><div class="num accent-amber">✓</div><div class="lbl">מובייל · להתקנה</div></div>
+    </div>
+    <div class="divider"></div>
+    <p style="font-size:24px;font-weight:700">מוכנה לפריסה רוחבית בכל החברה.</p>
+    <p class="footer-note">ניהול כלים — מערכת ניהול מלאי כלים · גרסת ייצור</p>
+  </div>
+</section>
+
+</body>
+</html>

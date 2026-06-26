@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>חלונות עבודה — חתימה ומסירה</title>
+<style>
+:root{--bg:#0f1620;--surface:#18222f;--surface2:#1f2c3c;--txt:#e7eef6;--mut:#9fb0c3;
+ --brand:#3b82f6;--brand2:#1d4ed8;--ok:#22c55e;--red:#ef4444;--amber:#f59e0b;--purple:#a78bfa;--line:#2a3a4d}
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Arial,sans-serif}
+body{background:var(--bg);color:var(--txt);min-height:100vh}
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#162232,#101a26)}
+.logo{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:grid;place-items:center;font-size:19px}
+.topbar h1{font-size:16px}.who{font-size:12px;color:var(--mut)}
+.badge{margin-inline-start:auto;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;background:var(--surface2);border:1px solid var(--line);color:#7dd3fc}
+.overlay{display:grid;place-items:center;padding:26px}
+.modal{background:var(--surface);border:1px solid var(--line);border-radius:20px;width:100%;max-width:600px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.modal h2{font-size:19px;padding:18px 22px 4px}.modal .sub{font-size:12.5px;color:var(--mut);padding:0 22px 14px}
+.body{padding:0 22px}
+.foot{display:flex;gap:10px;padding:16px 22px;border-top:1px solid var(--line);margin-top:14px}
+.btn{background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:11px 16px;font-size:14px;font-weight:600;cursor:pointer}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.disabled{opacity:.5}
+.check{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13.5px;border-bottom:1px solid var(--line)}
+.check .b{width:18px;height:18px;border-radius:5px;border:1px solid var(--line);display:grid;place-items:center;font-size:12px;color:var(--ok)}
+.check .b.on{background:rgba(34,197,94,.12);border-color:var(--ok)}
+label{display:block;font-size:12.5px;color:var(--mut);margin:14px 0 6px}
+textarea,input{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:13.5px;resize:vertical}
+.flag{display:flex;align-items:center;gap:9px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.35);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:12.5px;color:#fcd34d}
+.note{font-size:12px;color:var(--mut);background:var(--surface2);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-top:12px}
+.sig{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:var(--surface2)}
+.sig .dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:800}
+.sig .dot.done{background:rgba(34,197,94,.15);color:var(--ok)}.sig .dot.wait{background:rgba(245,158,11,.15);color:var(--amber)}
+.sig .t{font-weight:600;font-size:13.5px}.sig .s{font-size:12px;color:var(--mut)}
+.sig .st{margin-inline-start:auto;font-size:12px;font-weight:700}
+.flow{display:flex;align-items:center;gap:10px;font-size:13.5px;margin-bottom:14px}
+.pers{flex:1;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:11px;text-align:center}
+.arrow{color:var(--brand);font-size:20px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const screen=(new URLSearchParams(location.search)).get('screen')||'signoff';
+
+const SIGNOFF=`
+<div class="topbar"><div class="logo">🧰</div><div><h1>ניהול כלים</h1><div class="who">חלון חתימה</div></div><span class="badge">בעל עגלה</span></div>
+<div class="overlay"><div class="modal">
+  <h2>🖊️ חתימה יומית — עגלה C0007 · דור ב'</h2>
+  <div class="sub">בדיקה יומית של תכולת העגלה ואישורה. (שישי ושבת — אין חתימה.)</div>
+  <div class="body">
+    <div class="check"><span class="b on">✓</span> כל הכלים במקומם לפי הרשימה</div>
+    <div class="check"><span class="b on">✓</span> אין כלי חסר ללא "חוסר מאושר"</div>
+    <div class="check"><span class="b">✓</span> מצב הכלים תקין</div>
+    <label>הערות שהתגלו בבדיקה (חופשי)</label>
+    <textarea rows="2" placeholder="לדוגמה: מד-מומנט C0007-A1-0003 מראה סטייה — דווח."></textarea>
+    <div class="flag">⚠️ נמצאה תקלה? חובה לדווח ולעדכן בתוכנה לפני המשך / מסירה.</div>
+    <div class="note">אחראי הכלים ומנהל המערכת רשומים כבעלים משניים על העגלה הזו.</div>
+  </div>
+  <div class="foot"><div class="btn primary">חתום על העגלה</div><div class="btn">שמור הערות בלבד</div></div>
+</div></div>`;
+
+const HANDOVER=`
+<div class="topbar"><div class="logo">🧰</div><div><h1>ניהול כלים</h1><div class="who">חלון מסירה</div></div><span class="badge">אחראי כלים</span></div>
+<div class="overlay"><div class="modal">
+  <h2>🔁 העברת עגלה בין עובדים — C0007</h2>
+  <div class="sub">מסירה תתבצע רק לאחר ששני הצדדים חתמו והתקלות עודכנו בתוכנה.</div>
+  <div class="body">
+    <div class="flow"><div class="pers">מ: דנה (עובד נוכחי)</div><span class="arrow">←</span><div class="pers">אל: יוסי (עובד חדש)</div></div>
+    <div class="sig"><span class="dot done">✓</span><div><div class="t">חתימת אחראי כלים</div><div class="s">אישור מצב העגלה למסירה</div></div><span class="st" style="color:var(--ok)">חתום</span></div>
+    <div class="sig"><span class="dot wait">…</span><div><div class="t">חתימת העובד החדש (יוסי)</div><div class="s">קבלת העגלה לאחריותו</div></div><span class="st" style="color:var(--amber)">ממתין</span></div>
+    <label>הערות מסירה</label>
+    <textarea rows="2" placeholder="כל תקלה שהתגלתה — חובה שתעודכן בתוכנה לפני המסירה."></textarea>
+    <div class="note">לאחר שתי החתימות: אחראי הכלים / מנהל המערכת "מוסר" והעובד החדש "מקבל" — והבעלות עוברת.</div>
+  </div>
+  <div class="foot"><div class="btn primary disabled">מסור עגלה (ממתין לחתימת העובד)</div><div class="btn">ביטול</div></div>
+</div></div>`;
+
+document.getElementById('root').innerHTML = screen==='handover'?HANDOVER:SIGNOFF;
+</script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>מעבדת בדיקות — ניהול כלים</title>
+  <style>
+    :root { --ok:#2e7d32; --bad:#c62828; --bg:#0f1419; --card:#1b2430; --txt:#e6edf3; --mut:#8b98a5; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: "Segoe UI", Arial, sans-serif; background:var(--bg); color:var(--txt); padding:18px; }
+    h1 { font-size:20px; margin:0 0 4px; }
+    .sub { color:var(--mut); margin:0 0 16px; font-size:13px; }
+    .summary { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+    .pill { padding:10px 16px; border-radius:12px; font-weight:700; background:var(--card); }
+    .pill.ok { color:var(--ok); } .pill.bad { color:var(--bad); }
+    .pill.big { font-size:18px; }
+    ul { list-style:none; padding:0; margin:0; }
+    li { background:var(--card); border-radius:10px; padding:8px 12px; margin-bottom:6px; font-size:14px;
+         display:flex; align-items:center; gap:10px; }
+    .mark { width:22px; text-align:center; font-weight:700; }
+    .mark.ok { color:var(--ok); } .mark.bad { color:var(--bad); }
+    .err { color:var(--bad); font-size:12px; margin-inline-start:auto; opacity:.9; }
+  </style>
+</head>
+<body>
+  <h1>🧪 מעבדת בדיקות — ניהול כלים</h1>
+  <p class="sub">רץ בדפדפן ובטלפון, ללא התקנה. כל בדיקה היא טענה אמיתית על דקדוק המזהים ועל מנוע ההרשאות.</p>
+  <div class="summary" id="summary">מריץ…</div>
+  <ul id="list"></ul>
+  <pre id="machine" style="position:absolute;left:-9999px">pending</pre>
+
+  <script type="module">
+    import { runAll as runCore } from './tests.core.js';
+    import { runAll as runModel } from './tests.model.js';
+    import { runAll as runWf } from './tests.workflows.js';
+    import { runAll as runDates } from './tests.dates.js';
+    import { runAll as runImport } from './tests.import.js';
+    const a = runCore();
+    const b = await runModel();
+    const c = runWf();
+    const d = runDates();
+    const e = runImport();
+    const r = {
+      passed: a.passed + b.passed + c.passed + d.passed + e.passed,
+      failed: a.failed + b.failed + c.failed + d.failed + e.failed,
+      total: a.total + b.total + c.total + d.total + e.total,
+      results: [...a.results, ...b.results, ...c.results, ...d.results, ...e.results],
+    };
+    const sum = document.getElementById('summary');
+    sum.innerHTML =
+      `<span class="pill big ${r.failed ? 'bad' : 'ok'}">${r.failed ? '✗ נכשל' : '✓ הכל עבר'}</span>` +
+      `<span class="pill ok">עברו: ${r.passed}</span>` +
+      `<span class="pill ${r.failed ? 'bad' : ''}">נכשלו: ${r.failed}</span>` +
+      `<span class="pill">סה"כ: ${r.total}</span>`;
+    const list = document.getElementById('list');
+    list.innerHTML = r.results.map(t =>
+      `<li><span class="mark ${t.ok ? 'ok' : 'bad'}">${t.ok ? '✓' : '✗'}</span>` +
+      `<span>${t.name}</span>` +
+      (t.ok ? '' : `<span class="err">${t.error}</span>`) + `</li>`
+    ).join('');
+    // expose for any headless harness to read a machine result:
+    window.__TEST_RESULT__ = r;
+    document.getElementById('machine').textContent =
+      '@@RESULT@@' + JSON.stringify({ passed: r.passed, failed: r.failed, total: r.total }) + '@@END@@';
+    document.title = (r.failed ? `FAIL ${r.failed}` : `PASS ${r.passed}`) + ' — tests';
+  </script>
+</body>
+</html>

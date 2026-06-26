@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ניהול כלים — סטטוס חי לכל כלי</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Segoe UI", "Arial", "Helvetica Neue", sans-serif;
+    background: #0f1620;
+    color: #e7eef6;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .slide {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 80px 7vw;
+    border-bottom: 1px solid #2a3a4d;
+    position: relative;
+  }
+  .kicker {
+    color: #3b82f6;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: clamp(40px, 7vw, 88px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -1px;
+    margin-bottom: 28px;
+  }
+  h2 {
+    font-size: clamp(32px, 5vw, 60px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 36px;
+  }
+  .lead {
+    font-size: clamp(20px, 2.6vw, 30px);
+    color: #9fb0c3;
+    max-width: 980px;
+    font-weight: 400;
+  }
+  .grid {
+    display: grid;
+    gap: 22px;
+    margin-top: 20px;
+  }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .card {
+    background: #18222f;
+    border: 1px solid #2a3a4d;
+    border-radius: 16px;
+    padding: 30px 28px;
+  }
+  .card h3 {
+    font-size: 23px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .card p {
+    color: #9fb0c3;
+    font-size: 17px;
+  }
+  .icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 18px;
+    background: #1f2c3c;
+  }
+  .blue { color: #3b82f6; }
+  .green { color: #22c55e; }
+  .red { color: #ef4444; }
+  .amber { color: #f59e0b; }
+  .purple { color: #a78bfa; }
+  .b-blue { border-color: #3b82f6; }
+  .stat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    margin-top: 44px;
+  }
+  .stat {
+    background: #1f2c3c;
+    border: 1px solid #2a3a4d;
+    border-radius: 16px;
+    padding: 28px 38px;
+    flex: 1;
+    min-width: 200px;
+    text-align: center;
+  }
+  .stat .num {
+    font-size: clamp(34px, 4.4vw, 52px);
+    font-weight: 800;
+    line-height: 1.05;
+  }
+  .stat .lbl {
+    color: #9fb0c3;
+    font-size: 16px;
+    margin-top: 10px;
+  }
+  .shot {
+    width: 100%;
+    border-radius: 16px;
+    border: 1px solid #2a3a4d;
+    display: block;
+    box-shadow: 0 24px 60px rgba(0,0,0,.45);
+  }
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    align-items: center;
+  }
+  ul.checks { list-style: none; margin-top: 24px; }
+  ul.checks li {
+    font-size: 20px;
+    padding: 12px 0;
+    color: #e7eef6;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  ul.checks li::before {
+    content: "✓";
+    color: #22c55e;
+    font-weight: 800;
+    font-size: 22px;
+  }
+  .pill {
+    display: inline-block;
+    background: #1f2c3c;
+    border: 1px solid #2a3a4d;
+    border-radius: 999px;
+    padding: 8px 20px;
+    font-size: 15px;
+    color: #9fb0c3;
+    margin: 6px 6px 0 0;
+  }
+  .status-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 30px;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #18222f;
+    border: 1px solid #2a3a4d;
+    border-radius: 999px;
+    padding: 10px 20px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .cta-box {
+    background: linear-gradient(135deg, #1f2c3c, #18222f);
+    border: 1px solid #3b82f6;
+    border-radius: 16px;
+    padding: 50px;
+    text-align: center;
+    margin-top: 10px;
+  }
+  .badge {
+    position: absolute;
+    top: 36px;
+    inset-inline-start: 7vw;
+    font-size: 15px;
+    color: #9fb0c3;
+    letter-spacing: 1px;
+  }
+  .vs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 26px;
+    margin-top: 20px;
+  }
+  .vs .col {
+    background: #18222f;
+    border: 1px solid #2a3a4d;
+    border-radius: 16px;
+    padding: 32px 30px;
+  }
+  .vs .col.us { border-color: #22c55e; }
+  .vs h3 { font-size: 26px; margin-bottom: 18px; }
+  .vs ul { list-style: none; }
+  .vs ul li {
+    font-size: 18px;
+    padding: 9px 0;
+    color: #cdd9e6;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .vs .old ul li::before { content: "—"; color: #9fb0c3; font-weight: 800; }
+  .vs .us ul li::before { content: "✓"; color: #22c55e; font-weight: 800; }
+  @media (max-width: 820px) {
+    .grid-3, .grid-2, .grid-4 { grid-template-columns: 1fr; }
+    .split, .vs { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Slide 1 — Title -->
+<section class="slide">
+  <div class="badge">ניהול כלים · פלטפורמת ענן</div>
+  <div class="kicker">סטטוס חי לכל כלי</div>
+  <h1>כל כלי, כל מגירה,<br>כל מחלקה.<br><span class="blue">בענן. בזמן אמת.</span></h1>
+  <p class="lead">פלטפורמה לניהול מלאי כלים — מסדנת בית קטנה ועד מערך עצום. ארגון לפי מחלקה, מכל "עגלה", ארון או אזור עבודה, עם סטטוס חי שכולם רואים באותו רגע.</p>
+  <div class="stat-row">
+    <div class="stat"><div class="num blue">מחלקה</div><div class="lbl">ארגון לפי מחלקה, לא לפי מיקום פיזי</div></div>
+    <div class="stat"><div class="num green">סטטוס חי</div><div class="lbl">צבע אחד לכל מצב, מתעדכן מיידית</div></div>
+    <div class="stat"><div class="num amber">כל קנה מידה</div><div class="lbl">מכלי בודד ועד כמות אסטרונומית</div></div>
+  </div>
+</section>
+
+<!-- Slide 2 — The Problem -->
+<section class="slide">
+  <div class="kicker red">האתגר</div>
+  <h2>אקסל מנהל —<br>אבל הוא לא חי.</h2>
+  <div class="grid grid-3">
+    <div class="card">
+      <div class="icon red">✕</div>
+      <h3>גיליון סטטי</h3>
+      <p>אקסל מתעד, אבל אינו נושם: מסורבל לעדכן, לא משקף מצב אמת, וכל אחד עובד על עותק אחר.</p>
+    </div>
+    <div class="card">
+      <div class="icon amber">↯</div>
+      <h3>כלי שנפל מהרשימה</h3>
+      <p>כלי בשימוש חיצוני או במיקום לא ידוע, "מישהו לקח" — בלי שרשרת אחריות ברורה מי מחזיק במה.</p>
+    </div>
+    <div class="card">
+      <div class="icon purple">!</div>
+      <h3>בלי תיעוד דיגיטלי הכול פרוץ</h3>
+      <p>מי בדק, מתי, מי אישר — כשהמידע פזור ולא חי, אין על מה להישען וכל פינה חשופה.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 3 — The Solution / Live -->
+<section class="slide">
+  <div class="split">
+    <div>
+      <div class="kicker green">הפתרון</div>
+      <h2>מערכת חיה,<br>לא קובץ.</h2>
+      <p class="lead">כל שינוי נשמר מיידית בענן ומשתקף לכל המשתמשים באותו רגע. סטטוס צבעוני לכל כלי — צבע אחד לכל מצב — נקרא במבט אחד.</p>
+      <ul class="checks">
+        <li>עדכון נשמר ומשתקף לכולם בזמן אמת</li>
+        <li>ארגון לפי מחלקה, ללא תלות במיקום הפיזי</li>
+        <li>מעבר מהיר ל"מכל שלי" בלחיצת כפתור</li>
+        <li>יומן מלא לכל פעולה — מי, מה ומתי</li>
+      </ul>
+    </div>
+    <div>
+      <img class="shot" src="../../lab/reports/view-admin.png" alt="תצוגת ניהול">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 4 — One colour per status -->
+<section class="slide">
+  <div class="kicker amber">סטטוס במבט אחד</div>
+  <h2>צבע אחד —<br>מצב אחד.</h2>
+  <p class="lead">לכל סטטוס צבע נפרד ומובחן משלו. אין שני מצבים החולקים אותו צבע, כך שמבט מהיר על המכל מספיק כדי לדעת בדיוק מה המצב.</p>
+  <div class="status-row">
+    <span class="chip"><span class="dot" style="background:#22c55e"></span>תקין</span>
+    <span class="chip"><span class="dot" style="background:#f59e0b"></span>מתקרב לכיול</span>
+    <span class="chip"><span class="dot" style="background:#3b82f6"></span>בכיול</span>
+    <span class="chip"><span class="dot" style="background:#ef4444"></span>שבור</span>
+    <span class="chip"><span class="dot" style="background:#a78bfa"></span>מיקום לא ידוע</span>
+  </div>
+  <p class="lead" style="margin-top:34px;font-size:clamp(17px,2vw,22px)">הצבעים כאן הם דוגמה להמחשה. העיקרון קבוע: הפרדה מלאה בין מצבים — "בכיול" ו"שבור", למשל, לעולם לא יישאו את אותו צבע.</p>
+</section>
+
+<!-- Slide 5 — Roles -->
+<section class="slide">
+  <div class="kicker blue">תפקידים והרשאות</div>
+  <h2>כל אחד רואה בדיוק<br>את מה שמותר לו.</h2>
+  <p class="lead">בקרת גישה מבוססת תפקידים, אכופה ברמת מסד הנתונים — לא רק בממשק.</p>
+  <div class="grid grid-3">
+    <div class="card b-blue">
+      <div class="icon blue">★</div>
+      <h3>מנהל המערכת / בעל הכלים</h3>
+      <p>שליטה מלאה: כל המכלים והמחלקות, אישורים, הגדרות, ניהול משתמשים ופעולות מערכת.</p>
+    </div>
+    <div class="card">
+      <div class="icon green">⚙</div>
+      <h3>אחראי כלים</h3>
+      <p>ניהול תפעולי שוטף: בדיקות, אישורי כיול, הצהרות תקלה ומעקב יומיומי על המכלים.</p>
+    </div>
+    <div class="card">
+      <div class="icon purple">◉</div>
+      <h3>בעל עגלה</h3>
+      <p>צפייה ב"מכל" שלו בלבד ובדוח שלו — מיקוד מלא, ללא בלבול.</p>
+    </div>
+  </div>
+  <div style="margin-top:30px">
+    <span class="pill">אימות בענן</span>
+    <span class="pill">הרשאות אכופות בשרת</span>
+    <span class="pill">מעבר חלונות בלחיצת כפתור</span>
+    <span class="pill">גיבוי ענן אוטומטי</span>
+  </div>
+</section>
+
+<!-- Slide 6 — Calibration -->
+<section class="slide">
+  <div class="split">
+    <div>
+      <img class="shot" src="../../lab/reports/view-owner.png" alt="תצוגת בעל מכל">
+    </div>
+    <div>
+      <div class="kicker amber">כיול</div>
+      <h2>כלי לא מכויל<br>"מזייף".</h2>
+      <p class="lead">כלי שאינו מכויל נותן קריאה שגויה — בדיוק כמו עבודה ללא כלי מכויל בכלל. התוצאה: חוסר דיוק בעבודה ופגיעה בציוד. המערכת לא נותנת לזה לקרות.</p>
+      <ul class="checks">
+        <li>חלון 30 יום לפני פקיעה פותח בקשת כיול</li>
+        <li>בקשה → אישור (אדם שני / מנהל המערכת) → "חוסר מאושר" → שליחה לכיול</li>
+        <li>שליחה ישירה בשלב אחד עבור אחראי כלים / מנהל המערכת</li>
+        <li>סטטוס כיול צבעוני, נפרד מכל מצב אחר</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 7 — Sign-offs (operational, no attendance) -->
+<section class="slide">
+  <div class="kicker green">חתימות תפעוליות</div>
+  <h2>מי חתם,<br>ומה עוד פתוח.</h2>
+  <p class="lead">תהליך חתימה תפעולי טהור: אילו מכלים נחתמו ואילו לא. אין כאן עניין של נוכחות אנשים — רק תמונת מצב על המכלים עצמם.</p>
+  <div class="grid grid-2">
+    <div class="card">
+      <div class="icon green">✓</div>
+      <h3>חתימת "עגלה" יומית</h3>
+      <p>"עגלות" שדורשות זאת נחתמות מדי יום. שישי ושבת אינם ימי חתימה.</p>
+    </div>
+    <div class="card">
+      <div class="icon blue">▣</div>
+      <h3>חתימת ארון מחלקתי</h3>
+      <p>פעולה נפרדת לחלוטין מחתימת "עגלה". ארון מנוהל במלאי, ולחלקם נדרשת גם חתימה יומית — לפי הגדרת המכל.</p>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:30px;font-size:clamp(17px,2vw,22px)">עובד יכול להתבקש לבדוק ולחתום על ארון מחלקתי מסוים, ויש דוח "מי חתם ומתי" שנה אחורה.</p>
+</section>
+
+<!-- Slide 8 — Containers / cloning / scale -->
+<section class="slide">
+  <div class="kicker purple">מבנה גמיש</div>
+  <h2>מכל אחד,<br>מוכפל לרבים.</h2>
+  <p class="lead">"מכל" אצלנו הוא גנרי — "עגלה", ארון או אזור עבודה. מגדירים פריסה פעם אחת, ומשכפלים אותה למספר מכלים זהים הנבדלים רק במספר. כל מכל נושא דור/סוג משלו.</p>
+  <div class="grid grid-4">
+    <div class="card"><div class="icon purple">▤</div><h3>מכל גנרי</h3><p>"עגלה", ארון או אזור עבודה — אותו ניהול.</p></div>
+    <div class="card"><div class="icon blue">⧉</div><h3>שכפול פריסה</h3><p>הגדרה אחת, N מכלים זהים. לדוגמה: כמה "דור א" וכמה "דור ב".</p></div>
+    <div class="card"><div class="icon green">∞</div><h3>קנה מידה</h3><p>מסדנת בית בודדת ועד כמות כלים אסטרונומית.</p></div>
+    <div class="card"><div class="icon amber">⌗</div><h3>זיהוי וחריטה</h3><p>קוד למיקום, למכל, למגירה ולכלי — נושא את שרשרת השיוך שלו.</p></div>
+  </div>
+  <p class="lead" style="margin-top:26px;font-size:clamp(16px,1.8vw,20px)">כל הכמויות בכל מקום הן דוגמאות בלבד — המערכת אינה כבולה לגודל מסוים.</p>
+</section>
+
+<!-- Slide 9 — Anywhere / mission -->
+<section class="slide">
+  <div class="split">
+    <div>
+      <div class="kicker blue">זמין מכל מקום</div>
+      <h2>נבנה כדי לבצע<br>את המשימה.</h2>
+      <p class="lead">לא כדי לעבור ביקורת — אלא כדי לתת תמונת אמת חיה שמחזיקה בכל מצב. עברית מלאה, ממשק RTL, גישה מכל מכשיר ליד המכל ממש.</p>
+      <ul class="checks">
+        <li>גישה מהשטח, ליד "העגלה", הארון או אזור העבודה</li>
+        <li>ענן — בלי התקנה ובלי שרת מקומי לתחזק</li>
+        <li>סנכרון מיידי — כולם רואים אותו מצב אמת</li>
+        <li>עברית RTL מהיסוד</li>
+      </ul>
+    </div>
+    <div>
+      <img class="shot" src="../../lab/reports/live-login.png" alt="מסך כניסה">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 10 — Excel vs us -->
+<section class="slide">
+  <div class="kicker green">למה לעבור</div>
+  <h2>מגיליון מנוהל —<br>למערכת שנושמת.</h2>
+  <div class="vs">
+    <div class="col old">
+      <h3 class="purple">גיליון</h3>
+      <ul>
+        <li>סטטי — לא משקף מצב אמת</li>
+        <li>מסורבל לעדכן ולעבוד בו</li>
+        <li>עותקים שונים אצל כל אחד</li>
+        <li>בלי שרשרת אחריות ברורה</li>
+        <li>צבעים ומצבים מתערבבים</li>
+      </ul>
+    </div>
+    <div class="col us">
+      <h3 class="green">ניהול כלים</h3>
+      <ul>
+        <li>סטטוס חי, מתעדכן מיידית לכולם</li>
+        <li>ניהול קל לפי מחלקה ומכל</li>
+        <li>מקור אמת אחד בענן</li>
+        <li>שרשרת אחריות מתועדת</li>
+        <li>צבע אחד לכל מצב, הפרדה מלאה</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 11 — CTA -->
+<section class="slide">
+  <div class="kicker blue">בואו נדבר</div>
+  <h2 style="text-align:center">מוכנים לראות כל כלי<br>בזמן אמת?</h2>
+  <div class="cta-box">
+    <p class="lead" style="margin:0 auto 26px">נשמח להציג הדגמה חיה המותאמת למחלקות, למכלים ולתהליכי הכיול שלכם — בכל קנה מידה.</p>
+    <div style="font-size:26px;font-weight:800" class="blue">ניהול כלים</div>
+    <div style="color:#9fb0c3;margin-top:10px">סטטוס חי לכל כלי · עברית · מאובטח · בזמן אמת</div>
+  </div>
+</section>
+
+</body>
+</html>

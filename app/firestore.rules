@@ -1,0 +1,108 @@
+rules_version = '2';
+// Firestore Security Rules — ניהול כלים (v2: covers all collections; admin-by-email
+// always has full access so the owner can never be locked out).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function adminEmails() { return ['aseelhalaby646@gmail.com', 'acehalaby646@gmail.com']; }
+    function isAdmin() { return signedIn() && request.auth.token.email in adminEmails(); }
+
+    function userDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function hasUserDoc() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function role() { return isAdmin() ? 'admin' : (hasUserDoc() ? userDoc().role : 'none'); }
+    function isManager() { return role() == 'manager'; }
+    function canEdit() { return isAdmin() || isManager(); }
+    function ownsCart(cartId) { return hasUserDoc() && (cartId in userDoc().ownedCartIds); }
+
+    // connection test — any signed-in user may ping (write their own diagnostics doc)
+    match /_diagnostics/{id} {
+      allow read, write: if signedIn();
+    }
+
+    // departments (v2 organizing unit)
+    match /departments/{id} {
+      allow read: if signedIn();
+      allow write: if canEdit();
+    }
+
+    match /users/{uid} {
+      allow read: if isAdmin() || isManager() || request.auth.uid == uid;
+      allow create: if isAdmin() || (isManager() && request.resource.data.role == 'cart_owner');
+      allow update, delete: if isAdmin();
+    }
+
+    match /locations/{id} {
+      allow read:  if isAdmin() || isManager();
+      allow write: if canEdit() && (request.method != 'delete' || isAdmin());
+    }
+    match /carts/{cartId} {
+      allow read:  if isAdmin() || isManager() || ownsCart(cartId);
+      allow create, update: if canEdit();
+      allow delete: if isAdmin();
+    }
+    match /drawers/{id} {
+      allow read:  if isAdmin() || isManager() || ownsCart(resource.data.cartId);
+      allow create, update: if canEdit();
+      allow delete: if isAdmin();
+    }
+    match /tools/{id} {
+      allow read:  if isAdmin() || isManager() || ownsCart(resource.data.cartId);
+      allow create, update: if canEdit();
+      allow delete: if isAdmin();
+    }
+    match /orders/{id} {
+      allow read:  if isAdmin() || isManager();
+      allow create, update: if canEdit();
+      allow delete: if isAdmin();
+    }
+    match /catalogs/{doc=**} {
+      allow read:  if isAdmin() || isManager();
+      allow write: if canEdit();
+    }
+
+    // operational collections (previously missing → were default-denied)
+    match /signoffs/{id} {
+      allow read:   if isAdmin() || isManager() || ownsCart(resource.data.cartId);
+      allow create: if signedIn() && (canEdit() || ownsCart(request.resource.data.cartId))
+                       && request.resource.data.uid == request.auth.uid;   // can't forge another's signoff
+      allow update, delete: if false;                                       // sign-offs are immutable events
+    }
+    match /inspections/{id} {
+      allow read:   if isAdmin() || isManager() || ownsCart(resource.data.cartId);
+      allow create: if canEdit();
+      allow update, delete: if false;
+    }
+    match /requests/{id} {
+      allow read:   if isAdmin() || isManager() || ownsCart(resource.data.cartId);
+      allow create: if signedIn() && (canEdit() || ownsCart(request.resource.data.cartId))
+                       && request.resource.data.by == request.auth.uid
+                       && request.resource.data.status == 'pending';
+      // approve/reject: a manager/admin, OR a different user (second pair of eyes), only from pending
+      allow update: if (canEdit() || (signedIn() && resource.data.by != request.auth.uid))
+                       && resource.data.status == 'pending';
+      allow delete: if isAdmin();
+    }
+    match /notifications/{id} {
+      allow read:   if isAdmin() || isManager() || (signedIn() && role() in resource.data.forRoles);
+      allow create: if signedIn();
+      allow update: if isAdmin() || isManager();   // mark-read
+      allow delete: if isAdmin();
+    }
+
+    match /versions/{id} { allow read, write: if isAdmin(); }
+    match /audit/{id} {
+      allow read:   if isAdmin();
+      allow create: if signedIn()
+                       && request.resource.data.uid == request.auth.uid
+                       && request.resource.data.email == request.auth.token.email; // can't forge identity
+      allow update, delete: if false;
+    }
+
+    // ADMIN catch-all: the program admin (by email) can read/write ANY collection,
+    // including future ones — guarantees the owner is never locked out.
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מדריך שימוש · ניהול כלים</title>
+<style>
+  :root{
+    --bg:#0f1620; --surface:#18222f; --surface2:#1f2c3c; --text:#e7eef6;
+    --muted:#9fb0c3; --blue:#3b82f6; --green:#22c55e; --red:#ef4444;
+    --amber:#f59e0b; --purple:#a78bfa; --border:#2a3a4d; --r:16px;
+    --cyan:#22d3ee; --gray:#5b6b7d;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:"Segoe UI","Arial Hebrew",Arial,system-ui,sans-serif;
+    line-height:1.65; -webkit-font-smoothing:antialiased;
+    font-size:19px;
+  }
+  .slide{
+    width:100%; min-height:100vh; display:flex; flex-direction:column;
+    justify-content:center; align-items:center;
+    padding:64px 24px; border-bottom:1px solid var(--border);
+    position:relative;
+  }
+  .wrap{width:100%; max-width:880px}
+  .kicker{
+    color:var(--blue); font-weight:800; letter-spacing:.5px;
+    font-size:18px; margin-bottom:14px; display:inline-block;
+  }
+  h1{font-size:64px; line-height:1.1; font-weight:900; letter-spacing:-1px}
+  h2{font-size:46px; line-height:1.15; font-weight:900; margin-bottom:10px}
+  h3{font-size:26px; font-weight:800; margin-bottom:6px}
+  p{font-size:21px; color:var(--text)}
+  .lead{font-size:24px; color:var(--muted); margin-top:18px}
+  .muted{color:var(--muted)}
+  .big{font-size:30px}
+  .step-num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:64px; height:64px; border-radius:50%;
+    background:var(--blue); color:#fff; font-size:30px; font-weight:900;
+    box-shadow:0 8px 24px rgba(59,130,246,.35); flex:0 0 auto;
+  }
+  .badge{
+    display:inline-block; padding:6px 16px; border-radius:999px;
+    font-size:16px; font-weight:800; border:1px solid var(--border);
+  }
+  .card{
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r); padding:26px 28px; margin-top:18px;
+  }
+  .card.alt{background:var(--surface2)}
+  .row{display:flex; gap:20px; align-items:flex-start}
+  .grid{display:grid; gap:18px}
+  .grid.two{grid-template-columns:1fr 1fr}
+  @media(max-width:680px){ .grid.two{grid-template-columns:1fr} h1{font-size:46px} h2{font-size:36px} }
+  .pill-row{display:flex; flex-wrap:wrap; gap:14px; margin-top:8px}
+  .colorcard{
+    display:flex; align-items:center; gap:18px;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r); padding:18px 22px;
+  }
+  .swatch{width:48px; height:48px; border-radius:14px; flex:0 0 auto}
+  .num-tag{
+    position:absolute; top:24px; inset-inline-start:28px;
+    color:var(--muted); font-size:15px; font-weight:700;
+    border:1px solid var(--border); border-radius:999px; padding:4px 14px;
+  }
+  .hero-icon{font-size:80px; line-height:1; margin-bottom:24px}
+  img.shot{
+    width:100%; max-width:420px; border-radius:14px;
+    border:1px solid var(--border); margin-top:22px;
+    box-shadow:0 16px 40px rgba(0,0,0,.45);
+  }
+  .center{text-align:center}
+  .btnfake{
+    display:inline-flex; align-items:center; gap:10px;
+    background:var(--blue); color:#fff; font-weight:800; font-size:20px;
+    padding:14px 28px; border-radius:14px; margin-top:10px;
+  }
+  .btnfake.green{background:var(--green)}
+  .btnfake.red{background:var(--red)}
+  .btnfake.amber{background:var(--amber); color:#1a1300}
+  .btnfake.purple{background:var(--purple); color:#190f2e}
+  ul.clean{list-style:none; margin-top:14px}
+  ul.clean li{
+    font-size:21px; padding:10px 0 10px 0; padding-inline-start:34px;
+    position:relative;
+  }
+  ul.clean li::before{
+    content:"✓"; position:absolute; inset-inline-start:0; top:10px;
+    color:var(--green); font-weight:900; font-size:22px;
+  }
+  .tip{
+    border-inline-start:4px solid var(--amber);
+    background:rgba(245,158,11,.08); padding:16px 22px; border-radius:12px;
+    margin-top:18px; font-size:19px;
+  }
+  .footer{
+    color:var(--muted); font-size:16px; text-align:center;
+    padding:40px 20px;
+  }
+  .icon-circle{
+    width:72px; height:72px; border-radius:18px; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center; font-size:36px;
+  }
+  .quote{
+    font-size:15px; color:var(--muted); margin-top:8px;
+  }
+</style>
+</head>
+<body>
+
+<!-- 1. TITLE -->
+<section class="slide center" style="background:linear-gradient(160deg,#0f1620 0%,#16202d 100%)">
+  <div class="wrap">
+    <div class="hero-icon">🛠️</div>
+    <span class="kicker">מדריך פשוט · שימוש יומי</span>
+    <h1>ניהול כלים</h1>
+    <p class="lead">המדריך שלך לעבודה היומית מהטלפון.<br>פשוט, ברור, בלי לחץ — נעבור על הכול ביחד.</p>
+    <div class="pill-row center" style="justify-content:center; margin-top:30px">
+      <span class="badge" style="color:var(--green); border-color:var(--green)">חתימה יומית</span>
+      <span class="badge" style="color:var(--blue); border-color:var(--blue)">צבעי מצב</span>
+      <span class="badge" style="color:var(--amber); border-color:var(--amber)">בקשות</span>
+      <span class="badge" style="color:var(--red); border-color:var(--red)">דיווח שבור</span>
+      <span class="badge" style="color:var(--purple); border-color:var(--purple)">דוח אישי</span>
+    </div>
+  </div>
+</section>
+
+<!-- 2. WELCOME / WHAT IS THIS -->
+<section class="slide">
+  <span class="num-tag">2</span>
+  <div class="wrap">
+    <span class="kicker">ברוכים הבאים</span>
+    <h2>מה המערכת הזו עושה בשבילך?</h2>
+    <p class="lead">זו הרשימה החיה והנושמת של ה"עגלה" שלך — תמיד מעודכנת, תמיד איתך בטלפון. במקום טבלה סטטית שצריך לעדכן ידנית, כאן המצב אמיתי ובזמן אמת.</p>
+    <div class="grid two" style="margin-top:24px">
+      <div class="card">
+        <div class="icon-circle" style="background:rgba(59,130,246,.15)">👀</div>
+        <h3 style="margin-top:14px">רואה את הכלים שלך</h3>
+        <p class="muted">כל הכלים ב"עגלה" שלך, המיקום שלהם, ומצב הכלי — במבט אחד.</p>
+      </div>
+      <div class="card">
+        <div class="icon-circle" style="background:rgba(34,197,94,.15)">📱</div>
+        <h3 style="margin-top:14px">הכול מהטלפון</h3>
+        <p class="muted">חותם, מבקש, מדווח — בלחיצות ספורות, מאיפה שאתה נמצא.</p>
+      </div>
+    </div>
+    <div class="tip">אתה <b>בעל ה"עגלה"</b> — ה"עגלה" שלך יכולה להיות עגלה ממש, ארון, או אזור עבודה. אתה צופה בה ומבצע את הפעולות היומיות. אין מה לחשוש: אתה לא יכול למחוק או לקלקל שום דבר.</div>
+  </div>
+</section>
+
+<!-- 3. LOGIN -->
+<section class="slide">
+  <span class="num-tag">3</span>
+  <div class="wrap">
+    <span class="kicker">להתחיל</span>
+    <h2>כניסה למערכת</h2>
+    <p class="lead">פותחים את הקישור בטלפון ומתחברים פעם אחת.</p>
+    <div class="row" style="margin-top:24px; flex-wrap:wrap">
+      <div style="flex:1; min-width:280px">
+        <ul class="clean">
+          <li>נכנסים עם האימייל והסיסמה שקיבלת</li>
+          <li>הטלפון יזכור אותך — לא צריך להתחבר כל יום</li>
+          <li>אם שכחת סיסמה — פנה לאחראי הכלים</li>
+        </ul>
+        <div class="tip">הקישור נשמר במסך הבית של הטלפון ונפתח כמו אפליקציה רגילה.</div>
+      </div>
+      <div style="flex:1; min-width:240px" class="center">
+        <img class="shot" src="../../lab/reports/live-login.png" alt="מסך כניסה">
+        <p class="muted" style="font-size:15px; margin-top:8px">מסך הכניסה</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. THE HOME SCREEN -->
+<section class="slide">
+  <span class="num-tag">4</span>
+  <div class="wrap">
+    <span class="kicker">מסך הבית</span>
+    <h2>זו ה"עגלה" שלך</h2>
+    <p class="lead">אחרי הכניסה אתה רואה ישר את ה"עגלה" שלך עם כל הכלים שבה.</p>
+    <div class="row" style="margin-top:22px; flex-wrap:wrap">
+      <div style="flex:1; min-width:240px" class="center">
+        <img class="shot" src="../../lab/reports/view-owner.png" alt="תצוגת בעל עגלה">
+        <p class="muted" style="font-size:15px; margin-top:8px">התצוגה שלך</p>
+      </div>
+      <div style="flex:1; min-width:280px">
+        <ul class="clean">
+          <li>שם הכלי והמזהה החקוק</li>
+          <li>המיקום — באיזו מגירה / מדף הכלי נמצא</li>
+          <li>נקודת צבע שמראה את מצב הכלי</li>
+          <li>חיפוש מהיר לפי שם או מזהה</li>
+        </ul>
+        <div class="tip">אתה רואה רק את ה"עגלה" שלך — זו בדיוק התצוגה שאתה צריך, בלי הסחות דעת.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. DAILY SIGN-OFF (the most important) -->
+<section class="slide" style="background:linear-gradient(160deg,#0f1620,#13201a)">
+  <span class="num-tag">5</span>
+  <div class="wrap">
+    <span class="kicker" style="color:var(--green)">הפעולה הכי חשובה ביום</span>
+    <h2>חתימה יומית ✍️</h2>
+    <p class="lead">אם ה"עגלה" שלך דורשת חתימה יומית — פעם אחת בכל יום עבודה אתה בודק וחותם. זהו.</p>
+    <div class="card" style="border-color:var(--green)">
+      <div class="row">
+        <span class="step-num" style="background:var(--green); box-shadow:0 8px 24px rgba(34,197,94,.35)">1</span>
+        <div>
+          <h3>פתח את ה"עגלה"</h3>
+          <p class="muted">תסתכל שהכול במקום ותקין.</p>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="border-color:var(--green)">
+      <div class="row">
+        <span class="step-num" style="background:var(--green); box-shadow:0 8px 24px rgba(34,197,94,.35)">2</span>
+        <div>
+          <h3>לחץ על הכפתור הירוק</h3>
+          <span class="btnfake green">✍️ חתימה על ה"עגלה" היום</span>
+        </div>
+      </div>
+    </div>
+    <div class="tip" style="border-color:var(--green); background:rgba(34,197,94,.08)">
+      <b>שים לב:</b> ביום <b>שישי ושבת</b> אין צורך בחתימה כלל. בשאר ימי העבודה — פשוט תחתום בבוקר. החתימה רושמת באופן תפעולי שה"עגלה" נבדקה היום.
+    </div>
+  </div>
+</section>
+
+<!-- 6. CLOSET SIGN-OFF (separate flow) -->
+<section class="slide">
+  <span class="num-tag">6</span>
+  <div class="wrap">
+    <span class="kicker" style="color:var(--cyan)">פעולה נפרדת</span>
+    <h2>חתימה על ארון מחלקתי 🗄️</h2>
+    <p class="lead">לפעמים תתבקש (בהתראה מאחראי הכלים או ממנהל המערכת / בעל הכלים) לבדוק ולחתום על <b>ארון מחלקתי</b>. זו פעולה <b>נפרדת ושונה</b> מהחתימה על ה"עגלה".</p>
+    <div class="grid two" style="margin-top:22px">
+      <div class="card">
+        <h3>מתי זה קורה</h3>
+        <ul class="clean">
+          <li>מקבל התראה לבדוק ארון מסוים</li>
+          <li>בודק שהארון תקין ומסודר</li>
+          <li>חותם בזרימה ייעודית לארון</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>חשוב לדעת</h3>
+        <p class="muted">חתימה על ארון היא לא חתימה על ה"עגלה" שלך, ולהיפך — שתי פעולות שונות לגמרי. לא כל ארון דורש חתימה יומית; חלקם כן, וזה מסומן בנפרד.</p>
+      </div>
+    </div>
+    <div class="tip" style="border-color:var(--cyan); background:rgba(34,211,238,.08)">גם בשישי ושבת — אין חתימות, גם לא על ארונות.</div>
+  </div>
+</section>
+
+<!-- 7. STATUS COLORS - intro -->
+<section class="slide">
+  <span class="num-tag">7</span>
+  <div class="wrap">
+    <span class="kicker" style="color:var(--blue)">להבין את הצבעים</span>
+    <h2>צבעי המצב — לכל מצב צבע משלו</h2>
+    <p class="lead">לכל מצב של כלי יש <b>צבע אחד ייחודי</b> — אין שני מצבים שחולקים את אותו צבע. הצבע ליד הכלי אומר לך הכול במבט. אין צורך לזכור תאריכים — הצבע עושה את העבודה.</p>
+  </div>
+</section>
+
+<!-- 8. STATUS COLORS - the legend (one colour per status) -->
+<section class="slide">
+  <span class="num-tag">8</span>
+  <div class="wrap">
+    <span class="kicker" style="color:var(--blue)">מקרא הצבעים</span>
+    <h2>צבע אחד לכל מצב</h2>
+    <div class="grid" style="margin-top:22px">
+      <div class="colorcard">
+        <span class="swatch" style="background:var(--green)"></span>
+        <div><h3>ירוק — תקין</h3><p class="muted">הכלי מכויל ובתוקף. אין מה לעשות.</p></div>
+      </div>
+      <div class="colorcard">
+        <span class="swatch" style="background:var(--amber)"></span>
+        <div><h3>כתום — מתקרב לסוף תוקף</h3><p class="muted">נכנסים ל-30 הימים האחרונים. עכשיו נפתחת לך האפשרות לבקש שליחה לכיול.</p></div>
+      </div>
+      <div class="colorcard">
+        <span class="swatch" style="background:var(--red)"></span>
+        <div><h3>אדום — פג תוקף</h3><p class="muted">הכיול פג. צריך לשלוח לכיול — נראה איך בשקף הבא.</p></div>
+      </div>
+      <div class="colorcard">
+        <span class="swatch" style="background:var(--purple)"></span>
+        <div><h3>סגול — בכיול</h3><p class="muted">הכלי נמצא כרגע בתהליך כיול — לא ב"עגלה".</p></div>
+      </div>
+      <div class="colorcard">
+        <span class="swatch" style="background:var(--cyan)"></span>
+        <div><h3>תכלת — שבור</h3><p class="muted">הכלי מסומן כשבור. מצב נפרד לגמרי מ"בכיול" — צבע שונה לחלוטין.</p></div>
+      </div>
+      <div class="colorcard">
+        <span class="swatch" style="background:var(--gray)"></span>
+        <div><h3>אפור — לא דורש כיול</h3><p class="muted">כלי רגיל שלא צריך כיול בכלל.</p></div>
+      </div>
+    </div>
+    <div class="tip" style="border-color:var(--blue); background:rgba(59,130,246,.08)"><b>"בכיול" ו"שבור" הם שני צבעים שונים</b> — לעולם לא אותו צבע. כך אי אפשר להתבלבל.</div>
+  </div>
+</section>
+
+<!-- 9. REQUEST CALIBRATION -->
+<section class="slide">
+  <span class="num-tag">9</span>
+  <div class="wrap">
+    <span class="kicker" style="color:var(--blue)">משימה</span>
+    <h2>בקשת שליחה לכיול 🔧</h2>
+    <p class="lead">כשכלי נכנס ל-30 הימים האחרונים לתוקף, נפתח לך כפתור לבקש לשלוח אותו לכיול.</p>
+    <div class="card">
+      <div class="row"><span class="step-num">1</span><div><h3>פתח את חלון הבקשה</h3><p class="muted">תראה רשימה של הכלים המכוילים שלך עם התאריכים.</p></div></div>
+    </div>
+    <div class="card">
+      <div class="row"><span class="step-num">2</span><div><h3>בחר מה לשלוח</h3><p class="muted">אפשר לסמן רק את מה שפג / קרוב, או לבחור הכול.</p></div></div>
+    </div>
+    <div class="card">
+      <div class="row"><span class="step-num">3</span><div><h3>שלח בקשה</h3><span class="btnfake">🔧 בקש שליחה לכיול</span></div></div>
+    </div>
+    <div class="tip">הבקשה נשלחת לאחראי הכלים או למנהל המערכת / בעל הכלים לאישור. אחרי אישור — נפתח "חוסר מאושר" והכלי נשלח לכיול. אתה לא צריך לעשות עוד כלום.</div>
+  </div>
+</section>
+
+<!-- 10. WHY CALIBRATION MATTERS -->
+<section class="slide">
+  <span class="num-tag">10</span>
+  <div class="wrap">
+    <span class="kicker" style="color:var(--amber)">למה זה משנה</span>
+    <h2>למה לא להשתמש בכלי לא מכויל?</h2>
+    <div class="card alt" style="border-color:var(--amber)">
+      <p class="big">כלי לא מכויל <b>"מזייף"</b>.</p>
+      <p class="muted" style="margin-top:10px; font-size:21px">שימוש בכלי שאיבד כיול הוא כמו לעבוד עם מדידה שגויה — זה מוביל ל<b>חוסר דיוק בעבודה</b> ועלול לגרום <b>נזק לציוד</b>. בדיוק בגלל זה הצבעים שם — שתמיד תדע מה אפשר להפעיל.</p>
+    </div>
+    <div class="tip" style="border-color:var(--amber)">המסר פשוט: אם הכלי אדום — אל תשתמש בו לפני שעבר כיול. שלח בקשה, וזה יטופל.</div>
+  </div>
+</section>
+
+<!-- 11. REQUEST EXTERNAL USE -->
+<section class="slide">
+  <span class="num-tag">11</span>
+  <div class="wrap">
+    <span class="kicker" style="color:var(--amber)">משימה</span>
+    <h2>בקשת כלי לשימוש בחוץ 📍</h2>
+    <p class="lead">צריך להוציא כלי מה"עגלה" לשימוש מחוץ למחלקה? מבקשים אישור ומציינים לאן.</p>
+    <div class="card alt">
+      <div class="row"><span class="step-num" style="background:var(--amber); color:#1a1300; box-shadow:0 8px 24px rgba(245,158,11,.35)">1</span><div><h3>בחר את הכלי</h3><p class="muted">הקש על הכלי שאתה צריך להוציא.</p></div></div>
+    </div>
+    <div class="card alt">
+      <div class="row"><span class="step-num" style="background:var(--amber); color:#1a1300; box-shadow:0 8px 24px rgba(245,158,11,.35)">2</span><div><h3>כתוב לאן הוא הולך</h3><p class="muted">הסיבה היא <b>המיקום</b> — לאיזה אזור / מכונה הכלי יוצא. זה חובה.</p></div></div>
+    </div>
+    <div class="card alt">
+      <div class="row"><span class="step-num" style="background:var(--amber); color:#1a1300; box-shadow:0 8px 24px rgba(245,158,11,.35)">3</span><div><h3>שלח לאישור</h3><span class="btnfake amber">📍 בקש הוצאת כלי</span></div></div>
+    </div>
+    <div class="tip" style="border-color:var(--amber)">אחרי אישור, הכלי מסומן כ"חוסר מאושר" עם המיקום שכתבת — כך כולם יודעים איפה הוא.</div>
+  </div>
+</section>
+
+<!-- 12. REPORT BROKEN -->
+<section class="slide" style="background:linear-gradient(160deg,#0f1620,#1c1416)">
+  <span class="num-tag">12</span>
+  <div class="wrap">
+    <span class="kicker" style="color:var(--red)">משימה</span>
+    <h2>דיווח על כלי שבור 🚨</h2>
+    <p class="lead">כלי נשבר או התקלקל? מדווחים מיד — שני קליקים והעניין בידיים טובות.</p>
+    <div class="grid two" style="margin-top:22px">
+      <div class="card" style="border-color:var(--red)">
+        <h3>איך מדווחים</h3>
+        <ul class="clean">
+          <li>בוחרים את הכלי</li>
+          <li>לוחצים "הצהר כשבור"</li>
+          <li>זהו — שלחת התראה</li>
+        </ul>
+        <span class="btnfake red" style="margin-top:6px">🚨 הצהר כלי כשבור</span>
+      </div>
+      <div class="card" style="border-color:var(--red)">
+        <h3>מה קורה אחר כך</h3>
+        <ul class="clean">
+          <li>נשלחת התראה לאחראים מיד</li>
+          <li>הכלי נכנס לדוח שבורים עם המזהה</li>
+          <li>ידאגו לכלי מחליף או להשלמה מהמלאי</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tip" style="border-color:var(--red); background:rgba(239,68,68,.08)">לא צריך להתנצל ולא להסביר הרבה — עדיף לדווח מיד מאשר לחכות.</div>
+  </div>
+</section>
+
+<!-- 13. EXPORT REPORT -->
+<section class="slide">
+  <span class="num-tag">13</span>
+  <div class="wrap">
+    <span class="kicker" style="color:var(--purple)">לקחת איתך</span>
+    <h2>הוצאת הדוח האישי שלך 📄</h2>
+    <p class="lead">צריך רשימה מסודרת של כל הכלים ב"עגלה"? אפשר להוציא דוח בלחיצה.</p>
+    <div class="card" style="border-color:var(--purple)">
+      <div class="row">
+        <span class="icon-circle" style="background:rgba(167,139,250,.15)">📄</span>
+        <div>
+          <h3>דוח "עגלה" אישי</h3>
+          <p class="muted">הדוח כולל את כל הכלים שלך, המיקומים ומצב כל כלי — מוכן להדפסה או לשליחה.</p>
+          <span class="btnfake purple" style="margin-top:10px">📄 הוצא דוח אישי</span>
+        </div>
+      </div>
+    </div>
+    <div class="tip" style="border-color:var(--purple)">אתה יכול להוציא דוח רק על ה"עגלה" שלך — וזה בדיוק מה שאתה צריך.</div>
+  </div>
+</section>
+
+<!-- 14. CHEAT SHEET -->
+<section class="slide" style="background:linear-gradient(160deg,#16202d,#0f1620)">
+  <span class="num-tag">14</span>
+  <div class="wrap">
+    <span class="kicker">לסיכום</span>
+    <h2>הכול במקום אחד</h2>
+    <div class="grid two" style="margin-top:24px">
+      <div class="card"><div class="row"><span class="icon-circle" style="background:rgba(34,197,94,.15)">✍️</span><div><h3>כל יום עבודה</h3><p class="muted">חתום על ה"עגלה" (לא בשישי/שבת).</p></div></div></div>
+      <div class="card"><div class="row"><span class="icon-circle" style="background:rgba(34,211,238,.15)">🗄️</span><div><h3>ארון</h3><p class="muted">אם התבקשת — חתום בזרימה נפרדת.</p></div></div></div>
+      <div class="card"><div class="row"><span class="icon-circle" style="background:rgba(59,130,246,.15)">🎨</span><div><h3>צבעים</h3><p class="muted">לכל מצב צבע משלו — שונה ובולט.</p></div></div></div>
+      <div class="card"><div class="row"><span class="icon-circle" style="background:rgba(59,130,246,.15)">🔧</span><div><h3>כיול</h3><p class="muted">בקש שליחה לכלי אדום / כתום.</p></div></div></div>
+      <div class="card"><div class="row"><span class="icon-circle" style="background:rgba(245,158,11,.15)">📍</span><div><h3>הוצאה</h3><p class="muted">בקש כלי לשימוש בחוץ — ציין מיקום.</p></div></div></div>
+      <div class="card"><div class="row"><span class="icon-circle" style="background:rgba(239,68,68,.15)">🚨</span><div><h3>שבור</h3><p class="muted">דווח מיד — נשלחת התראה.</p></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 15. REASSURANCE / CLOSING -->
+<section class="slide center" style="background:linear-gradient(160deg,#0f1620,#13201a)">
+  <div class="wrap">
+    <div class="hero-icon">👍</div>
+    <h2>זהו — אתה מוכן</h2>
+    <p class="lead">אי אפשר לטעות. אתה רואה רק את ה"עגלה" שלך, ולא יכול למחוק או לשבור שום דבר. אם משהו לא ברור — שאל את אחראי הכלים או את מנהל המערכת / בעל הכלים, הם פה בשבילך.</p>
+    <div class="pill-row center" style="justify-content:center; margin-top:28px">
+      <span class="badge" style="color:var(--green); border-color:var(--green)">חותם בימי עבודה</span>
+      <span class="badge" style="color:var(--blue); border-color:var(--blue)">קורא צבעים</span>
+      <span class="badge" style="color:var(--amber); border-color:var(--amber)">מבקש כשצריך</span>
+      <span class="badge" style="color:var(--red); border-color:var(--red)">מדווח מיד</span>
+    </div>
+    <p class="lead" style="margin-top:30px; color:var(--text)"><b>בהצלחה! 🛠️</b></p>
+  </div>
+</section>
+
+<div class="footer">ניהול כלים · מדריך שימוש · תצוגה לנייד</div>
+
+</body>
+</html>
