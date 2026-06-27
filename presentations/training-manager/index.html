@@ -185,6 +185,9 @@
       <img src="../../lab/reports/win-manager.png" alt="מעבר בין חלונות">
       <div class="cap">מעבר בין חלון הניהול הראשי לתצוגת "המיכלים שלי"</div>
     </div>
+    <div class="note blue">מהמסך הראשי יש גם כפתור <span class="kbd">📊 לוח ניהול ›</span> שפותח
+      תצוגת גרפים <strong>לקריאה בלבד</strong> על המלאי שבאחריותך (פירוט בהמשך). זו אינה פעולת מערכת —
+      פעולות המערכת של מנהל המערכת מוסתרות ממך לחלוטין.</div>
   </div>
 </section>
 
@@ -384,6 +387,80 @@
   </div>
 </section>
 
+<!-- 11b · MANAGEMENT DASHBOARD (read-only graphs for HIS scope) -->
+<section class="slide" id="dash">
+  <div class="wrap">
+    <span class="kicker">חדש · לוח ניהול</span>
+    <h2>לוח ניהול — גרפים על המלאי שבאחריותך</h2>
+    <p class="lead">מהמסך הראשי יש כפתור <span class="kbd">📊 לוח ניהול ›</span> שפותח לך תצוגת
+      גרפים <strong>לקריאה בלבד</strong>. אין כאן עריכה — זו תמונת מצב חיה של המלאי
+      <strong>שבאחריותך</strong>, כדי לראות איפה צריך לטפל.</p>
+    <div class="grid g3">
+      <div class="card">
+        <span class="badge b-teal">עוגה</span>
+        <h3 style="margin-top:12px">חתימות להיום</h3>
+        <p class="muted">פילוח "נחתמו" מול "לא נחתמו" של המיכלים שדורשים חתימה היום —
+          בעוגת SVG פשוטה, עם תאריך היום. עוגה אדומה ב-09:00 פירושה "היום, עדיין בתהליך".</p>
+      </div>
+      <div class="card s2">
+        <span class="badge b-blue">עוגה</span>
+        <h3 style="margin-top:12px">סטטוס כיול</h3>
+        <p class="muted">פילוח חזותי של מצבי הכיול בכלים שלך: תקין, לקראת פקיעה, פג תוקף,
+          בכיול — כל סטטוס בצבע שלו (זהה לצבעי הכרטיס בהמשך).</p>
+      </div>
+      <div class="card">
+        <span class="badge b-red">כרטיס</span>
+        <h3 style="margin-top:12px">בעיות בכלים</h3>
+        <p class="muted">מספר גדול = כמה כלים דורשים טיפול (שבור / נדחה / לא ידוע / חוסר /
+          כיול שפג). לחיצה מסננת אותך לרשימת הכלים הרלוונטית כדי לטפל.</p>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:24px">
+      <div class="note green">בנוסף לעוגות: תורי טיפול לקריאה — כיול שמתקרב לפקיעה (ממוין),
+        מיכלים "אדומים", וחתימות שחסרו — כל שורה מציינת את <strong>האחראי</strong> הרלוונטי.</div>
+      <div class="note blue">הלוח הוא <strong>צפייה בלבד</strong>. הוא לא מחליף את העבודה במסך הראשי —
+        הוא מכוון אותך אליה. ניווט מהלוח אל הרשימות אינו דורש סיסמה.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 11c · WHAT YOU DON'T SEE — stations admin-only, restricted carts, freeze -->
+<section class="slide" id="scope">
+  <div class="wrap">
+    <span class="kicker">חשוב להבין · גבולות התצוגה</span>
+    <h2>מה אינך רואה — והמספרים שלך הם תת-קבוצה במכוון</h2>
+    <p class="lead">חלק מהכלים <strong>מוסתרים ממך בכוונת מתכנן</strong>. לכן ייתכן שהמספרים
+      שלך יהיו נמוכים מאלה של <strong>מנהל המערכת / בעל הכלים</strong> — וזה תקין לחלוטין.</p>
+    <div class="grid g3">
+      <div class="card">
+        <span class="badge b-gray">למנהל המערכת בלבד</span>
+        <h3 style="margin-top:12px">🏗️ תחנת בנייה</h3>
+        <p class="muted">כלים שזה עתה הועלו/יובאו <strong>ממתינים</strong> שם עד שמנהל המערכת
+          בודק ו"משחרר אותם לחי". <strong>לא רואה אותם</strong> — לא ברשימות ולא בגרפים.</p>
+      </div>
+      <div class="card s2">
+        <span class="badge b-gray">למנהל המערכת בלבד</span>
+        <h3 style="margin-top:12px">🕵️ תחנת בעיות נסתרות</h3>
+        <p class="muted">מנהל המערכת יכול <strong>לשלוח לשם כלי בעייתי</strong> כדי שיוסתר מהאחראים —
+          הכלי שומר על הסטטוס האמיתי שלו, אבל אינו מופיע אצלך.</p>
+      </div>
+      <div class="card">
+        <span class="badge b-purple">נקבע ביצירה</span>
+        <h3 style="margin-top:12px">🔒 מיכל מוגבל</h3>
+        <p class="muted">בעת יצירת מיכל מנהל המערכת בוחר "נראה לכולם" או "מוגבל" + צופים מורשים.
+          מיכל מוגבל שאינך מורשה לו <strong>לא יופיע</strong> בתצוגה ובגרפים שלך.</p>
+      </div>
+    </div>
+    <div class="note blue" style="margin-top:24px">השורה התחתונה: הרשימות והגרפים שלך מציגים
+      <strong>רק את המלאי שבאחריותך — ללא התחנות הפנימיות וללא מיכלים מוגבלים שאינך מורשה להם.</strong>
+      אם מספר אצלך שונה ממנהל המערכת, זה בגלל ההפרדה הזו, לא תקלה.</div>
+    <div class="note red" style="margin-top:18px"><strong>🧊 הקפאת עריכות:</strong> למנהל המערכת יש
+      מתג שמקפיא עריכות בכל המערכת. כשהוא פעיל — <strong>פעולות עריכה ומבנה שלך נחסמות</strong> (גם ברמת
+      הכללים, לא רק במסך). <strong>חתימה יומית, הצהרה על שבור ובקשת כיול ממשיכות לעבוד כרגיל</strong> —
+      הזרם התפעולי לא נחסם. אם עריכה נחסמת פתאום — ייתכן שהמערכת בהקפאה; פנה למנהל המערכת.</div>
+  </div>
+</section>
+
 <!-- 12 · STATUS LEGEND -->
 <section class="slide">
   <div class="wrap">
@@ -436,7 +513,7 @@
     <h2>זהו — אתה מוכן לנהל</h2>
     <p class="lead" style="margin-inline:auto">שני חלונות, מספר מיכלים תחת המחלקה, והכל בענן חי.
       ערוך כלים, נהל מלאי ארונות, החלף מיקום ידוע/לא-ידוע, חתום על "עגלות" וארונות,
-      אשר בקשות, הוסף משתמשים ובקש שדרוג.</p>
+      אשר בקשות, הוסף משתמשים ובקש שדרוג — וקרא את לוח הניהול לראות איפה לטפל.</p>
     <div class="pill-row" style="justify-content:center;margin-top:30px">
       <span class="badge b-blue">1 · עריכה</span>
       <span class="badge b-gray">2 · ידוע/לא-ידוע</span>
@@ -444,6 +521,11 @@
       <span class="badge b-teal">4 · חתימות</span>
       <span class="badge b-green">5 · אישורים</span>
       <span class="badge b-purple">6 · משתמשים ושדרוג</span>
+    </div>
+    <div class="pill-row" style="justify-content:center;margin-top:14px">
+      <span class="badge b-teal">📊 לוח ניהול · קריאה בלבד</span>
+      <span class="badge b-gray">המספרים שלך = תת-קבוצה במכוון</span>
+      <span class="badge b-red">🧊 הקפאה עלולה לחסום עריכה</span>
     </div>
     <div class="foot" style="border:0;margin-top:46px">ניהול כלים · מערכת ענן חיה · בכל שאלה — פנה אל מנהל המערכת / בעל הכלים</div>
   </div>

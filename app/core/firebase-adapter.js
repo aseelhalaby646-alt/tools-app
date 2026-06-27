@@ -2,28 +2,37 @@
 // db shape the app/model already use, resolve the signed-in user's role, and
 // expose entity writers (used by import + edits). Same db shape as LocalAdapter.
 import { fdb } from './firebase.js';
-import { collection, getDocs, doc, getDoc, setDoc, deleteDoc, writeBatch }
+import { collection, getDocs, doc, getDoc, setDoc, deleteDoc, writeBatch, query, where }
   from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
 import { newDb } from './model.js';
 import { isAdminEmail } from './admins.js';
 import { ROLES } from './permissions.js';
 
 const COLLECTIONS = ['departments', 'locations', 'carts', 'drawers', 'tools', 'users', 'orders',
-  'signoffs', 'inspections', 'requests', 'notifications', 'versions', 'audit'];
+  'signoffs', 'inspections', 'requests', 'transfers', 'notifications', 'versions', 'audit'];
 
 // Read everything the signed-in user is allowed to see (security rules enforce scope).
-export async function loadDb() {
+export async function loadDb(actor) {
   const db = newDb();
   db._mkId = () => doc(collection(fdb, '_ids')).id;   // Firestore auto-id factory — collision-proof (ISS-4)
+  const nonAdmin = actor && actor.role && actor.role !== ROLES.ADMIN;
   for (const name of COLLECTIONS) {
     try {
-      const snap = await getDocs(collection(fdb, name));
+      // non-admins may only read LIVE tools (station rule); the query must match the rule or it is denied.
+      const src = (name === 'tools' && nonAdmin)
+        ? query(collection(fdb, 'tools'), where('stage', '==', 'live'))
+        : collection(fdb, name);
+      const snap = await getDocs(src);
       db[name] = snap.docs.map(d => ({ id: d.id, ...d.data() })); // keep the Firestore doc id (ISS-4)
     } catch (e) {
       if (e && e.code === 'permission-denied') { db[name] = []; continue; } // role denied this collection — fine
       throw new Error(`טעינת ${name} נכשלה: ${e && e.message ? e.message : e}`); // fail loud, not silent (ISS-2)
     }
   }
+  try {                                                   // edit-gate + freeze config (admin-only doc)
+    const sd = await getDoc(doc(fdb, 'config', 'security'));
+    if (sd.exists()) db.security = { ...db.security, ...sd.data() };
+  } catch (e) { /* missing / permission-denied → keep the default db.security */ }
   return db;
 }
 

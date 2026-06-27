@@ -2,14 +2,14 @@
 // Type letter is a PREFIX, the code is N alphanumeric chars AFTER it (A–Z, 0–9).
 //   Location : L + 4 alnum                         e.g. L0042 / LA1B2  (+ Hebrew display name)
 //   Container: C + 4 alnum (cart) / B + 4 alnum (closet)   e.g. C0001 / B0007
-//   Drawer/shelf : containerId + '-' + 2 alnum      e.g. C0001-A1
-//   Tool : drawerId + '-' + 4 alnum                 e.g. C0001-A1-0001
-// Alphanumeric = uppercase A–Z and digits 0–9.
+//   Drawer/shelf : containerId + '-' + 1 alnum      e.g. C0001-A  (single engraved letter/digit a–h, 1–8)
+//   Tool : drawerId + '-' + 4 alnum                 e.g. C0001-A-0001
+// Alphanumeric = uppercase A–Z and digits 0–9. Drawer code is ONE character only.
 
 export const RE_LOCATION  = /^L[A-Z0-9]{4}$/;
 export const RE_CONTAINER = /^[CB][A-Z0-9]{4}$/;          // C = cart, B = closet
-export const RE_DRAWER     = /^[CB][A-Z0-9]{4}-[A-Z0-9]{2}$/;
-export const RE_TOOL       = /^[CB][A-Z0-9]{4}-[A-Z0-9]{2}-[A-Z0-9]{4}$/;
+export const RE_DRAWER     = /^[CB][A-Z0-9]{4}-[A-Z0-9]$/;
+export const RE_TOOL       = /^[CB][A-Z0-9]{4}-[A-Z0-9]-[A-Z0-9]{4}$/;
 
 const ALNUM = /^[A-Z0-9]+$/;
 // normalise a code to exactly `len` uppercase alnum chars; numbers are zero-padded.
@@ -28,7 +28,7 @@ export const closetIdStr = (c) => containerIdStr('closet', c);
 
 export function drawerIdStr(containerId, suffix) {
   if (!RE_CONTAINER.test(containerId)) throw new Error(`bad containerId: ${containerId}`);
-  return containerId + '-' + code(suffix, 2);
+  return containerId + '-' + code(suffix, 1);
 }
 export function toolIdStr(drawerId, suffix) {
   if (!RE_DRAWER.test(drawerId)) throw new Error(`bad drawerId: ${drawerId}`);

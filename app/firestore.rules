@@ -12,8 +12,16 @@ service cloud.firestore {
     function hasUserDoc() { return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)); }
     function role() { return isAdmin() ? 'admin' : (hasUserDoc() ? userDoc().role : 'none'); }
     function isManager() { return role() == 'manager'; }
-    function canEdit() { return isAdmin() || isManager(); }
+    // freeze-edits kill-switch (req 8): when config/security.frozen, only the admin may edit.
+    function frozen() { return exists(/databases/$(database)/documents/config/security)
+                          && get(/databases/$(database)/documents/config/security).data.frozen == true; }
+    function canEdit() { return isAdmin() || (isManager() && !frozen()); }
     function ownsCart(cartId) { return hasUserDoc() && (cartId in userDoc().ownedCartIds); }
+    // a tool is "live" (visible to non-admins) unless it is parked in a station (req 5/6):
+    function liveStage(d) { return !('stage' in d) || d.stage == 'live'; }
+
+    // edit-gate config (hash + frozen flag) — ADMIN ONLY, so the hash never leaks to a manager.
+    match /config/security { allow read, write: if isAdmin(); }
 
     // connection test — any signed-in user may ping (write their own diagnostics doc)
     match /_diagnostics/{id} {
@@ -47,8 +55,18 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     match /tools/{id} {
-      allow read:  if isAdmin() || isManager() || ownsCart(resource.data.cartId);
+      // REAL station enforcement (req 6): a manager/owner may read a tool only when it is LIVE —
+      // staged (build) and hidden tools are admin-only. Non-admin queries must filter stage=='live'.
+      allow read:  if isAdmin()
+                   || (isManager() && liveStage(resource.data))
+                   || (ownsCart(resource.data.cartId) && liveStage(resource.data));
       allow create, update: if canEdit();
+      allow delete: if isAdmin();
+    }
+    match /transfers/{id} {
+      allow read:   if isAdmin() || isManager() || ownsCart(resource.data.cartId);
+      allow create: if canEdit();
+      allow update: if canEdit() || signedIn();   // dual-signature: each party signs its part
       allow delete: if isAdmin();
     }
     match /orders/{id} {

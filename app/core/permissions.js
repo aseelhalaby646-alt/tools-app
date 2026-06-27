@@ -38,6 +38,7 @@ export const ACTIONS = Object.freeze({
   VIEW_AUDIT: 'view_audit',
   EXPORT_ALPHA: 'export_alpha',
   MANAGE_VERSIONS: 'manage_versions',         // rollback / restore
+  MANAGE_STATIONS: 'manage_stations',         // build / hidden-problems stations (admin only)
   EDIT_PROGRAM: 'edit_program',
   // --- operational workflows ---
   SIGN_CART: 'sign_cart',                     // daily owner sign-off

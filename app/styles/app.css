@@ -116,9 +116,30 @@ tr.row-shortage{background:rgba(103,232,249,.05)}
 .impbox textarea{flex:1;padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:12.5px;resize:vertical}
 .impbox button{padding:9px 14px;border:0;border-radius:9px;background:var(--surface2);border:1px solid var(--line);color:var(--txt);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
 .flash{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);color:#86efac;border-radius:12px;padding:11px 14px;margin:6px 0;font-size:13.5px;font-weight:600}
-.viewsw{display:flex;gap:8px;margin:10px 0 2px}
+.viewsw{display:flex;gap:8px;margin:10px 0 2px;flex-wrap:wrap}
 .viewsw a{font-size:13px;font-weight:700;text-decoration:none;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:8px 15px;background:var(--surface);cursor:pointer}
 .viewsw a.on{color:#fff;background:var(--brand);border-color:var(--brand)}
+.viewsw a.ghost{color:var(--brand);background:transparent;border-style:dashed}
+/* admin work-mode controls + nav badge */
+.topbar{flex-wrap:wrap}
+.modebtn{margin-inline-start:10px;font-size:12px;font-weight:700;padding:7px 13px;border-radius:999px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--txt)}
+.modebtn.enter{background:var(--brand);border-color:var(--brand);color:#fff}
+.modebtn.back{background:var(--surface2)}
+.modechip{margin-inline-start:10px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;background:var(--surface2);color:var(--txt)}
+.navbadge{display:inline-block;min-width:18px;padding:0 5px;border-radius:999px;background:var(--brand);color:#fff;font-size:11px;line-height:17px;text-align:center;margin-inline-start:4px}
+/* management dashboard — charts + problems card */
+.charts{display:grid;grid-template-columns:1fr;gap:14px;margin:8px 0}
+@media(min-width:560px){.charts{grid-template-columns:1fr 1fr}}
+.chartcard{display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.chartcard h4{margin:0;font-size:13px;color:var(--mut)}
+.legend{display:flex;flex-direction:column;gap:4px;width:100%}
+.lg{display:flex;align-items:center;gap:8px;font-size:13px}
+.lg .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.lg .lv{margin-inline-start:auto;color:var(--mut)}
+.probcard{display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;width:100%;text-align:start;color:var(--txt)}
+.probcard.bad{border-color:#c62828}
+.probcard.good{cursor:default}
+.probcard .pn{font-size:32px;font-weight:800}
 .btn-prim{padding:10px 16px;border:0;border-radius:10px;background:var(--brand);color:#fff;font-weight:700;font-size:14px;cursor:pointer}
 .btn-prim:disabled{opacity:.5}
 .notif{display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid var(--line);font-size:13.5px}

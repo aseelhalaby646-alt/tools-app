@@ -3,14 +3,14 @@
 // approved shortages, broken declaration, unknown-location tools.
 // Pure + testable. All "today" inputs are injectable for deterministic tests.
 import { ROLES, ACTIONS, canPerform } from './permissions.js';
-import { PermissionError, ValidationError, calibrationStatus, removeUser } from './model.js';
+import { PermissionError, ValidationError, calibrationStatus, removeUser, STAGES } from './model.js';
 import { toDay, isoDay, daysBetween, today as utcToday, DAY_MS as DAY } from './dates.js';
 import { toolIdStr, nextToolSeq } from './ids.js';
 
 export const SPECIAL = Object.freeze({ CAL: 'כיול', BROKEN: 'שבור', SHORTAGE: 'חוסר', UNKNOWN: 'לא ידוע', REJECT: 'פסילה' });
 // Unknown-location tools live under a reserved cart/drawer so their ids are
 // grammar-valid (isToolId) and cart-scoped rules/queries can see them (ISS-4).
-const UNKNOWN_CART = 'C0000', UNKNOWN_DRAWER = 'C0000-UN';
+const UNKNOWN_CART = 'C0000', UNKNOWN_DRAWER = 'C0000-U';   // reserved drawer for unlocated tools (single-char code)
 
 function must(actor, action, ctx, msg) {
   if (!canPerform(actor.role, action, ctx)) throw new PermissionError(msg || `cannot ${action}`);
@@ -247,6 +247,7 @@ export function declareBroken(db, actor, toolId) {
   const t = db.tools.find(x => x.id === toolId);
   if (!t) throw new ValidationError(`tool ${toolId} not found`);
   t.loc = SPECIAL.BROKEN;
+  t.brokenSince = isoDay(utcToday());   // for the dashboard "days stuck" aging counter
   notify(db, { type: 'broken', msg: `כלי שבור: ${t.vendor} (${toolId})`, refId: toolId });
   pushAudit(db, actor, 'broken', 'tool', toolId, t.vendor);
   return t;
@@ -264,6 +265,42 @@ export function sendToRejection(db, actor, toolId) {
   t.loc = SPECIAL.REJECT;
   notify(db, { type: 'rejection', msg: `כלי נשלח לפסילה: ${t.vendor} (${toolId})` });
   pushAudit(db, actor, 'reject-loc', 'tool', toolId, t.vendor);
+  return t;
+}
+
+// ── stations (ADMIN only): build = review newly-uploaded tools; hidden = problems ──
+// A tool's stage is its access scope (separate from loc/calibration). Managers/owners
+// never see a non-live tool (model.visibleTools). loc is left UNCHANGED so a hidden
+// broken tool still reports 'broken'.
+export function releaseFromBuild(db, actor, toolId, { drawerId } = {}) {  // staged upload → live
+  must(actor, ACTIONS.MANAGE_STATIONS);
+  const t = db.tools.find(x => x.id === toolId);
+  if (!t) throw new ValidationError(`tool ${toolId} not found`);
+  if (drawerId) {                                          // optional re-home into a different drawer
+    const d = db.drawers.find(x => x.id === drawerId);
+    if (!d) throw new ValidationError(`drawer ${drawerId} not found`);
+    const c = db.carts.find(x => x.id === d.cartId);
+    t.drawerId = d.id; t.cartId = d.cartId; t.loc = c ? c.name : d.cartId;
+  }
+  t.stage = STAGES.LIVE;
+  pushAudit(db, actor, 'release', 'tool', toolId, 'build→live');
+  return t;
+}
+export function sendToHidden(db, actor, toolId) {           // hide a problem from managers
+  must(actor, ACTIONS.MANAGE_STATIONS);
+  const t = db.tools.find(x => x.id === toolId);
+  if (!t) throw new ValidationError(`tool ${toolId} not found`);
+  t.stage = STAGES.HIDDEN; t.hiddenSince = isoDay(utcToday());
+  notify(db, { type: 'hidden', msg: `כלי הועבר לבעיות נסתרות: ${t.vendor} (${toolId})`, forRoles: [ROLES.ADMIN] });
+  pushAudit(db, actor, 'hide', 'tool', toolId, t.vendor);
+  return t;
+}
+export function releaseFromHidden(db, actor, toolId) {      // hidden problem → back to visible
+  must(actor, ACTIONS.MANAGE_STATIONS);
+  const t = db.tools.find(x => x.id === toolId);
+  if (!t) throw new ValidationError(`tool ${toolId} not found`);
+  t.stage = STAGES.LIVE; delete t.hiddenSince;
+  pushAudit(db, actor, 'unhide', 'tool', toolId, t.vendor);
   return t;
 }
 

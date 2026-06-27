@@ -1,7 +1,7 @@
 // import.js — bulk import of tools from a Hebrew CSV (the integration surface).
 // Carts/drawers must already exist; the import links each tool to a drawer and
 // classifies every row as created / duplicate / error (so the source can be fixed).
-import { addTool } from './model.js';
+import { addTool, STAGES } from './model.js';
 
 // ---- CSV parsing (handles quoted fields with commas / escaped quotes) ------
 function splitLine(line) {
@@ -52,6 +52,7 @@ export function importTools(db, actor, rows) {
       cal: get(row, H.cal) === 'כן' ? 'כן' : 'לא', calDate: get(row, H.calDate),
       calID: get(row, H.calID), note: get(row, H.note),
       explicitId: (get(row, H.explicit) || get(row, 'מזהה')) || null,
+      stage: STAGES.BUILD,   // bulk-uploaded tools land in the build station for admin review
     };
     try {
       const r = addTool(db, actor, payload);

@@ -12,6 +12,20 @@ export class ValidationError extends Error {}
 
 const SPECIAL_DEFAULT = ['כיול', 'שבור', 'פסילה']; // calibration / broken / rejection (pre-deletion)
 
+// Stage = the access scope of a tool, independent of its calibration status (loc):
+//   live   — visible to everyone allowed the cart (the default)
+//   build  — newly-uploaded tool, parked in the BUILD station for admin review (admin-only)
+//   hidden — a problem tool the admin sent to the HIDDEN-problems station (admin-only)
+export const STAGES = Object.freeze({ LIVE: 'live', BUILD: 'build', HIDDEN: 'hidden' });
+export const isLive = (t) => !t.stage || t.stage === STAGES.LIVE;
+
+// cart.viewers: who may see a container. Default {scope:'all'} = back-compat (everyone allowed the cart).
+export function normalizeViewers(v) {
+  if (!v || v.scope === 'all') return { scope: 'all', uids: [] };
+  return { scope: v.scope === 'restricted' ? 'restricted' : 'all',
+           uids: Array.isArray(v.uids) ? [...new Set(v.uids)] : [] };
+}
+
 export function newDb() {
   return {
     schemaVersion: 2,
@@ -29,6 +43,7 @@ export function newDb() {
     transfers: [],   // { id, cartId, fromUid, toUid, by, sigManager, sigNewWorker, note, status }
     notifications: [],// { id, type, msg, forRoles, refId, ts, read }
     specialLocations: [...SPECIAL_DEFAULT],
+    security: { editPwdHash: '', frozen: false }, // admin edit-gate + freeze (config, not a restore-managed collection)
     _seq: 0,
   };
 }
@@ -101,12 +116,16 @@ export function addCart(db, actor, p) {
     id = ID.containerIdStr(type, number != null ? number : (used.length ? Math.max(...used) : 0) + 1);
   }
   if (db.carts.some(c => c.id === id)) throw new ValidationError(`container id ${id} exists`);
+  // only the admin may create a RESTRICTED container; a manager's containers are visible to all.
+  let viewersAtCreate = normalizeViewers(p.viewers);
+  if (viewersAtCreate.scope === 'restricted' && actor.role !== ROLES.ADMIN) viewersAtCreate = { scope: 'all', uids: [] };
   const cart = {
     id, name, desc, type, locationId, departmentId,
     requiresDailySignoff: requiresDailySignoff != null ? !!requiresDailySignoff : (type === 'cart'),
     inventoryManaged: !!inventoryManaged, generationLabel,
     ownerUids: [...ownerUids], primaryOwnerUid: primaryOwnerUid || ownerUids[0] || '',
     ownerUntil: {}, // { uid: 'YYYY-MM-DD' } — time-bound assignment; absent = permanent
+    viewers: viewersAtCreate, // { scope:'all'|'restricted', uids:[] } — who may see it
   };
   db.carts.push(cart);
   audit(db, actor, 'add', type, id, name);
@@ -220,7 +239,7 @@ export function addDrawer(db, actor, { cartId, suffix, name, desc = '' }) {
 export function addTool(db, actor, p) {
   require(actor, ACTIONS.EDIT_TOOLS);
   const { drawerId, vendor, customer = '', desc, cal = 'לא', calDate = '', calID = '',
-          note = '', explicitId = null } = p;
+          note = '', explicitId = null, stage = STAGES.LIVE } = p;
   if (!vendor || !desc) throw new ValidationError('vendor and desc are required');
   const drawer = db.drawers.find(d => d.id === drawerId);
   if (!drawer) throw new ValidationError(`drawer ${drawerId} does not exist`);
@@ -246,6 +265,7 @@ export function addTool(db, actor, p) {
     calDate: cal === 'כן' ? calDate : '',
     calID: cal === 'כן' ? calID : '',
     note,
+    stage: (stage === STAGES.BUILD || stage === STAGES.HIDDEN) ? stage : STAGES.LIVE,
   };
   db.tools.push(tool);
   audit(db, actor, 'add', 'tool', id, `${vendor} / ${desc}`);
@@ -284,18 +304,46 @@ export function calibrationStatus(tool, specialLocations = SPECIAL_DEFAULT, ref 
 }
 
 // ---- visibility (per-role scoping) ----------------------------------------
-export function visibleTools(db, actor) {
-  const allowed = visibleCartIds(actor.role, actor.ownedCartIds); // null = all
-  if (allowed === null) return db.tools;
-  const set = new Set(allowed);
-  return db.tools.filter(t => set.has(t.cartId));
+// The set of cart ids an actor may see, honouring per-cart `viewers` restrictions.
+// Unlike permissions.visibleCartIds (role-only, db-free), this is db-aware. ADMIN sees all.
+export function visibleCartIdsFor(db, actor) {
+  if (actor.role === ROLES.ADMIN) return db.carts.map(c => c.id);
+  const allowedCart = (c) => {
+    const v = c.viewers || { scope: 'all' };
+    if (v.scope === 'restricted')
+      return (c.ownerUids || []).includes(actor.uid) || (v.uids || []).includes(actor.uid);
+    return true;                                          // scope 'all' (default)
+  };
+  const base = visibleCartIds(actor.role, actor.ownedCartIds); // null = all (manager)
+  if (base === null) return db.carts.filter(allowedCart).map(c => c.id);   // manager
+  // owner: their owned carts (still subject to restriction) + any cart that GRANTS them viewing
+  const byId = new Map(db.carts.map(c => [c.id, c]));
+  const owned = base.filter(id => { const c = byId.get(id); return !c || allowedCart(c); });
+  const granted = db.carts.filter(c => c.viewers && c.viewers.scope === 'restricted'
+    && (c.viewers.uids || []).includes(actor.uid)).map(c => c.id);
+  return [...new Set([...owned, ...granted])];
 }
 
-// ---- versions (admin snapshot for rollback / alpha) -----------------------
-export function snapshotVersion(db, actor, label = '') {
+// Tools an actor may see. THE choke point for req 6: a manager/owner never sees a
+// staged (build) or hidden tool — only ADMIN does. Branch on role, not on "all".
+export function visibleTools(db, actor) {
+  if (actor.role === ROLES.ADMIN) return db.tools;        // admin: everything incl. stations
+  const set = new Set(visibleCartIdsFor(db, actor));
+  return db.tools.filter(t => set.has(t.cartId) && isLive(t));
+}
+
+// ---- versions / reset / restore (admin) -----------------------------------
+// Collections a version snapshot/restore OWNS = the inventory. A tool's current
+// status/location/calibration are FIELDS on these docs, so a snapshot captures
+// "status now" implicitly. Defined EXPLICITLY (not derived from COLLECTIONS,
+// which omits transfers) per the reset design.
+export const RESTORE_MANAGED = ['departments', 'locations', 'carts', 'drawers', 'tools', 'users', 'orders'];
+
+export function snapshotVersion(db, actor, label = '', kind = 'snapshot') {
   require(actor, ACTIONS.MANAGE_VERSIONS, {}, 'only admin may snapshot versions');
+  const manifest = {}; for (const k of RESTORE_MANAGED) manifest[k] = (db[k] || []).length;
   return {
-    ts: Date.now(), by: actor.email, label,
+    ts: Date.now(), by: actor.email, label, kind, schemaVersion: db.schemaVersion, manifest,
     data: JSON.parse(JSON.stringify({
       schemaVersion: db.schemaVersion, departments: db.departments, locations: db.locations,
       carts: db.carts, drawers: db.drawers, tools: db.tools, users: db.users, orders: db.orders,
@@ -319,6 +367,10 @@ export function editCart(db, actor, cartId, patch) {
   const c = db.carts.find(x => x.id === cartId);
   if (!c) throw new ValidationError(`container ${cartId} not found`);
   for (const k of ['name', 'desc', 'generationLabel', 'departmentId']) if (k in patch) c[k] = patch[k];
+  if ('viewers' in patch) {                                   // visibility is an admin-only control
+    if (actor.role !== ROLES.ADMIN) throw new PermissionError('only the program admin may change visibility');
+    c.viewers = normalizeViewers(patch.viewers);
+  }
   audit(db, actor, 'edit', c.type || 'cart', cartId, c.name);
   return c;
 }
@@ -345,15 +397,70 @@ export function addUser(db, actor, { uid = '', email, role = ROLES.CART_OWNER, o
   return user;
 }
 
-// ── versions / rollback (brick 15) ──────────────────────────────────────────
+// ── reset / restore engine (brick 15 + reset design) ────────────────────────
+// Compute the write/delete plan to make db's managed collections equal `source`
+// (a db-like object). DELETES are the heart of a real reset: every live doc that
+// is ABSENT from the target gets removed. Without them, "reset to Alpha (empty)"
+// leaks every existing tool/cart as a ghost. Pure — does not mutate.
+export function restorePlan(db, source) {
+  const writes = [], deletes = [];
+  for (const coll of RESTORE_MANAGED) {
+    const target = source[coll] || [];
+    const targetIds = new Set(target.map(d => d.id));
+    for (const d of target) writes.push({ coll, id: d.id, data: d });
+    for (const live of (db[coll] || [])) if (!targetIds.has(live.id)) deletes.push({ coll, id: live.id });
+  }
+  return { writes, deletes };
+}
+
+// Restore db's inventory to `source` (snapshot.data / Alpha=newDb() / Beta=seed).
+// Returns { writes, deletes } for the live (Firestore) path; mutates db in place.
+export function restoreManaged(db, actor, source, meta = {}) {
+  require(actor, ACTIONS.MANAGE_VERSIONS, {}, 'only the program admin may reset / restore');
+  if (!source) throw new ValidationError('empty restore source');
+  const plan = restorePlan(db, source);
+  for (const coll of RESTORE_MANAGED) db[coll] = JSON.parse(JSON.stringify(source[coll] || []));
+  if (source.specialLocations) db.specialLocations = JSON.parse(JSON.stringify(source.specialLocations));
+  audit(db, actor, 'restore', 'version', meta.id || '',
+    `${meta.kind || 'snapshot'} ${meta.label || ''} (+${plan.writes.length}/-${plan.deletes.length})`);
+  return plan;
+}
+
+// Back-compat: restore from a saved version object. Reuses the diff engine, so
+// it now DELETES docs added since the snapshot (the bug the design flagged).
 export function restoreVersion(db, actor, version) {
-  require(actor, ACTIONS.MANAGE_VERSIONS, {}, 'only the program admin may restore a version');
-  const d = (version && version.data) || version;
-  if (!d) throw new ValidationError('empty version');
-  for (const k of ['departments', 'locations', 'carts', 'drawers', 'tools', 'users', 'orders', 'specialLocations'])
-    if (d[k]) db[k] = JSON.parse(JSON.stringify(d[k]));
-  audit(db, actor, 'restore', 'version', (version && version.id) || '', (version && version.label) || '');
-  return db;
+  const src = (version && version.data) || version;
+  return restoreManaged(db, actor, src,
+    { id: version && version.id, label: version && version.label, kind: (version && version.kind) || 'snapshot' });
+}
+
+// Annual light reset: export, then CLEAR movement/signature history while KEEPING
+// inventory + calibration + current status (those are FIELDS on tools/carts and
+// are never touched here). audit is append-only under the rules → archived, kept.
+export const ANNUAL_CLEAR = ['signoffs', 'inspections', 'transfers', 'notifications'];
+
+export function annualReset(db, actor, { keepPendingRequests = true } = {}) {
+  require(actor, ACTIONS.MANAGE_VERSIONS, {}, 'only the program admin may run the annual reset');
+  const decided = (db.requests || []).filter(r => r.status === 'approved' || r.status === 'rejected');
+  const archive = {
+    ts: Date.now(), by: actor.email,
+    signoffs: JSON.parse(JSON.stringify(db.signoffs || [])),
+    inspections: JSON.parse(JSON.stringify(db.inspections || [])),
+    transfers: JSON.parse(JSON.stringify(db.transfers || [])),
+    decidedRequests: JSON.parse(JSON.stringify(decided)),
+    notifications: JSON.parse(JSON.stringify(db.notifications || [])),
+    auditCount: (db.audit || []).length,
+  };
+  const deletes = [];
+  for (const coll of ANNUAL_CLEAR) {
+    for (const d of (db[coll] || [])) deletes.push({ coll, id: d.id });
+    db[coll] = [];
+  }
+  for (const r of decided) deletes.push({ coll: 'requests', id: r.id });
+  db.requests = keepPendingRequests ? (db.requests || []).filter(r => r.status === 'pending') : [];
+  const keptTools = (db.tools || []).length;
+  audit(db, actor, 'annual-reset', 'system', '', `ניקוי היסטוריה — נשמרו ${keptTools} כלים`);
+  return { archive, deletes, kept: { tools: keptTools, carts: (db.carts || []).length } };
 }
 
 // ── orders (brick 17) ───────────────────────────────────────────────────────

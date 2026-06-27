@@ -2,18 +2,33 @@
 //   ?demo=1[&as=admin|manager|owner]  → offline demo on seed data (no network).
 //   default                            → LIVE app: Firebase login → load cloud → dashboard.
 import { LocalAdapter } from '../core/storage.js';
-import { calibrationStatus, visibleTools, actorOf,
+import { calibrationStatus, visibleTools, visibleCartIdsFor, isLive, actorOf, newDb,
   addDepartment, addCart, addDrawer, addTool, snapshotVersion,
-  editTool, deleteCart, removeTool, addUser, restoreVersion, createOrder, assignOwner } from '../core/model.js';
+  editTool, deleteCart, removeTool, addUser, restoreVersion, restoreManaged, restorePlan,
+  annualReset, createOrder, assignOwner } from '../core/model.js';
 import { ROLES, ROLE_LABEL_HE, visibleCartIds } from '../core/permissions.js';
+import { viewsFor, resolveView, inMgmtMode } from '../core/views.js';
+import { signoffPie, calibrationPie, problemSummary, calibrationDueSoon, redCarts, pendingQueue,
+  PROBLEM_STATUSES } from '../core/dashboard.js';
+import { svgPie, svgLegend } from './charts.js';
+import { EDIT_GATED, hashPwd, isUnlocked, EDIT_UNLOCK_MS } from '../core/security.js';
 import { parseCSV, importTools } from '../core/import.js';
 import * as WF from '../core/workflows.js';
+
+let _editUnlockedUntil = 0;   // session edit-unlock (fat-finger gate; real control = Firebase + rules)
 
 // run an operational action; returns { writes:[{coll,id,data}], flash }. Throws on error.
 function applyAction(db, actor, kind, P = {}) {
   const writes = [], deletes = [];
   const noteBefore = db.notifications.length;
   let flash = '';
+  // edit-gate (req 8/9): a freeze blocks non-admin structural edits; a set edit-password
+  // locks structural/destructive ops until the admin unlocks the session.
+  const sec = db.security || {};
+  if (sec.frozen && actor.role !== ROLES.ADMIN && EDIT_GATED.has(kind))
+    throw new Error('המערכת בהקפאת עריכות — פנה למנהל המערכת');
+  if (EDIT_GATED.has(kind) && sec.editPwdHash && !isUnlocked(_editUnlockedUntil))
+    throw new Error('🔒 נדרשת סיסמת עריכה — בטל נעילה במסך "ניהול מערכת"');
   if (kind === 'sign') {
     const s = WF.signCartDaily(db, actor, P.cartId, null, { note: P.note, issue: !!P.note });
     writes.push({ coll: 'signoffs', id: s.id, data: s }); flash = `נחתמה חתימה על ${P.cartId}`;
@@ -26,15 +41,51 @@ function applyAction(db, actor, kind, P = {}) {
   } else if (kind === 'sendreject') {
     const t = WF.sendToRejection(db, actor, P.toolId);
     writes.push({ coll: 'tools', id: t.id, data: t }); flash = `${P.toolId} נשלח לפסילה`;
+  } else if (kind === 'sendhidden') {
+    const t = WF.sendToHidden(db, actor, P.toolId);
+    writes.push({ coll: 'tools', id: t.id, data: t }); flash = `${P.toolId} הועבר לבעיות נסתרות`;
+  } else if (kind === 'releasehidden') {
+    const t = WF.releaseFromHidden(db, actor, P.toolId);
+    writes.push({ coll: 'tools', id: t.id, data: t }); flash = `${P.toolId} הוחזר מהתחנה`;
+  } else if (kind === 'releasebuild') {
+    const t = WF.releaseFromBuild(db, actor, P.toolId, { drawerId: P.drawerId || '' });
+    writes.push({ coll: 'tools', id: t.id, data: t }); flash = `${P.toolId} שוחרר לעבודה`;
+  } else if (kind === 'releaseallbuild') {
+    const staged = db.tools.filter(x => x.stage === 'build');
+    for (const s of staged) { const t = WF.releaseFromBuild(db, actor, s.id); writes.push({ coll: 'tools', id: t.id, data: t }); }
+    flash = `${staged.length} כלים שוחררו לעבודה`;
   } else if (kind === 'reqcal') {
     const ids = WF.calibrationEligible(db, P.cartId).map(t => t.id);
     if (!ids.length) throw new Error('אין כלים שפגו או מתקרבים לכיול בעגלה זו');
     const r = WF.requestCalibration(db, actor, { cartId: P.cartId, toolIds: ids });
     writes.push({ coll: 'requests', id: r.id, data: r }); flash = `נשלחה בקשת כיול ל-${ids.length} כלים`;
   } else if (kind === 'snapshot') {
-    const snap = snapshotVersion(db, actor, 'alpha'); const id = 'V' + snap.ts;
+    const label = (P.label || '').trim() || 'גרסת שלב';
+    const snap = snapshotVersion(db, actor, label); const id = 'V' + snap.ts;
     db.versions = db.versions || []; db.versions.push({ id, ...snap });
-    writes.push({ coll: 'versions', id, data: { id, ...snap } }); flash = 'גיבוי Alpha נוצר ונשמר';
+    writes.push({ coll: 'versions', id, data: { id, ...snap } }); flash = `נשמרה גרסה: ${label}`;
+  } else if (kind === 'reset') {
+    const source = P.kind === 'alpha' ? newDb() : P.source;
+    if (!source) throw new Error('מקור אתחול חסר');
+    const label = P.kind === 'alpha' ? 'אלפא — ריק' : 'בטא — דמו';
+    const plan = restoreManaged(db, actor, source, { kind: P.kind, label });
+    plan.writes.forEach(w => writes.push(w)); plan.deletes.forEach(d => deletes.push(d));
+    flash = `אותחל ל${label} (+${plan.writes.length}/−${plan.deletes.length})`;
+  } else if (kind === 'annualreset') {
+    const r = annualReset(db, actor);
+    const id = 'V' + Date.now();
+    const ver = { id, ts: Date.now(), by: actor.email, kind: 'annual-archive', label: 'ארכיון שנתי', archive: r.archive };
+    db.versions = db.versions || []; db.versions.push(ver);
+    writes.push({ coll: 'versions', id, data: ver });
+    r.deletes.forEach(d => deletes.push(d));
+    flash = `איפוס שנתי הושלם — נשמרו ${r.kept.tools} כלים, נוקתה היסטוריה`;
+  } else if (kind === 'setsecurity') {
+    if (actor.role !== ROLES.ADMIN) throw new Error('למנהל המערכת בלבד');
+    db.security = db.security || { editPwdHash: '', frozen: false };
+    if ('editPwdHash' in P) db.security.editPwdHash = P.editPwdHash;
+    if ('frozen' in P) db.security.frozen = !!P.frozen;
+    writes.push({ coll: 'config', id: 'security', data: db.security });
+    flash = ('frozen' in P) ? (P.frozen ? '🧊 עריכות הוקפאו' : '🔥 ההקפאה בוטלה') : '🔑 סיסמת העריכה עודכנה';
   } else if (kind === 'edittool') {
     const t = editTool(db, actor, P.toolId, P.patch || {});
     writes.push({ coll: 'tools', id: t.id, data: t }); flash = `${t.id} עודכן`;
@@ -91,33 +142,39 @@ function applyAction(db, actor, kind, P = {}) {
   } else if (kind === 'restore') {
     const v = (db.versions || []).find(x => x.id === P.versionId);
     if (!v) throw new Error('גרסה לא נמצאה');
-    restoreVersion(db, actor, v);
-    for (const coll of ['departments', 'locations', 'carts', 'drawers', 'tools', 'users', 'orders'])
-      for (const e of (db[coll] || [])) writes.push({ coll, id: e.id, data: e });
+    const plan = restoreVersion(db, actor, v);                 // diff engine: writes + DELETES
+    plan.writes.forEach(w => writes.push(w)); plan.deletes.forEach(d => deletes.push(d));
     flash = 'שוחזר לגרסה ' + (v.label || v.id);
   } else throw new Error('unknown action');
   for (const n of db.notifications.slice(noteBefore)) writes.push({ coll: 'notifications', id: n.id, data: n });
   return { writes, deletes, flash };
 }
 
-// CSV export of tools (same headers as the import; empty inventory → headers-only template)
-function toolsToCSV(db) {
+// CSV export of tools (same headers as the import; empty inventory → headers-only template).
+// Scoped to the actor's VISIBLE tools so a manager's export never leaks station tools.
+function toolsToCSV(db, actor) {
   const headers = ['מזהה כלי', 'מזהה מגירה', 'מקט יצרן', 'מקט לקוח', 'תיאור', 'כיול', 'תאריך כיול', 'מזהה כיול', 'הערה'];
   const q = (s) => { s = String(s ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const rows = (db.tools || []).map(t => [t.id, t.drawerId, t.vendor, t.customer, t.desc, t.cal, t.calDate, t.calID, t.note].map(q).join(','));
+  const list = actor ? visibleTools(db, actor) : (db.tools || []);
+  const rows = list.map(t => [t.id, t.drawerId, t.vendor, t.customer, t.desc, t.cal, t.calDate, t.calID, t.note].map(q).join(','));
   return '﻿' + [headers.join(','), ...rows].join('\r\n');
 }
-function downloadCSV(db) {
-  const blob = new Blob([toolsToCSV(db)], { type: 'text/csv;charset=utf-8' });
+function downloadCSV(db, actor) {
+  const blob = new Blob([toolsToCSV(db, actor)], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = 'tools.csv'; document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
 }
 
-// view-switching state (admin 3 windows / manager 2): main ↔ mine ↔ system
+// view-switching state: normal (main ↔ mine) ↔ management mode (mgmt / build / hidden / system)
 let activeView = 'main';
 let _rerender = () => {};
-function setView(v) { activeView = v; _rerender(); }
+function setView(v) {
+  activeView = v;
+  try { const u = new URL(location); u.searchParams.set('view', v); history.replaceState(null, '', u); } catch (e) {}
+  _rerender();
+}
+let problemFilter = false;   // set by the dashboard "בעיות בכלים" card → filters the main tool list
 
 // run the right model add-op; returns { coll, entity } for persistence. Throws on error.
 function applyAdd(db, actor, kind, payload) {
@@ -188,7 +245,7 @@ async function bootLive() {
       const actor = await fa.getActorForUser(user);
       if (actor.role === 'none') return renderNoAccess(actor, () => fb.logout());
       const render = async (flash) => {
-        const db = await fa.loadDb();                                  // cloud is the source of truth
+        const db = await fa.loadDb(actor);                             // cloud is the source of truth (role-scoped)
         const onAdd = async (kind, payload) => {
           const { coll, entity } = applyAdd(db, actor, kind, payload); // mutate loaded db
           await fa.putEntity(coll, entity.id, entity);                  // persist to Firestore
@@ -254,16 +311,82 @@ function renderNoAccess(actor, onLogout) {
 
 const statusOf = (db, t) => calibrationStatus(t, db.specialLocations);
 
+// ── management dashboard + stations — nav helpers (panels filled in Steps 3-4) ──
+const badge = (n) => n ? ` <span class="navbadge">${n}</span>` : '';
+function stationCount(db, which) {
+  return (db.tools || []).filter(t => t.stage === which).length;   // which = 'build' | 'hidden'
+}
+// ── management dashboard (read-only graphs; problems card links to the filtered main list) ──
+function mgmtDashboardHtml(db, actor) {
+  const adm = actor.role === ROLES.ADMIN;
+  const scopedTools = visibleTools(db, actor);
+  const scopedCartIds = visibleCartIdsFor(db, actor);
+  const cap = adm ? 'תצוגת מנהל — כל המלאי כולל תחנת בנייה ובעיות נסתרות'
+                  : 'הגרפים מציגים את המלאי שבאחריותך (לא כולל תחנות פנימיות)';
+  const ps = problemSummary(db, scopedTools);
+  const sp = signoffPie(db, scopedCartIds);
+  const cp = calibrationPie(db, scopedTools);
+  const due = calibrationDueSoon(db, scopedTools, undefined, 60).slice(0, 8);
+  const reds = redCarts(db, scopedCartIds);
+  const pq = pendingQueue(db, scopedCartIds);
+  const dlabel = (() => { const [y, m, d] = sp.date.split('-'); return `${d}/${m}`; })();
+  const probCard = ps.total
+    ? `<button class="probcard bad" data-probfilter="1"><span class="pn" style="color:#fca5a5">${ps.total}</span>` +
+      `<span><b>בעיות בכלים — דורש טיפול</b><div class="muted" style="font-size:12px">${ps.inflight ? `מתוכם ${ps.inflight} בטיפול · ` : ''}לחץ לרשימה ›</div></span></button>`
+    : `<div class="probcard good"><span class="pn" style="color:#86efac">0</span><span><b>אין בעיות פתוחות ✅</b></span></div>`;
+  const dueRows = due.map(t => `<div class="notif"><span>${esc(t.desc)} <span class="id">${esc(t.cartId)}</span></span>` +
+    `<span class="c">${t.daysLeft < 0 ? 'פג תוקף' : t.daysLeft + ' ימים'} · ${esc(t.calDate)}</span></div>`).join('');
+  const redRows = reds.map(r => `<div class="notif"><span>🔴 ${esc(r.name)}</span><span class="c">${esc(r.reasons.join(' · '))}</span></div>`).join('');
+  const pend = pq.reqs.length + pq.trs.length;
+  return `
+    <div class="section-title">לוח ניהול</div>
+    <div class="who" style="margin-bottom:10px">${esc(cap)}</div>
+    ${probCard}
+    <div class="charts">
+      <div class="chartcard"><h4>חתימות להיום (${dlabel})</h4>${svgPie(sp)}${svgLegend(sp.slices, sp.total)}</div>
+      <div class="chartcard"><h4>סטטוס כיול</h4>${svgPie(cp)}${svgLegend(cp.slices, cp.total)}</div>
+    </div>
+    ${due.length ? `<div class="section-title">כיול קרב / פג (${due.length})</div><div class="card" style="padding:4px 0">${dueRows}</div>` : ''}
+    ${reds.length ? `<div class="section-title">עגלות אדומות (${reds.length})</div><div class="card" style="padding:4px 0">${redRows}</div>` : ''}
+    ${pend ? `<div class="section-title">ממתינים לטיפול (${pend})</div><div class="card" style="padding:4px 0"><div class="notif"><span>בקשות ${pq.reqs.length} · מסירות ${pq.trs.length}</span><span class="c">המתנה עד ${pq.oldestDays} ימים</span></div></div>` : ''}`;
+}
+
+// ── station panel (ADMIN only): build = release uploads; hidden = return problems ──
+function stationPanelHtml(db, actor, which) {
+  if (actor.role !== ROLES.ADMIN) return '<div class="empty">למנהל המערכת בלבד</div>';
+  const list = (db.tools || []).filter(t => t.stage === which);
+  const drawerOpts = db.drawers.map(d => `<option value="${esc(d.id)}">${esc(d.id)}</option>`).join('');
+  const title = which === 'build' ? '🏗️ תחנת בנייה — כלים שהועלו וממתינים לשחרור' : '🕵️ בעיות נסתרות — מוסתר מהאחראים';
+  if (!list.length) return `<div class="section-title">${title}</div><div class="empty">אין כלים בתחנה</div>`;
+  const rows = list.map(t => {
+    const st = statusOf(db, t);
+    const action = which === 'build'
+      ? `<select class="st-draw" data-tool="${esc(t.id)}"><option value="">— מגירת יעד —</option>${drawerOpts}</select><button class="mini ok" data-releasebuild="${esc(t.id)}">שחרר</button>`
+      : `<button class="mini" data-releasehidden="${esc(t.id)}">↩ החזר למקור</button>`;
+    return `<tr class="row-${st}"><td><span class="id">${esc(t.id)}</span></td><td>${esc(t.desc)}</td>` +
+      `<td>${esc(t.vendor)}</td><td><span class="pill ${st}">${STATUS_HE[st]}</span></td><td>${action}</td></tr>`;
+  }).join('');
+  const allBtn = which === 'build' ? `<button class="btn-prim" data-releaseallbuild="1" style="margin-bottom:10px">✅ שחרר הכל לעבודה (${list.length})</button>` : '';
+  return `<div class="section-title">${title} (${list.length})</div>${allBtn}
+    <div class="card"><div class="tbl-scroll"><table><thead><tr><th>מזהה</th><th>תיאור</th><th>מק"ט</th><th>סטטוס</th><th>פעולה</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+}
+
 function renderDashboard(db, actor, opts = {}) {
   _rerender = () => renderDashboard(db, actor, opts);
   const isMgr = actor.role === ROLES.ADMIN || actor.role === ROLES.MANAGER;
+  const isAdmin = actor.role === ROLES.ADMIN;
   const canSwitch = !!opts.onAction && isMgr;
-  const view = canSwitch ? activeView : 'main';
-  const allowed = visibleCartIds(actor.role, actor.ownedCartIds);
-  let carts = allowed === null ? db.carts : db.carts.filter(c => allowed.includes(c.id));
+  const view = canSwitch ? resolveView(actor.role, activeView) : 'main';
+  const mgmt = inMgmtMode(view);
+  const cartIdSet = new Set(visibleCartIdsFor(db, actor));      // honours per-cart `viewers` restrictions
+  let carts = db.carts.filter(c => cartIdSet.has(c.id));
   if (view === 'mine') carts = carts.filter(c => (c.ownerUids || []).includes(actor.uid));
   const cset = new Set(carts.map(c => c.id));
-  const tools = visibleTools(db, actor).filter(t => view === 'mine' ? cset.has(t.cartId) : true);
+  // main/mine lists show only LIVE tools — staged (build) & hidden tools live in their own admin views.
+  const tools = visibleTools(db, actor).filter(t => (view === 'mine' ? cset.has(t.cartId) : true) && isLive(t));
+  if (view !== 'main') problemFilter = false;
+  const shownTools = (problemFilter && view === 'main')
+    ? tools.filter(t => PROBLEM_STATUSES.includes(statusOf(db, t))) : tools;
   const by = (s) => tools.filter(t => statusOf(db, t) === s).length;
   const stats = { total: tools.length, expired: by('expired'), due60: by('due60'), special: by('special') };
   const scopeNote = actor.role === ROLES.CART_OWNER
@@ -272,20 +395,39 @@ function renderDashboard(db, actor, opts = {}) {
   const pingBtn = (!opts.demo && actor.role === ROLES.ADMIN && opts.onPing)
     ? `<button class="logout" id="ping">🔌 בדיקת ענן</button><span id="ping-res" style="font-size:12px;margin-inline-start:8px;color:var(--mut)"></span>` : '';
   const right = opts.demo ? '' : `${pingBtn}<button class="logout" id="logout">התנתק</button>`;
+  // admin's "enter work mode / return" buttons (req 1,3): a state chip in mgmt mode + an exit,
+  // a single enter button in normal mode. A label-flipping button hides current state, so we don't.
+  const modeCtl = (canSwitch && isAdmin)
+    ? (mgmt
+        ? `<span class="modechip">⚙️ מצב ניהול</span><button class="modebtn back" data-view="main">↩ יציאה לתצוגת אחראי</button>`
+        : `<button class="modebtn enter" data-view="mgmt">⚙️ מצב ניהול</button>`)
+    : '';
 
   document.getElementById('app').innerHTML = `
     <div class="topbar">
       <div class="logo">🧰</div>
       <div><h1>ניהול כלים</h1><div class="who">${esc(scopeNote)}</div></div>
       <span class="rolebadge ${actor.role}">${ROLE_LABEL_HE[actor.role] || actor.role}</span>
-      ${right}
+      ${modeCtl}${right}
     </div>
     <div class="wrap">
       ${opts.flash ? `<div class="flash">${esc(opts.flash)}</div>` : ''}
       ${opts.demo ? demoSwitcher() : ''}
-      ${canSwitch ? `<div class="viewsw"><a class="${view === 'main' ? 'on' : ''}" data-view="main">🏠 ראשי</a><a class="${view === 'mine' ? 'on' : ''}" data-view="mine">📦 הכלים שלי</a>${actor.role === ROLES.ADMIN ? `<a class="${view === 'system' ? 'on' : ''}" data-view="system">⚙️ ניהול מערכת</a>` : ''}</div>` : ''}
-      ${view === 'system' ? systemPanelHtml(db) : `
-      ${(opts.onAdd && isMgr) ? addPanelHtml(db) : ''}
+      ${canSwitch ? `<div class="viewsw">${mgmt
+        ? `<a class="${view === 'mgmt' ? 'on' : ''}" data-view="mgmt">📊 לוח ניהול</a>` +
+          (isAdmin ? `<a class="${view === 'build' ? 'on' : ''}" data-view="build">🏗️ תחנת בנייה${badge(stationCount(db, 'build'))}</a>` : '') +
+          (isAdmin ? `<a class="${view === 'hidden' ? 'on' : ''}" data-view="hidden">🕵️ בעיות נסתרות${badge(stationCount(db, 'hidden'))}</a>` : '') +
+          (isAdmin ? `<a class="${view === 'system' ? 'on' : ''}" data-view="system">🛡️ ניהול מערכת</a>` : '')
+        : `<a class="${view === 'main' ? 'on' : ''}" data-view="main">🏠 ראשי</a>` +
+          `<a class="${view === 'mine' ? 'on' : ''}" data-view="mine">📦 הכלים שלי</a>` +
+          (isAdmin ? '' : `<a class="ghost" data-view="mgmt">📊 לוח ניהול ›</a>`)
+      }</div>` : ''}
+      ${view === 'system' ? systemPanelHtml(db)
+        : view === 'mgmt' ? mgmtDashboardHtml(db, actor)
+        : view === 'build' ? stationPanelHtml(db, actor, 'build')
+        : view === 'hidden' ? stationPanelHtml(db, actor, 'hidden')
+        : `
+      ${(opts.onAdd && isMgr) ? addPanelHtml(db, actor) : ''}
       ${opts.onAction ? actionsPanelHtml(db, actor) : ''}
       ${opts.onAction ? approvalsHtml(db, actor) : ''}
       ${(opts.onAction && isMgr) ? mgmtPanelHtml(db, actor) : ''}
@@ -301,12 +443,12 @@ function renderDashboard(db, actor, opts = {}) {
       <div class="chips">${carts.filter(c => c.type !== 'closet').map(c => cartChip(db, tools, c)).join('') || '<div class="empty">אין עגלות</div>'}</div>
       <div class="section-title">ארונות (${carts.filter(c => c.type === 'closet').length})</div>
       <div class="chips">${carts.filter(c => c.type === 'closet').map(c => cartChip(db, tools, c)).join('') || '<div class="empty">אין ארונות</div>'}</div>
-      <div class="section-title">כלים (${tools.length})</div>
-      <div class="card"><div class="tbl-scroll">${toolsTable(db, tools)}</div></div>`}
+      <div class="section-title">כלים (${shownTools.length})${problemFilter ? ` · בעיות בלבד <a data-clearfilter style="cursor:pointer;color:var(--brand);font-size:12px">נקה סינון</a>` : ''}</div>
+      <div class="card"><div class="tbl-scroll">${toolsTable(db, shownTools)}</div></div>`}
       ${opts.demo ? '<div class="demo-note">★ תצוגת הדגמה על נתונים מומצאים. בגרסה החיה הנתונים מהענן.</div>' : ''}
     </div>`;
   const lo = document.getElementById('logout');
-  if (lo && opts.onLogout) lo.onclick = opts.onLogout;
+  if (lo && opts.onLogout) lo.onclick = () => { _editUnlockedUntil = 0; opts.onLogout(); };
   const pb = document.getElementById('ping');
   if (pb && opts.onPing) pb.onclick = async () => {
     const res = document.getElementById('ping-res');
@@ -322,19 +464,23 @@ function renderDashboard(db, actor, opts = {}) {
   };
   wireAddPanel(opts);
   const expBtn = document.querySelector('[data-export]');
-  if (expBtn) expBtn.onclick = () => downloadCSV(db);
+  if (expBtn) expBtn.onclick = () => downloadCSV(db, actor);
   wireActionsPanel(opts);
-  document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => setView(b.getAttribute('data-view')));
-  const sysBtn = document.querySelector('[data-sys="alpha"]');
-  if (sysBtn && opts.onAction) sysBtn.onclick = async () => {
-    const m = document.getElementById('sys-msg');
-    try { sysBtn.disabled = true; if (m) { m.textContent = 'שומר…'; m.style.color = 'var(--mut)'; } await opts.onAction('snapshot', {}); }
-    catch (e) { if (m) { m.textContent = '❌ ' + (e.message || e); m.style.color = 'var(--red)'; } sysBtn.disabled = false; }
-  };
+  document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => setView(resolveView(actor.role, b.getAttribute('data-view'))));
+  wireSystem(db, opts);
   document.querySelectorAll('[data-apr]').forEach(b => b.onclick = () => opts.onAction && opts.onAction('approve', { requestId: b.getAttribute('data-apr') }));
   document.querySelectorAll('[data-rej]').forEach(b => b.onclick = () => opts.onAction && opts.onAction('reject', { requestId: b.getAttribute('data-rej') }));
-  document.querySelectorAll('[data-restore]').forEach(b => b.onclick = () => opts.onAction && opts.onAction('restore', { versionId: b.getAttribute('data-restore') }));
   document.querySelectorAll('[data-signtr]').forEach(b => b.onclick = () => opts.onAction && opts.onAction('signtransfer', { transferId: b.getAttribute('data-signtr') }));
+  document.querySelectorAll('[data-releasebuild]').forEach(b => b.onclick = () => {
+    const id = b.getAttribute('data-releasebuild');
+    const sel = document.querySelector(`.st-draw[data-tool="${id}"]`);
+    opts.onAction && opts.onAction('releasebuild', { toolId: id, drawerId: sel ? sel.value : '' });
+  });
+  document.querySelectorAll('[data-releasehidden]').forEach(b => b.onclick = () => opts.onAction && opts.onAction('releasehidden', { toolId: b.getAttribute('data-releasehidden') }));
+  document.querySelectorAll('[data-releaseallbuild]').forEach(b => b.onclick = () => opts.onAction && opts.onAction('releaseallbuild', {}));
+  document.querySelectorAll('[data-probfilter]').forEach(b => b.onclick = () => { problemFilter = true; setView('main'); });
+  const clr = document.querySelector('[data-clearfilter]');
+  if (clr) clr.onclick = () => { problemFilter = false; _rerender(); };
   wireMgmt(opts);
 }
 
@@ -403,22 +549,171 @@ function wireMgmt(opts) {
   });
 }
 
-// ── system-admin view (admin's 3rd window): Alpha backup + versions + audit ──
+// ── system-admin view (admin's 3rd window): snapshot + reset/restore + annual + audit ──
 function systemPanelHtml(db) {
+  const versions = db.versions || [];
+  const snaps = versions.filter(v => v.kind !== 'annual-archive');
+  const archives = versions.filter(v => v.kind === 'annual-archive');
+  const lastTs = versions.length ? Math.max(...versions.map(v => v.ts || 0)) : 0;
+  const days = lastTs ? Math.floor((Date.now() - lastTs) / 86400000) : 999;
+  const remind = days >= 7;
+  const inv = `${(db.tools || []).length} כלים · ${(db.carts || []).length} עגלות/ארונות · ${(db.users || []).length} משתמשים`;
   const aud = (db.audit || []).slice(-30).reverse().map(a =>
     `<tr><td>${esc(a.email || a.uid)}</td><td>${esc(a.action)}</td><td>${esc(a.entityType)}</td><td><span class="id">${esc(a.entityId)}</span></td><td>${esc(a.summary || '')}</td></tr>`).join('');
-  const vers = (db.versions || []).slice(-5).reverse().map(v =>
-    `<div class="chip"><b>${esc(v.label || 'גרסה')}</b><span class="c">${new Date(v.ts).toLocaleString('he-IL')}</span><button class="mini" data-restore="${esc(v.id)}">↩️ שחזר</button></div>`).join('');
+  const versChip = (v) => `<div class="chip"><b>${esc(v.label || 'גרסה')}</b><span class="c">${new Date(v.ts).toLocaleString('he-IL')} · ${(v.manifest && v.manifest.tools != null) ? v.manifest.tools + ' כלים' : ''}</span><button class="mini" data-restore="${esc(v.id)}">↩️ שחזר</button></div>`;
+  const sec = db.security || {};
+  const hasPwd = !!sec.editPwdHash, frozen = !!sec.frozen, unlocked = isUnlocked(_editUnlockedUntil);
+  const pend = (db.requests || []).filter(r => r.status === 'pending').length + (db.transfers || []).filter(t => t.status === 'pending').length;
+  const stale = WF.unlocatedTooLong(db).length;
+  const overdue = (db.carts || []).filter(c => c.requiresDailySignoff && WF.inspectionOverdue(db, c.id)).length;
   return `
     <div class="section-title">ניהול מערכת</div>
+    ${remind ? `<div class="flash" style="background:#7c2d12">⏳ לא נשמרה גרסה כבר ${days} ימים — מומלץ לשמור גרסת שלב לפני עבודת תחזוקה.</div>` : ''}
     <div class="card" style="padding:14px">
-      <button class="btn-prim" data-sys="alpha">💾 צור גיבוי Alpha</button>
-      <span id="sys-msg" style="font-size:13px;color:var(--mut);margin-inline-start:10px"></span>
+      <div class="muted" style="margin-bottom:8px">מצב נוכחי: <b>${inv}</b></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input id="sys-label" placeholder="שם הגרסה (למשל: לפני תחזוקה)" style="flex:1;min-width:160px">
+        <button class="btn-prim" data-sys="snapshot">💾 שמור גרסת שלב</button>
+      </div>
+      <span id="sys-msg" style="font-size:13px;color:var(--mut)"></span>
     </div>
-    <div class="section-title">גרסאות / גיבויים (${(db.versions || []).length})</div>
-    <div class="chips">${vers || '<div class="empty">אין גיבויים עדיין</div>'}</div>
+
+    <div class="section-title">ממשל ואבטחה</div>
+    <div class="card" style="padding:14px">
+      <div class="muted" style="margin-bottom:10px;font-size:12px">ממתינים לטיפול: <b>${pend}</b> · כלים תקועים: <b>${stale}</b> · בדיקות באיחור: <b>${overdue}</b> · מצב: <b>${frozen ? '🧊 עריכות מוקפאות' : 'פעיל'}</b></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <input id="sec-pwd" type="password" placeholder="${hasPwd ? 'שנה סיסמת עריכה' : 'הגדר סיסמת עריכה'}" style="flex:1;min-width:140px">
+        <button data-secset="1">🔑 ${hasPwd ? 'עדכן סיסמה' : 'הגדר סיסמה'}</button>
+      </div>
+      ${hasPwd ? `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+        <input id="sec-unlock" type="password" placeholder="סיסמת עריכה לפתיחת נעילה" style="flex:1;min-width:140px">
+        <button data-secunlock="1">🔓 בטל נעילה (10 דק׳)</button>
+        <span class="muted" style="font-size:12px">${unlocked ? '🔓 פתוח לעריכה' : '🔒 נעול'}</span></div>` : '<div class="muted" style="font-size:11px;margin-bottom:8px">ללא סיסמה — עריכות אינן נעולות. הגדר סיסמה לנעילת פעולות הרסניות.</div>'}
+      <button class="${frozen ? 'btn-prim' : 'bad'}" data-secfreeze="${frozen ? '0' : '1'}">${frozen ? '🔥 בטל הקפאת עריכות' : '🧊 הקפא עריכות'}</button>
+      <span id="sec-msg" style="font-size:13px;color:var(--mut);margin-inline-start:10px"></span>
+    </div>
+
+    <div class="section-title">אתחול / שחזור</div>
+    <div class="card" style="padding:14px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="bad" data-reset="alpha">♻️ אתחול ל-Alpha (ריק)</button>
+        <button data-reset="beta">🧪 אתחול ל-Beta (דמו)</button>
+      </div>
+      <div class="muted" style="margin-top:8px;font-size:12px">Alpha = מוחק את כל התוכן (בסיס ריק). Beta = מחליף בנתוני דמו לבדיקה. שתי הפעולות דורשות ייצוא דוח לפני.</div>
+    </div>
+    <div class="section-title">גרסאות שמורות (${snaps.length})</div>
+    <div class="chips">${snaps.slice(-8).reverse().map(versChip).join('') || '<div class="empty">אין גרסאות עדיין</div>'}</div>
+
+    <div class="section-title">איפוס שנתי</div>
+    <div class="card" style="padding:14px">
+      <div class="muted" style="font-size:12px;margin-bottom:8px">מייצא ומנקה היסטוריית תנועות / חתימות / ביקורות — <b>שומר את כל הכלים, התקפים והסטטוס הנוכחי.</b>${archives.length ? ` (ארכיונים קיימים: ${archives.length})` : ''}</div>
+      <button class="bad" data-annual="1">🗓️ הרץ איפוס שנתי</button>
+    </div>
+
     <div class="section-title">יומן ביקורת — מי ערך (${(db.audit || []).length})</div>
     <div class="card"><div class="tbl-scroll"><table><thead><tr><th>מי</th><th>פעולה</th><th>סוג</th><th>מזהה</th><th>פירוט</th></tr></thead><tbody>${aud || '<tr><td colspan="5">—</td></tr>'}</tbody></table></div></div>`;
+}
+
+// Export the discard/history set to a downloadable JSON file — the "no export, no reset" gate.
+function downloadHistoryReport(db, tag) {
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  const payload = { generatedAt: Date.now(), tag,
+    audit: db.audit || [], signoffs: db.signoffs || [], inspections: db.inspections || [],
+    transfers: db.transfers || [], requests: db.requests || [], notifications: db.notifications || [] };
+  const blob = new Blob(['﻿' + JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `דוח-היסטוריה_${tag}_${stamp}.json`;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+
+// Destructive-action confirm modal: optional export gate + type-to-confirm.
+function openConfirm({ db, title, body, danger, needExport, needType, exportTag, onConfirm }) {
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px';
+  ov.innerHTML = `<div style="background:var(--card,#1b2130);color:inherit;max-width:460px;width:100%;border-radius:14px;padding:20px;box-shadow:0 12px 44px rgba(0,0,0,.5)">
+    <h3 style="margin:0 0 10px">${title}</h3>
+    <div style="font-size:14px;line-height:1.6;margin-bottom:14px">${body}</div>
+    ${needExport ? `<button id="cf-exp" class="mini">📤 ייצא דוח היסטוריה</button>
+      <label class="ck" style="display:flex;gap:8px;margin:10px 0;align-items:center"><input type="checkbox" id="cf-ck" disabled> קובץ הדוח נשמר אצלי</label>` : ''}
+    ${needType ? `<input id="cf-type" placeholder='הקלד אתחול לאישור' style="width:100%;margin-bottom:10px">` : ''}
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button id="cf-cancel" class="mini">ביטול</button>
+      <button id="cf-ok" class="mini ${danger ? 'bad' : 'ok'}" disabled>אישור</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  const ok = ov.querySelector('#cf-ok'), ckEl = ov.querySelector('#cf-ck'), typeEl = ov.querySelector('#cf-type');
+  let exported = !needExport;
+  const refresh = () => {
+    const ckOk = !needExport || (ckEl && ckEl.checked && exported);
+    const typeOk = !needType || (typeEl && typeEl.value.trim() === 'אתחול');
+    ok.disabled = !(ckOk && typeOk);
+  };
+  const expBtn = ov.querySelector('#cf-exp');
+  if (expBtn) expBtn.onclick = () => { downloadHistoryReport(db, exportTag); exported = true; if (ckEl) ckEl.disabled = false; refresh(); };
+  if (ckEl) ckEl.onchange = refresh;
+  if (typeEl) typeEl.oninput = refresh;
+  ov.querySelector('#cf-cancel').onclick = () => ov.remove();
+  ok.onclick = async () => { ok.disabled = true; try { await onConfirm(); ov.remove(); } catch (e) { ok.disabled = false; alert('❌ ' + (e.message || e)); } };
+  refresh();
+}
+
+// Wire the system panel: snapshot, Alpha/Beta reset, snapshot restore, annual reset.
+function wireSystem(db, opts) {
+  if (!opts.onAction) return;
+  const msg = (t, c) => { const m = document.getElementById('sys-msg'); if (m) { m.textContent = t; m.style.color = c || 'var(--mut)'; } };
+  const snapBtn = document.querySelector('[data-sys="snapshot"]');
+  if (snapBtn) snapBtn.onclick = async () => {
+    const lab = (document.getElementById('sys-label') || {}).value || '';
+    try { snapBtn.disabled = true; msg('שומר…'); await opts.onAction('snapshot', { label: lab }); }
+    catch (e) { msg('❌ ' + (e.message || e), 'var(--red)'); snapBtn.disabled = false; }
+  };
+  document.querySelectorAll('[data-reset]').forEach(b => b.onclick = () => {
+    const kind = b.getAttribute('data-reset');
+    const inv = `${(db.tools || []).length} כלים · ${(db.carts || []).length} עגלות/ארונות · ${(db.users || []).length} משתמשים`;
+    openConfirm({ db,
+      title: kind === 'alpha' ? '♻️ אתחול ל-Alpha (ריק)' : '🧪 אתחול ל-Beta (דמו)',
+      body: kind === 'alpha'
+        ? `פעולה זו <b>תמחק לצמיתות</b> את כל התוכן: ${inv}.`
+        : `פעולה זו תחליף את התוכן הנוכחי (${inv}) ב<b>נתוני דמו</b> לבדיקה.`,
+      danger: true, needExport: true, needType: kind === 'alpha', exportTag: kind,
+      onConfirm: async () => {
+        const payload = { kind };
+        if (kind === 'beta') { const { generateSeed } = await import('../../lab/seed/seed.js'); payload.source = generateSeed({ carts: 5, drawersPerCart: 4, toolsPerDrawer: 8, closets: 2 }); }
+        await opts.onAction('reset', payload);
+      } });
+  });
+  document.querySelectorAll('[data-restore]').forEach(b => b.onclick = () => {
+    const id = b.getAttribute('data-restore');
+    const v = (db.versions || []).find(x => x.id === id); if (!v) return;
+    const plan = restorePlan(db, v.data || v);
+    openConfirm({ db, title: '↩️ שחזור: ' + (v.label || v.id),
+      body: `ישוחזר המלאי לגרסה זו — ${plan.writes.length} מסמכים ישתנו, <b>${plan.deletes.length} יימחקו</b>.`,
+      danger: plan.deletes.length > plan.writes.length, needExport: plan.deletes.length > 0, needType: false, exportTag: 'restore',
+      onConfirm: async () => { await opts.onAction('restore', { versionId: id }); } });
+  });
+  const an = document.querySelector('[data-annual]');
+  if (an) an.onclick = () => openConfirm({ db, title: '🗓️ איפוס שנתי',
+    body: 'ייצוא וניקוי של היסטוריית תנועות / חתימות / ביקורות. <b>הכלים, התקפים והסטטוס נשמרים.</b>',
+    danger: true, needExport: true, needType: false, exportTag: 'annual',
+    onConfirm: async () => { await opts.onAction('annualreset', {}); } });
+  const secMsg = (t, c) => { const m = document.getElementById('sec-msg'); if (m) { m.textContent = t; m.style.color = c || 'var(--mut)'; } };
+  const setBtn = document.querySelector('[data-secset]');
+  if (setBtn) setBtn.onclick = async () => {
+    const v = (document.getElementById('sec-pwd') || {}).value || '';
+    if (!v) { secMsg('הזן סיסמה', 'var(--red)'); return; }
+    try { await opts.onAction('setsecurity', { editPwdHash: hashPwd(v) }); }
+    catch (e) { secMsg('❌ ' + (e.message || e), 'var(--red)'); }
+  };
+  const unlBtn = document.querySelector('[data-secunlock]');
+  if (unlBtn) unlBtn.onclick = () => {
+    const v = (document.getElementById('sec-unlock') || {}).value || '';
+    if (db.security && db.security.editPwdHash && hashPwd(v) === db.security.editPwdHash) {
+      _editUnlockedUntil = Date.now() + EDIT_UNLOCK_MS; _rerender();
+    } else secMsg('❌ סיסמה שגויה', 'var(--red)');
+  };
+  const frzBtn = document.querySelector('[data-secfreeze]');
+  if (frzBtn) frzBtn.onclick = () => opts.onAction('setsecurity', { frozen: frzBtn.getAttribute('data-secfreeze') === '1' });
 }
 
 // ── actions panel: sign-off / quarterly inspection / declare broken / request calibration ──
@@ -440,6 +735,7 @@ function actionsPanelHtml(db, actor) {
       ${isMgr ? `<div class="af"><h4>בדיקה רבעונית</h4><select id="ac-insp-cart">${cartOpts}</select><button data-action="inspect">🗓️ רשום בדיקה</button></div>` : ''}
       <div class="af"><h4>הצהר כלי שבור</h4><select id="ac-broken-tool">${toolOpts}</select><button class="bad" data-action="broken">💥 שבור</button></div>
       ${isMgr ? `<div class="af"><h4>שלח לפסילה</h4><select id="ac-reject-tool">${toolOpts}</select><button class="bad" data-action="sendreject">⛔ לפסילה</button></div>` : ''}
+      ${actor.role === ROLES.ADMIN ? `<div class="af"><h4>הסתר לבעיות נסתרות</h4><select id="ac-hidden-tool">${toolOpts}</select><button data-action="sendhidden">🕵️ הסתר מהאחראים</button></div>` : ''}
       ${isOwner ? `<div class="af"><h4>בקשת כיול</h4><select id="ac-cal-cart">${cartOpts}</select><button data-action="reqcal">🔧 בקש כיול</button></div>` : ''}
     </div>
     <div id="ac-msg" class="admsg"></div>
@@ -455,6 +751,7 @@ function wireActionsPanel(opts) {
     else if (kind === 'inspect') payload = { cartId: val('ac-insp-cart') };
     else if (kind === 'broken') payload = { toolId: val('ac-broken-tool') };
     else if (kind === 'sendreject') payload = { toolId: val('ac-reject-tool') };
+    else if (kind === 'sendhidden') payload = { toolId: val('ac-hidden-tool') };
     else if (kind === 'reqcal') payload = { cartId: val('ac-cal-cart') };
     const msg = document.getElementById('ac-msg');
     try { btn.disabled = true; if (msg) { msg.textContent = 'מבצע…'; msg.style.color = 'var(--mut)'; } await opts.onAction(kind, payload); }
@@ -463,11 +760,12 @@ function wireActionsPanel(opts) {
 }
 
 // ── add panel (admin/manager): create department / container / drawer / tool ──
-function addPanelHtml(db) {
+function addPanelHtml(db, actor) {
   const opt = (v, t) => `<option value="${esc(v)}">${esc(t)}</option>`;
   const deptOpts = db.departments.map(d => opt(d.id, d.name)).join('');
   const contOpts = db.carts.map(c => opt(c.id, `${c.name} · ${c.id}`)).join('');
   const drawOpts = db.drawers.map(d => opt(d.id, d.id)).join('');
+  const isAdm = actor && actor.role === ROLES.ADMIN;
   return `<details class="addp" open><summary>➕ הוספת נתונים</summary>
     <div class="addgrid">
       <div class="af"><h4>מיקום</h4>
@@ -478,10 +776,12 @@ function addPanelHtml(db) {
         <select id="ad-cont-type">${opt('cart', 'עגלה')}${opt('closet', 'ארון')}</select>
         <select id="ad-cont-dept">${opt('', '— ללא מיקום —')}${deptOpts}</select>
         <input id="ad-cont-code" placeholder="קוד/חריטה (ריק=אוטומטי)">
+        ${isAdm ? `<select id="ad-cont-viewers">${opt('all', '👁️ נראה לכל האחראים')}${opt('restricted', '🔒 מוגבל — בעלים + צופים נבחרים')}</select>
+        <input id="ad-cont-vuids" placeholder="צופים נוספים (uid, מופרד בפסיק)">` : ''}
         <button data-add="container">הוסף תא</button></div>
       <div class="af"><h4>מגירה / מדף</h4>
         <select id="ad-draw-cont">${contOpts || opt('', '— אין מכלים —')}</select>
-        <input id="ad-draw-suffix" maxlength="2" placeholder="סיומת (A1)">
+        <input id="ad-draw-suffix" maxlength="1" placeholder="סיומת — אות אחת (A)">
         <button data-add="drawer">הוסף מגירה</button></div>
       <div class="af"><h4>כלי</h4>
         <select id="ad-tool-draw">${drawOpts || opt('', '— אין מגירות —')}</select>
@@ -521,7 +821,12 @@ function wireAddPanel(opts) {
     const kind = btn.getAttribute('data-add');
     let payload;
     if (kind === 'dept') payload = { name: val('ad-dept-name') };
-    else if (kind === 'container') payload = { name: val('ad-cont-name'), type: val('ad-cont-type'), departmentId: val('ad-cont-dept'), code: val('ad-cont-code') };
+    else if (kind === 'container') {
+      const scope = val('ad-cont-viewers') || 'all';
+      const uids = val('ad-cont-vuids') ? val('ad-cont-vuids').split(',').map(s => s.trim()).filter(Boolean) : [];
+      payload = { name: val('ad-cont-name'), type: val('ad-cont-type'), departmentId: val('ad-cont-dept'), code: val('ad-cont-code'),
+        viewers: scope === 'restricted' ? { scope: 'restricted', uids } : { scope: 'all' } };
+    }
     else if (kind === 'drawer') payload = { cartId: val('ad-draw-cont'), suffix: val('ad-draw-suffix') };
     else if (kind === 'tool') { const dr = val('ad-tool-draw'), tc = val('ad-tool-code');
       payload = { drawerId: dr, vendor: val('ad-tool-vendor'), desc: val('ad-tool-desc'),
