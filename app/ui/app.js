@@ -22,6 +22,7 @@ function applyAction(db, actor, kind, P = {}) {
   const writes = [], deletes = [];
   const noteBefore = db.notifications.length;
   let flash = '';
+  let undo = null;   // populated for reversible status changes so the UI can offer "↩ בטל"
   // edit-gate (req 8/9): a freeze blocks non-admin structural edits; a set edit-password
   // locks structural/destructive ops until the admin unlocks the session.
   const sec = db.security || {};
@@ -36,14 +37,22 @@ function applyAction(db, actor, kind, P = {}) {
     const i = WF.inspectCart(db, actor, P.cartId);
     writes.push({ coll: 'inspections', id: i.id, data: i }); flash = `נרשמה בדיקה רבעונית ל-${P.cartId}`;
   } else if (kind === 'broken') {
+    const prev = (db.tools.find(x => x.id === P.toolId) || {}).loc;
     const t = WF.declareBroken(db, actor, P.toolId);
     writes.push({ coll: 'tools', id: t.id, data: t }); flash = `${P.toolId} הוצהר שבור`;
+    undo = { action: 'restoreloc', payload: { toolId: P.toolId, loc: prev } };
   } else if (kind === 'sendreject') {
+    const prev = (db.tools.find(x => x.id === P.toolId) || {}).loc;
     const t = WF.sendToRejection(db, actor, P.toolId);
     writes.push({ coll: 'tools', id: t.id, data: t }); flash = `${P.toolId} נשלח לפסילה`;
+    undo = { action: 'restoreloc', payload: { toolId: P.toolId, loc: prev } };
+  } else if (kind === 'restoreloc') {
+    const t = WF.restoreToolLoc(db, actor, P.toolId, P.loc);
+    writes.push({ coll: 'tools', id: t.id, data: t }); flash = `הפעולה בוטלה — ${P.toolId} שוחזר`;
   } else if (kind === 'sendhidden') {
     const t = WF.sendToHidden(db, actor, P.toolId);
     writes.push({ coll: 'tools', id: t.id, data: t }); flash = `${P.toolId} הועבר לבעיות נסתרות`;
+    undo = { action: 'releasehidden', payload: { toolId: P.toolId } };
   } else if (kind === 'releasehidden') {
     const t = WF.releaseFromHidden(db, actor, P.toolId);
     writes.push({ coll: 'tools', id: t.id, data: t }); flash = `${P.toolId} הוחזר מהתחנה`;
@@ -147,7 +156,7 @@ function applyAction(db, actor, kind, P = {}) {
     flash = 'שוחזר לגרסה ' + (v.label || v.id);
   } else throw new Error('unknown action');
   for (const n of db.notifications.slice(noteBefore)) writes.push({ coll: 'notifications', id: n.id, data: n });
-  return { writes, deletes, flash };
+  return { writes, deletes, flash, undo };
 }
 
 // CSV export of tools (same headers as the import; empty inventory → headers-only template).
@@ -175,6 +184,7 @@ function setView(v) {
   _rerender();
 }
 let problemFilter = false;   // set by the dashboard "בעיות בכלים" card → filters the main tool list
+let lastUndo = null;         // {action,payload} of the last reversible status change (#4 Undo)
 
 // run the right model add-op; returns { coll, entity } for persistence. Throws on error.
 function applyAdd(db, actor, kind, payload) {
@@ -223,7 +233,7 @@ async function bootDemo() {
     const ex = smart ? ` (+${r.carts.length} עגלות, +${r.drawers.length} מגירות)` : '';
     show(`ייבוא: נוצרו ${r.created.length} כלים${ex}, כפולים ${r.duplicates.length}, שגיאות ${r.errors.length} — שחרר ב🏗️ תחנת בנייה`);
   };
-  const onAction = async (kind, payload) => { const { flash } = applyAction(db, actor, kind, payload); await adapter.save(db); show(flash); };
+  const onAction = async (kind, payload) => { const r = applyAction(db, actor, kind, payload); lastUndo = r.undo || null; await adapter.save(db); show(r.flash); };
   show();
 }
 
@@ -268,10 +278,11 @@ async function bootLive() {
           }
         };
         const onAction = async (kind, payload) => {
-          const { writes, deletes, flash } = applyAction(db, actor, kind, payload);
-          for (const w of writes) await fa.putEntity(w.coll, w.id, w.data);
-          for (const d of (deletes || [])) await fa.removeEntity(d.coll, d.id);
-          await render(flash);
+          const r = applyAction(db, actor, kind, payload);
+          lastUndo = r.undo || null;
+          for (const w of r.writes) await fa.putEntity(w.coll, w.id, w.data);
+          for (const d of (r.deletes || [])) await fa.removeEntity(d.coll, d.id);
+          await render(r.flash);
         };
         renderDashboard(db, actor, { onLogout: () => fb.logout(), onPing: () => fa.pingWrite(actor.uid), onAdd, onImport, onAction, flash });
       };
@@ -423,7 +434,7 @@ function renderDashboard(db, actor, opts = {}) {
       ${modeCtl}${right}
     </div>
     <div class="wrap">
-      ${opts.flash ? `<div class="flash">${esc(opts.flash)}</div>` : ''}
+      ${opts.flash ? `<div class="flash">${esc(opts.flash)}${lastUndo ? ` <button data-undo style="margin-inline-start:10px;padding:5px 13px;border-radius:8px;border:0;background:var(--brand);color:#fff;font-weight:700;font-size:12px;cursor:pointer">↩ בטל</button>` : ''}</div>` : ''}
       ${opts.demo ? demoSwitcher() : ''}
       ${canSwitch ? `<div class="viewsw">${mgmt
         ? `<a class="${view === 'mgmt' ? 'on' : ''}" data-view="mgmt">📊 לוח ניהול</a>` +
@@ -506,6 +517,9 @@ function renderDashboard(db, actor, opts = {}) {
   document.querySelectorAll('[data-signcart]').forEach(b => b.onclick = (e) => {
     e.stopPropagation(); opts.onAction && opts.onAction('sign', { cartId: b.getAttribute('data-signcart') });
   });
+  // #4 undo the last reversible status change
+  const undoBtn = document.querySelector('[data-undo]');
+  if (undoBtn) undoBtn.onclick = () => { const u = lastUndo; lastUndo = null; if (u && opts.onAction) opts.onAction(u.action, u.payload); };
   wireMgmt(opts);
 }
 

@@ -259,6 +259,16 @@ export function brokenReport(db) {
     .map(t => ({ id: t.id, vendor: t.vendor, desc: t.desc, cartId: t.cartId }));
 }
 
+// Undo a reversible status change (broken / rejection): restore the tool's prior location.
+export function restoreToolLoc(db, actor, toolId, loc) {
+  must(actor, ACTIONS.EDIT_TOOLS);
+  const t = db.tools.find(x => x.id === toolId);
+  if (!t) throw new ValidationError(`tool ${toolId} not found`);
+  t.loc = loc; delete t.brokenSince;        // back to its prior location, clear the aging stamp
+  pushAudit(db, actor, 'undo', 'tool', toolId, loc);
+  return t;
+}
+
 // Send a tool to "פסילה" — any tools-manager (or admin) may; only admin then deletes it.
 export function sendToRejection(db, actor, toolId) {
   must(actor, ACTIONS.EDIT_TOOLS);
