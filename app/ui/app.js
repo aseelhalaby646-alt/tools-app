@@ -217,11 +217,13 @@ function applyAdd(db, actor, kind, payload) {
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const params = new URLSearchParams(location.search);
 const DEMO = params.get('demo') === '1';
+const EXP = params.get('exp') === '1';   // experiment app: login (worker/manager/admin) over a rich generic seed
 const STATUS_HE = { expired: 'פג תוקף', due30: 'קרוב (30)', due60: 'מתקרב (60)', ok: 'תקין', none: '—',
   broken: 'שבור', calibrating: 'בכיול', rejected: 'פסילה', unknown: 'לא ידוע', shortage: 'חוסר', special: 'בטיפול' };
 
 async function boot() {
   activeView = params.get('view') || 'main';
+  if (DEMO && EXP) return bootExperiment();
   if (DEMO) return bootDemo();
   return bootLive();
 }
@@ -250,6 +252,63 @@ async function bootDemo() {
   };
   const onAction = async (kind, payload) => { const r = applyAction(db, actor, kind, payload); lastUndo = r.undo || null; await adapter.save(db); show(r.flash); };
   show();
+}
+
+// ── experiment app (login over a rich, fully-generic seed) ──────────────────
+async function bootExperiment() {
+  const { generateExperiment, EXP_ALIASES, EXP_LOGINS } = await import('../core/demo-experiment.js');
+  const adapter = new LocalAdapter({ key: 'tmv1_exp' });
+  let db = await adapter.load();
+  if (!db.tools || db.tools.length === 0) { db = generateExperiment(); await adapter.save(db); }
+  const start = (roleKey) => {
+    const info = EXP_LOGINS[roleKey];
+    const actor = actorOf({ uid: info.uid, email: info.email, role: info.role,
+      ownedCartIds: roleKey === 'worker' ? ['C0001', 'C0002', 'C0003'] : [] });
+    const show = (flash) => renderDashboard(db, actor, { demo: true, exp: true, onAdd, onImport, onAction, onLogout: () => renderExpLogin({ submit }), flash });
+    const onAdd = async (kind, payload) => { applyAdd(db, actor, kind, payload); await adapter.save(db); show(); };
+    const onImport = async (text, smart) => {
+      const rows = parseCSV(text);
+      const r = smart ? smartImport(db, actor, rows) : importTools(db, actor, rows);
+      await adapter.save(db);
+      const ex = smart ? ` (+${r.carts.length} עגלות, +${r.drawers.length} מגירות)` : '';
+      show(`ייבוא: נוצרו ${r.created.length} כלים${ex}, כפולים ${r.duplicates.length}, שגיאות ${r.errors.length}`);
+    };
+    const onAction = async (kind, payload) => { const r = applyAction(db, actor, kind, payload); lastUndo = r.undo || null; await adapter.save(db); show(r.flash); };
+    activeView = params.get('view') || 'main';
+    show();
+  };
+  const submit = (u, p) => {
+    const ku = String(u || '').trim().toLowerCase(), kp = String(p || '').trim().toLowerCase();
+    const role = EXP_ALIASES[ku];
+    if (!role || ku !== kp) return renderExpLogin({ submit, error: 'שם משתמש או סיסמה שגויים — נסה worker / manager / admin' });
+    start(role);
+  };
+  const pre = EXP_ALIASES[String(params.get('as') || '').toLowerCase()];   // ?as= → skip login (quick link)
+  if (pre) return start(pre);
+  renderExpLogin({ submit });
+}
+
+function renderExpLogin({ submit, error }) {
+  const app = document.getElementById('app');
+  app.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)">
+    <div style="width:100%;max-width:360px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:26px 22px;text-align:center">
+      <div style="font-size:34px">🧰</div>
+      <h1 style="margin:6px 0 2px;font-size:21px">אפליקציית התנסות</h1>
+      <p style="margin:0 0 16px;color:var(--mut);font-size:13px">התחבר/י כדי לשחק על נתוני דמו גנריים</p>
+      ${error ? `<div style="background:var(--redbg);color:#fca5a5;border-radius:10px;padding:9px;font-size:13px;margin-bottom:12px">${esc(error)}</div>` : ''}
+      <input id="exp-u" placeholder="שם משתמש" autocomplete="off" autocapitalize="none" style="width:100%;padding:12px;margin-bottom:9px;border-radius:11px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:16px;text-align:center">
+      <input id="exp-p" type="password" placeholder="סיסמה" autocomplete="off" style="width:100%;padding:12px;margin-bottom:12px;border-radius:11px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:16px;text-align:center">
+      <button id="exp-go" style="width:100%;padding:12px;border:0;border-radius:11px;background:var(--brand);color:#fff;font-size:16px;font-weight:700;cursor:pointer">כניסה</button>
+      <div style="margin-top:16px;font-size:12px;color:var(--mut);line-height:1.9;text-align:start;border-top:1px solid var(--line);padding-top:12px">
+        <div>👤 <b>עובד</b> — שם וסיסמה: <code>worker</code></div>
+        <div>🛠️ <b>אחראי</b> — שם וסיסמה: <code>manager</code></div>
+        <div>👑 <b>מנהל</b> — שם וסיסמה: <code>admin</code></div>
+      </div>
+    </div></div>`;
+  const go = () => submit(document.getElementById('exp-u').value, document.getElementById('exp-p').value);
+  document.getElementById('exp-go').onclick = go;
+  document.getElementById('exp-p').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  document.getElementById('exp-u').focus();
 }
 
 // ── live (Firebase) ─────────────────────────────────────────────────────────
@@ -466,7 +525,7 @@ function renderDashboard(db, actor, opts = {}) {
       ${(!opts.demo && typeof navigator !== 'undefined' && navigator.onLine === false)
         ? `<div class="flash" style="background:#7c2d12;border-inline-start:3px solid #f59e0b">📴 לא מחובר לרשת — צפייה בלבד. מוצגים הנתונים האחרונים שנטענו; פעולות עריכה יחזרו אוטומטית כשהחיבור יחזור.</div>` : ''}
       ${opts.flash ? `<div class="flash">${esc(opts.flash)}${lastUndo ? ` <button data-undo style="margin-inline-start:10px;padding:5px 13px;border-radius:8px;border:0;background:var(--brand);color:#fff;font-weight:700;font-size:12px;cursor:pointer">↩ בטל</button>` : ''}</div>` : ''}
-      ${opts.demo ? demoSwitcher() : ''}
+      ${opts.demo ? (opts.exp ? expSwitcher(actor) : demoSwitcher()) : ''}
       ${canSwitch ? `<div class="viewsw">${mgmt
         ? `<a class="${view === 'mgmt' ? 'on' : ''}" data-view="mgmt">📊 לוח ניהול</a>` +
           (isAdmin ? `<a class="${view === 'build' ? 'on' : ''}" data-view="build">🏗️ תחנת בנייה${badge(stationCount(db, 'build'))}</a>` : '') +
@@ -983,6 +1042,10 @@ function demoSwitcher() {
   const as = params.get('as') || 'admin';
   const link = (k, l) => `<a class="${as === k ? 'active' : ''}" href="?demo=1&as=${k}">${l}</a>`;
   return `<div class="demo-switch"><span style="font-size:12px;color:var(--mut);align-self:center">תצוגה כ:</span>${link('admin', 'מנהל המערכת')}${link('manager', 'אחראי כלים')}${link('owner', 'בעל עגלה')}</div>`;
+}
+
+function expSwitcher(actor) {
+  return `<div class="demo-switch"><span style="font-size:12px;color:var(--mut);align-self:center">מחובר/ת: <b>${ROLE_LABEL_HE[actor.role] || actor.role}</b></span><a href="?demo=1&exp=1">🔄 החלף משתמש</a></div>`;
 }
 
 boot();
