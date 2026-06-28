@@ -112,9 +112,13 @@ tr.row-shortage{background:rgba(103,232,249,.05)}
 .af .ck{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--mut)}
 .af .ck input{width:auto}
 .admsg{padding:2px 16px 12px;font-size:13px;min-height:16px}
-.impbox{display:flex;gap:10px;padding:0 16px 8px;align-items:stretch}
-.impbox textarea{flex:1;padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:12.5px;resize:vertical}
-.impbox button{padding:9px 14px;border:0;border-radius:9px;background:var(--surface2);border:1px solid var(--line);color:var(--txt);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
+.impbox{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 10px;align-items:stretch}
+.impbox textarea{flex:1 1 100%;min-height:62px;padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:12.5px;resize:vertical}
+.impbox button,.impbox .impbtn{flex:1 1 130px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface2);color:var(--txt);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;text-align:center}
+.impbox button.btn-prim{background:var(--brand);border-color:var(--brand);color:#fff;flex-basis:100%}
+/* mobile: single-column forms + no horizontal overflow */
+@media(max-width:520px){ .addgrid{grid-template-columns:1fr} }
+body{overflow-x:hidden}
 .flash{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);color:#86efac;border-radius:12px;padding:11px 14px;margin:6px 0;font-size:13.5px;font-weight:600}
 .viewsw{display:flex;gap:8px;margin:10px 0 2px;flex-wrap:wrap}
 .viewsw a{font-size:13px;font-weight:700;text-decoration:none;color:var(--mut);border:1px solid var(--line);border-radius:999px;padding:8px 15px;background:var(--surface);cursor:pointer}

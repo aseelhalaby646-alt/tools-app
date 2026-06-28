@@ -807,7 +807,8 @@ function addPanelHtml(db, actor) {
         <button data-add="tool">הוסף כלי</button></div>
     </div>
     <div class="impbox">
-      <textarea id="ad-imp" rows="3" placeholder="ייבוא בכמויות — הדבק CSV (כותרות: מזהה מגירה, מקט יצרן, תיאור, מקט לקוח, כיול, תאריך כיול, מזהה כיול, הערה)"></textarea>
+      <textarea id="ad-imp" rows="3" placeholder="בחר קובץ CSV למטה 👇 או הדבק כאן (כותרות: מזהה מגירה, מקט יצרן, תיאור, מקט לקוח, כיול, תאריך כיול, מזהה כיול, הערה)"></textarea>
+      <label class="impbtn">📂 בחר קובץ CSV<input type="file" id="ad-imp-file" accept=".csv,text/csv,.txt" hidden></label>
       <button class="btn-prim" data-smartimport="1">🧠 ייבוא חכם — יוצר עגלה+מגירות</button>
       <button data-import="1">📥 ייבא לקיים</button>
       <button data-export="1">📤 ייצא CSV</button>
@@ -832,6 +833,16 @@ function wireAddPanel(opts) {
   if (imp && opts.onImport) imp.onclick = () => runImport(imp, false);
   const simp = document.querySelector('[data-smartimport]');
   if (simp && opts.onImport) simp.onclick = () => runImport(simp, true);
+  const fileInp = document.getElementById('ad-imp-file');   // pick a CSV file (mobile-friendly) → fill the textarea
+  if (fileInp) fileInp.onchange = () => {
+    const f = fileInp.files && fileInp.files[0]; if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const ta = document.getElementById('ad-imp'); if (ta) ta.value = String(reader.result || '').replace(/^﻿/, '');
+      const msg = document.getElementById('ad-msg'); if (msg) { msg.textContent = `✓ "${f.name}" נטען — לחץ 🧠 ייבוא חכם`; msg.style.color = 'var(--ok)'; }
+    };
+    reader.readAsText(f, 'utf-8');
+  };
   document.querySelectorAll('[data-add]').forEach(btn => btn.onclick = async () => {
     const kind = btn.getAttribute('data-add');
     let payload;
