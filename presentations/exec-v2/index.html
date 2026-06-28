@@ -94,32 +94,90 @@
   .arch-node small{display:block; color:var(--mut); font-weight:400; font-size:.85rem; margin-top:4px}
   .arch-arrow{color:var(--blue); font-size:1.6rem; font-weight:800}
   @media(max-width:980px){.arch-flow{flex-direction:column}.arch-arrow{transform:rotate(90deg)}}
+  /* TOC / index */
+  .toc{list-style:none; margin-top:34px; display:grid; gap:14px}
+  .toc li{counter-increment:tocnum}
+  .toc a{
+    display:flex; align-items:center; gap:16px; text-decoration:none;
+    background:var(--s1); border:1px solid var(--bd); border-radius:14px;
+    padding:16px 22px; color:var(--tx); font-size:1.12rem; font-weight:600;
+    transition:border-color .15s, background .15s;
+  }
+  .toc a:hover{border-color:var(--blue); background:var(--s2)}
+  .toc a::before{
+    content:counter(tocnum); flex:none; width:38px; height:38px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--s2); border:1px solid var(--bd); border-radius:999px;
+    color:var(--blue); font-weight:800; font-size:1rem;
+  }
+  .toc-wrap{counter-reset:tocnum}
+  /* ===== PRINT / SAVE-AS-PDF ===== */
+  @media print{
+    :root{--bg:#ffffff; --s1:#f4f6f9; --s2:#eaeef4; --tx:#111a26; --mut:#445166; --bd:#c5d0dd}
+    html{scroll-behavior:auto}
+    body{background:#fff !important; color:var(--tx) !important; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+    .slide{
+      background:#fff !important; min-height:auto; padding:38px 40px;
+      border-bottom:none; break-after:page; page-break-after:always;
+      break-inside:avoid; page-break-inside:avoid; justify-content:flex-start;
+    }
+    .slide:last-of-type{break-after:auto; page-break-after:auto}
+    .card,.shot,.phase,.stat,.matrix,.arch-node,.tbl-note,.placeholder,.toc a,ul.checks li{break-inside:avoid; page-break-inside:avoid}
+    h1{font-size:2.6rem} h2{font-size:2rem}
+    .lead{color:var(--mut)} p.body,.card p,.shot .cap p{color:var(--mut)}
+    .badge-grad{-webkit-text-fill-color:initial; color:var(--blue) !important; background:none}
+    .matrix thead th{position:static}
+    .shot img{max-height:340px; object-fit:contain}
+    a{color:inherit; text-decoration:none}
+    .no-print{display:none !important}
+  }
 </style>
 </head>
 <body>
 
 <!-- 1. TITLE -->
-<section class="slide" style="background:radial-gradient(1200px 600px at 80% 0%,rgba(59,130,246,.12),transparent),radial-gradient(900px 500px at 10% 100%,rgba(167,139,250,.10),transparent),var(--bg)">
+<section id="slide-title" class="slide" style="background:radial-gradient(1200px 600px at 80% 0%,rgba(59,130,246,.12),transparent),radial-gradient(900px 500px at 10% 100%,rgba(167,139,250,.10),transparent),var(--bg)">
   <div class="slide-inner">
     <div class="kicker">מערכת ארגונית · ענן · ניהול כלים מדויק</div>
     <h1>מערכת ניהול עגלות וכלים<br><span class="badge-grad">שליטה מלאה, אחריותיות ובטיחות כיול</span></h1>
     <p class="lead">פלטפורמת ענן חכמה לניהול עגלות הכלים בארגון — מקור אמת אחד, סנכרון חי, ובקרת כיול מלאה, מותאמת לעבודה מהשטח ומהנייד.</p>
     <div class="stat-row">
-      <div class="stat"><div class="num">11</div><div class="lbl">עגלות כלים</div></div>
-      <div class="stat"><div class="num">אלפי</div><div class="lbl">כלים במעקב</div></div>
-      <div class="stat"><div class="num">77</div><div class="lbl">כלים בכיול</div></div>
+      <div class="stat"><div class="num">☁️</div><div class="lbl">מקור אמת אחד בענן</div></div>
+      <div class="stat"><div class="num">⚡</div><div class="lbl">סנכרון חי בזמן אמת</div></div>
+      <div class="stat"><div class="num">🛡️</div><div class="lbl">בקרת כיול מלאה</div></div>
       <div class="stat"><div class="num">100%</div><div class="lbl">ענן · נגיש מכל מקום</div></div>
     </div>
-    <p class="footer">מוצג בפני בעלי החברה, הדירקטוריון וההנהלה · דיון אסטרטגי</p>
+    <p class="footer">מצגת מוצר · סקירת יכולות המערכת</p>
+  </div>
+</section>
+
+<!-- 1b. TABLE OF CONTENTS -->
+<section id="slide-toc" class="slide">
+  <div class="slide-inner toc-wrap">
+    <div class="kicker">תוכן עניינים</div>
+    <h2>שלבי המצגת</h2>
+    <p class="lead">לחיצה על שלב מדלגת ישירות אליו.</p>
+    <ul class="toc">
+      <li><a href="#slide-challenge">האתגר והמטרה</a></li>
+      <li><a href="#slide-arch">ארכיטקטורת ענן</a></li>
+      <li><a href="#slide-roles">הרשאות ותפקידים</a></li>
+      <li><a href="#slide-screens-1">מסכים אמיתיים — כניסה ולוחות בקרה</a></li>
+      <li><a href="#slide-screens-2">מסכים אמיתיים — חלונות עבודה</a></li>
+      <li><a href="#slide-scope">היקף המערכת</a></li>
+      <li><a href="#slide-reliability">אמינות ואיכות</a></li>
+      <li><a href="#slide-positioning">מיצוב מול השוק</a></li>
+      <li><a href="#slide-roadmap">מפת דרכים</a></li>
+      <li><a href="#slide-closing">סיכום</a></li>
+    </ul>
   </div>
 </section>
 
 <!-- 2. CHALLENGE & GOAL -->
-<section class="slide">
+<section id="slide-challenge" class="slide">
   <div class="slide-inner">
     <div class="kicker">האתגר והמטרה</div>
     <h2>מה תפעול עגלות כלים באמת דורש</h2>
-    <p class="lead">עשרות עגלות, אלפי כלים, ודרישות כיול מחמירות — בלי מערכת אחת אמינה, נוצרים סיכוני בטיחות, אובדן ציוד וחוסר אחריותיות.</p>
+    <p class="lead">מספר רב של עגלות, כמות גדולה של כלים, ודרישות כיול מחמירות — בלי מערכת אחת אמינה, נוצרים סיכוני בטיחות, אובדן ציוד וחוסר אחריותיות.</p>
     <div class="grid g3">
       <div class="card accent-a"><span class="ic">🛡️</span><h3>עמידה בכיול</h3><p>כל כלי חייב להיות בתוקף כיול. כלי שפג — סיכון בטיחותי ותקלה איכותית שאסור שתחמוק.</p></div>
       <div class="card accent-b"><span class="ic">📋</span><h3>אחריותיות</h3><p>מי אחראי לאיזו עגלה, מי חתם, מי דיווח. שרשרת אחריות ברורה לכל פעולה ולכל כלי.</p></div>
@@ -130,19 +188,19 @@
 </section>
 
 <!-- 3. CLOUD ARCHITECTURE -->
-<section class="slide" style="background:var(--s1)">
+<section id="slide-arch" class="slide" style="background:var(--s1)">
   <div class="slide-inner">
     <div class="kicker">ארכיטקטורת ענן</div>
     <h2>בנויה על ענן · חיה · ניידת</h2>
-    <p class="lead">מקור אמת אחד בענן Firebase. כל שינוי מסונכרן מיידית לכל המשתמשים, בכל מכשיר — מחשב או טלפון.</p>
+    <p class="lead">מקור אמת אחד בענן. כל שינוי מסונכרן מיידית לכל המשתמשים, בכל מכשיר — מחשב או טלפון.</p>
     <div class="arch-flow">
       <div class="arch-node">משתמשים<small>מחשב · טלפון · שטח</small></div>
       <div class="arch-arrow">→</div>
       <div class="arch-node">שכבת אבטחה<small>הרשאות לפי תפקיד ולפי עגלה</small></div>
       <div class="arch-arrow">→</div>
-      <div class="arch-node" style="border-color:var(--blue)">ענן Firebase<small>מקור אמת אחד · סנכרון חי</small></div>
+      <div class="arch-node" style="border-color:var(--blue)">ענן מנוהל<small>מקור אמת אחד · סנכרון חי</small></div>
       <div class="arch-arrow">→</div>
-      <div class="arch-node">גיבוי ובקרה<small>היסטוריית גרסאות · גיבוי בסיס Alpha</small></div>
+      <div class="arch-node">גיבוי ובקרה<small>היסטוריית גרסאות · גיבוי בסיס</small></div>
     </div>
     <div class="grid g3" style="margin-top:38px">
       <div class="card accent-b"><span class="ic">☁️</span><h3>מקור אמת אחד</h3><p>אין קבצים מפוזרים. כל הנתונים במקום אחד מאובטח בענן.</p></div>
@@ -153,7 +211,7 @@
 </section>
 
 <!-- 4. ROLES TABLE -->
-<section class="slide">
+<section id="slide-roles" class="slide">
   <div class="slide-inner">
     <div class="kicker">הרשאות ותפקידים</div>
     <h2>שלוש רמות משתמש — מטריצת הרשאות</h2>
@@ -186,7 +244,7 @@
 </section>
 
 <!-- 5. REAL SCREENS — LOGIN + DASHBOARDS -->
-<section class="slide" style="background:var(--s1)">
+<section id="slide-screens-1" class="slide" style="background:var(--s1)">
   <div class="slide-inner">
     <div class="kicker">המוצר · מסכים אמיתיים</div>
     <h2>כניסה מאובטחת ולוחות בקרה</h2>
@@ -215,7 +273,7 @@
 </section>
 
 <!-- 6. REAL SCREENS — WORK WINDOWS -->
-<section class="slide">
+<section id="slide-screens-2" class="slide">
   <div class="slide-inner">
     <div class="kicker">המוצר · חלונות עבודה</div>
     <h2>חלונות העבודה בפעולה</h2>
@@ -234,30 +292,35 @@
 </section>
 
 <!-- 7. WHAT THE SYSTEM COVERS -->
-<section class="slide" style="background:var(--s1)">
+<section id="slide-scope" class="slide" style="background:var(--s1)">
   <div class="slide-inner">
     <div class="kicker">היקף המערכת</div>
     <h2>מה המערכת מכסה</h2>
-    <p class="lead">תהליך עבודה שלם מקצה לקצה — מבטיחות כיול ועד אחריותיות יומית ובקרת מלאי.</p>
+    <p class="lead">תהליך עבודה שלם מקצה לקצה — ממבנה פיזי מדויק ובטיחות כיול, דרך אחריותיות יומית ובעלות, ועד ממשל, חיפוש והתראות.</p>
     <ul class="checks">
       <li>ענן כמקור אמת אחד <span>כל הנתונים במקום אחד, מסונכרן בזמן אמת</span></li>
-      <li>בטיחות כיול עם סטטוס צבעוני <span>ירוק/אמבר/אדום — תוקף כיול במבט אחד</span></li>
-      <li>חתימת עגלה יומית <span>אחריותיות יומית — ומשמשת גם כנוכחות</span></li>
-      <li>זרימת בקשת כיול → אישור → "חוסר מאושר" <span>תהליך מסודר ומתועד מקצה לקצה</span></li>
-      <li>דיווח כלי שבור עם התראות <span>כלי שבור מדווח ומסומן מיד</span></li>
-      <li>חוסר מאושר לשימוש מחוץ למחלקה <span>כלי שיצא מהמחלקה — מתועד ומאושר</span></li>
+      <li>מבנה פיזי מלא <span>מחלקה ← מיקום ← עגלה (מספר דורות) ← ארון/מגירה ← כלי</span></li>
+      <li>בטיחות כיול עם סטטוס צבעוני <span>ירוק/אמבר/אדום — תוקף, מספר סידורי וכיול במבט אחד</span></li>
+      <li>חתימת עגלה יומית בלחיצה <span>חתימה ישירה מצ'יפ העגלה + תג "נחתם היום"</span></li>
+      <li>זרימת בקשת כיול → אישור / כיול ישיר <span>תהליך מסודר ומתועד, כולל "חוסר מאושר"</span></li>
+      <li>שבור · פסילה · מיקום לא ידוע — עם ביטול (Undo) <span>סטטוסים הפיכים ניתנים לשחזור בלחיצה</span></li>
+      <li>בעלות ושיוך מוגבל-בזמן <span>מי אחראי, עד מתי — שיוך עם תאריך תפוגה</span></li>
+      <li>מסירה בחתימה כפולה עם בורר עובדים אמיתי <span>מוסר ומקבל חותמים — ללא הקלדת מזהה חופשי</span></li>
       <li>ביקורת מנהל רבעונית <span>פג מועד → העגלה מסומנת באדום</span></li>
-      <li>מעקב כלים במיקום לא ידוע <span>שום כלי לא "נעלם" מהמערכת</span></li>
-      <li>אבטחה לכל עגלה <span>גישה מבוקרת לפי עגלה ולפי תפקיד</span></li>
+      <li>ייבוא CSV + ייבוא חכם + ייצוא <span>קובץ-מקור אחד יוצר עגלה ומגירות אוטומטית</span></li>
+      <li>חיפוש גלובלי על כל הכלים <span>איתור מיידי של כל כלי בכל עגלה</span></li>
+      <li>לוח ניהול עם תרשימי עוגה <span>מבט-על על סטטוסים + כרטיס "בעיות כלים"</span></li>
+      <li>תחנות ייעודיות (בנייה · בעיות נסתרות) <span>למנהל המערכת בלבד, נאכף ברמת מסד הנתונים</span></li>
+      <li>התראות לבעלי עגלות + מונה לא-נקראו <span>עדכון אישי לכל בעל עגלה, עם סימון "נקרא"</span></li>
       <li>יומן ביקורת מלא <span>כל פעולה מתועדת — מי, מה ומתי</span></li>
-      <li>היסטוריית גרסאות, שחזור וגיבוי בסיס Alpha <span>אפשר תמיד לחזור אחורה בבטחה</span></li>
-      <li>ידידותי לנייד <span>עבודה נוחה מהטלפון, ישירות מהשטח</span></li>
+      <li>גרסאות, אתחול/שחזור + הקפאה וסיסמת-עריכה <span>ממשל מלא: גיבוי בסיס / משני / נקודתי / שנתי + מתג נעילה</span></li>
+      <li>עיצוב מותאם נייד <span>מגע 44px, שדות 16px, ללא גלישה — עבודה מהשטח</span></li>
     </ul>
   </div>
 </section>
 
 <!-- 8. RELIABILITY / QUALITY -->
-<section class="slide">
+<section id="slide-reliability" class="slide">
   <div class="slide-inner">
     <div class="kicker">אמינות ואיכות</div>
     <h2>בנויה לעמוד באמון של ארגון</h2>
@@ -266,14 +329,48 @@
       <div class="card accent-b"><span class="ic">☁️</span><h3>ענן יציב</h3><p>נתונים מוגנים בענן, נגישים מכל מקום, ללא שרת מקומי לתחזק.</p></div>
       <div class="card accent-a"><span class="ic">🔐</span><h3>אבטחה לכל עגלה</h3><p>גישה מבוקרת לפי תפקיד ולפי עגלה — כל אחד רואה רק את שלו.</p></div>
       <div class="card accent-p"><span class="ic">🧾</span><h3>יומן ביקורת</h3><p>כל פעולה מתועדת — שקיפות מלאה ושרשרת אחריות ברורה.</p></div>
-      <div class="card accent-g"><span class="ic">↩️</span><h3>שחזור גרסאות + גיבוי Alpha</h3><p>היסטוריית גרסאות ושחזור, עם גיבוי בסיס Alpha להגנה מלאה.</p></div>
+      <div class="card accent-g"><span class="ic">↩️</span><h3>שחזור גרסאות + גיבוי בסיס</h3><p>היסטוריית גרסאות ושחזור, עם גיבוי בסיס להגנה מלאה.</p></div>
     </div>
-    <p class="body" style="margin-top:30px">המערכת נבנית ונבדקת בסטנדרט מקצועי — כך שהדירקטוריון וההנהלה יכולים לסמוך עליה כתשתית ליבה לתפעול הכלים.</p>
+    <p class="body" style="margin-top:30px">המערכת נבנית ונבדקת בסטנדרט מקצועי — כך שניתן לסמוך עליה כתשתית ליבה לתפעול הכלים.</p>
   </div>
 </section>
 
-<!-- 9. ROADMAP -->
-<section class="slide" style="background:var(--s1)">
+<!-- 9. COMPETITIVE POSITIONING -->
+<section id="slide-positioning" class="slide">
+  <div class="slide-inner">
+    <div class="kicker">מיצוב מול השוק</div>
+    <h2>איפה אנחנו חזקים — ואיפה השוק עוד מקדים</h2>
+    <p class="lead">השוואה כנה מול מוצרי ניהול כלים ומלאי מובילים בשוק. היתרון שלנו אמיתי — ויש פערים שאנחנו מודעים אליהם ויודעים לסגור.</p>
+    <div class="grid g2" style="margin-top:34px; align-items:start">
+      <div class="card accent-g">
+        <span class="ic">✅</span>
+        <h3>היתרון שלנו</h3>
+        <ul style="list-style:none; margin-top:12px; color:var(--mut)">
+          <li style="margin-bottom:12px"><strong style="color:var(--tx)">עברית RTL ונייד מלידה.</strong> כל המוצרים הגדולים אנגלית-first ו-LTR — אנחנו מותאמים לעובד בשטח בעברית.</li>
+          <li style="margin-bottom:12px"><strong style="color:var(--tx)">כיול בליבה, לא תוסף.</strong> סטטוס צבעוני, מספר סידורי ותוקף בעמוד-שדרה אחד — בעוד מערכות כלליות מצמידות כיול כשדה או מודול בתשלום.</li>
+          <li style="margin-bottom:12px"><strong style="color:var(--tx)">מבנה עגלה-עם-מגירות אמיתי.</strong> כמעט כל מתחרה הוא רשימת פריטים שטוחה; אנחנו ממדלים את העגלה כאובייקט חי.</li>
+          <li style="margin-bottom:12px"><strong style="color:var(--tx)">קצב אחריותיות חוזר.</strong> חתימה יומית + ביקורת רבעונית + מסירה דו-חתימה — ריטואל מובנה, לא רק השאלה/החזרה אד-הוק.</li>
+          <li><strong style="color:var(--tx)">עלות שולית נמוכה מאוד.</strong> מול רישיונות יקרים או דמי-מנוי חודשיים פר-משתמש המקובלים בשוק — בלי תלות בחומרה קניינית.</li>
+        </ul>
+      </div>
+      <div class="card accent-a">
+        <span class="ic">🎯</span>
+        <h3>איפה השוק מקדים (ומה התוכנית)</h3>
+        <ul style="list-style:none; margin-top:12px; color:var(--mut)">
+          <li style="margin-bottom:12px"><strong style="color:var(--tx)">סריקת QR/ברקוד בטלפון.</strong> אצלנו חיפוש בלבד. בתוכנית: מדבקות QR מתוך המערכת + סריקה לאיתור ולפעולה.</li>
+          <li style="margin-bottom:12px"><strong style="color:var(--tx)">עבודה לא-מקוונת (Offline).</strong> כיום תלויי-רשת. בתוכנית: שמירה מקומית + סנכרון אוטומטי בחזרה לחיבור (PWA).</li>
+          <li style="margin-bottom:12px"><strong style="color:var(--tx)">תעודות כיול מצורפות.</strong> כיום סטטוס ותוקף בלבד. בתוכנית: צירוף תעודה כקובץ + מחולל-תעודה.</li>
+          <li style="margin-bottom:12px"><strong style="color:var(--tx)">התראות יזומות והסלמה.</strong> כיום צבע פסיבי. בתוכנית: באנר 30/14/0 ימים פר-עגלה ופר-בעלים.</li>
+          <li><strong style="color:var(--tx)">חומרה: RFID · עמדות · מכונות-ניפוק.</strong> מחוץ לתחום מבחירה — שכבת תוכנה, ללא נעילה ליצרן חומרה.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tbl-note"><strong>הקו התחתון:</strong> ביתרונות שחשובים <strong>לנו</strong> — עברית, כיול, מבנה העגלות ועלות — אנחנו לפני השוק. הפערים שנותרו הם שיפורי-יכולת ידועים ומתועדפים, שרובם נסגרים <strong>ללא הרחבת תשתית</strong> — לא חורים אדריכליים.</div>
+  </div>
+</section>
+
+<!-- 10. ROADMAP -->
+<section id="slide-roadmap" class="slide" style="background:var(--s1)">
   <div class="slide-inner">
     <div class="kicker">מפת דרכים</div>
     <h2>הצעדים הבאים — אמינים וברי-ביצוע</h2>
@@ -284,8 +381,8 @@
         <div>
           <h3>השלמת טעינת הנתונים והפעלה מלאה</h3>
           <ul>
-            <li>השלמת הזנת הנתונים — 11 עגלות, אלפי כלים, 77 כלים בכיול</li>
-            <li>ייבוא מרוכז מ-Excel (Bulk Import)</li>
+            <li>השלמת הזנת הנתונים — כלל העגלות והכלים, כולל הכלים בכיול</li>
+            <li>ייבוא מרוכז מגיליון נתונים (Bulk Import)</li>
             <li>בניית הזמנות</li>
           </ul>
         </div>
@@ -314,12 +411,12 @@
   </div>
 </section>
 
-<!-- 10. CLOSING -->
-<section class="slide" style="background:radial-gradient(1100px 600px at 50% 0%,rgba(34,197,94,.10),transparent),var(--bg)">
+<!-- 11. CLOSING -->
+<section id="slide-closing" class="slide" style="background:radial-gradient(1100px 600px at 50% 0%,rgba(34,197,94,.10),transparent),var(--bg)">
   <div class="slide-inner" style="text-align:center">
     <div class="kicker" style="justify-self:center">סיכום</div>
     <h2 style="max-width:20ch; margin:0 auto"><span class="badge-grad">מערכת ענן מאובטחת ובדוקה — מוכנה להטמעה</span></h2>
-    <p class="lead" style="margin:18px auto 0">מערכת ענן מאובטחת ובדוקה, הנבנית בסטנדרט מקצועי, מוכנה להטמעה רחבה בכל מערך הכלים של החברה.</p>
+    <p class="lead" style="margin:18px auto 0">מערכת ענן מאובטחת ובדוקה, הנבנית בסטנדרט מקצועי, מוכנה להטמעה רחבה בכל מערך הכלים בארגון.</p>
     <div class="placeholder" style="max-width:760px; margin:34px auto 0; text-align:right">מקום שמור: דוגמת "דו"ח עגלה" וקובץ "חתימות" יתווספו כאן בהמשך.</div>
     <p class="footer" style="border:none; justify-self:center; margin-top:40px">תודה · נשמח לדיון ולשאלות</p>
   </div>

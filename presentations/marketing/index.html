@@ -223,12 +223,101 @@
     .grid-3, .grid-2, .grid-4 { grid-template-columns: 1fr; }
     .split, .vs { grid-template-columns: 1fr; }
   }
+  /* ===== Table of contents (clickable stage index) ===== */
+  .toc-list {
+    list-style: none;
+    margin-top: 28px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 28px;
+  }
+  .toc-list li a {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #18222f;
+    border: 1px solid #2a3a4d;
+    border-radius: 14px;
+    padding: 16px 22px;
+    color: #e7eef6;
+    text-decoration: none;
+    font-size: 19px;
+    font-weight: 600;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .toc-list li a:hover { border-color: #3b82f6; background: #1f2c3c; }
+  .toc-list li a .n {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: #1f2c3c;
+    border: 1px solid #2a3a4d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: #3b82f6;
+  }
+  @media (max-width: 820px) {
+    .toc-list { grid-template-columns: 1fr; }
+  }
+  /* ===== Print / Save-as-PDF ===== */
+  @media print {
+    @page { size: A4 landscape; margin: 12mm; }
+    html { scroll-behavior: auto; }
+    body {
+      background: #ffffff;
+      color: #14202c;
+      line-height: 1.45;
+    }
+    .slide {
+      min-height: auto;
+      height: auto;
+      padding: 8mm 6mm;
+      border-bottom: none;
+      break-after: page;
+      page-break-after: always;
+      break-inside: avoid;
+      page-break-inside: avoid;
+      justify-content: flex-start;
+    }
+    .slide:last-of-type { break-after: auto; page-break-after: auto; }
+    h1, h2, h3 { color: #14202c; }
+    .lead, .card p, .stat .lbl, .pill { color: #3a4a5c; }
+    .kicker { color: #1d4ed8; }
+    .badge { color: #5a6b7d; }
+    .card, .stat, .vs .col, .chip, .pill, .toc-list li a, .icon, .toc-list li a .n {
+      background: #f4f7fb;
+      border-color: #c7d3e0;
+      box-shadow: none;
+    }
+    .cta-box {
+      background: #f4f7fb;
+      border-color: #1d4ed8;
+    }
+    .shot {
+      box-shadow: none;
+      border-color: #c7d3e0;
+      max-height: 150mm;
+      width: auto;
+      max-width: 100%;
+    }
+    ul.checks li, .vs ul li { color: #14202c; }
+    .blue { color: #1d4ed8; }
+    .green { color: #15803d; }
+    .red { color: #b91c1c; }
+    .amber { color: #b45309; }
+    .purple { color: #6d28d9; }
+    a { color: inherit; text-decoration: none; }
+  }
 </style>
 </head>
 <body>
 
 <!-- Slide 1 — Title -->
-<section class="slide">
+<section class="slide" id="stage-1">
   <div class="badge">ניהול כלים · פלטפורמת ענן</div>
   <div class="kicker">סטטוס חי לכל כלי</div>
   <h1>כל כלי, כל מגירה,<br>כל מחלקה.<br><span class="blue">בענן. בזמן אמת.</span></h1>
@@ -240,8 +329,32 @@
   </div>
 </section>
 
+<!-- Slide 1b — Table of contents (clickable stage index) -->
+<section class="slide" id="stage-toc">
+  <div class="kicker blue">תוכן העניינים</div>
+  <h2>השלבים בהצגה.</h2>
+  <p class="lead">לחיצה על כל שלב קופצת ישירות אליו.</p>
+  <ul class="toc-list">
+    <li><a href="#stage-2"><span class="n">1</span>האתגר — גיליון שאינו חי</a></li>
+    <li><a href="#stage-3"><span class="n">2</span>הפתרון — מערכת חיה, לא קובץ</a></li>
+    <li><a href="#stage-4"><span class="n">3</span>צבע אחד — מצב אחד</a></li>
+    <li><a href="#stage-5"><span class="n">4</span>תפקידים והרשאות</a></li>
+    <li><a href="#stage-6"><span class="n">5</span>בנוי סביב המכל</a></li>
+    <li><a href="#stage-7"><span class="n">6</span>כיול</a></li>
+    <li><a href="#stage-8"><span class="n">7</span>חתימות תפעוליות</a></li>
+    <li><a href="#stage-9"><span class="n">8</span>מבנה גמיש ושכפול</a></li>
+    <li><a href="#stage-10"><span class="n">9</span>בעלות ומסירה</a></li>
+    <li><a href="#stage-11"><span class="n">10</span>התחלה מהירה וייבוא חכם</a></li>
+    <li><a href="#stage-12"><span class="n">11</span>ממשל ושליטה</a></li>
+    <li><a href="#stage-13"><span class="n">12</span>זמין מכל מקום</a></li>
+    <li><a href="#stage-14"><span class="n">13</span>למה אנחנו</a></li>
+    <li><a href="#stage-15"><span class="n">14</span>גיליון מול המערכת</a></li>
+    <li><a href="#stage-16"><span class="n">15</span>בואו נדבר</a></li>
+  </ul>
+</section>
+
 <!-- Slide 2 — The Problem -->
-<section class="slide">
+<section class="slide" id="stage-2">
   <div class="kicker red">האתגר</div>
   <h2>אקסל מנהל —<br>אבל הוא לא חי.</h2>
   <div class="grid grid-3">
@@ -264,7 +377,7 @@
 </section>
 
 <!-- Slide 3 — The Solution / Live -->
-<section class="slide">
+<section class="slide" id="stage-3">
   <div class="split">
     <div>
       <div class="kicker green">הפתרון</div>
@@ -284,7 +397,7 @@
 </section>
 
 <!-- Slide 4 — One colour per status -->
-<section class="slide">
+<section class="slide" id="stage-4">
   <div class="kicker amber">סטטוס במבט אחד</div>
   <h2>צבע אחד —<br>מצב אחד.</h2>
   <p class="lead">לכל סטטוס צבע נפרד ומובחן משלו. אין שני מצבים החולקים אותו צבע, כך שמבט מהיר על המכל מספיק כדי לדעת בדיוק מה המצב.</p>
@@ -299,7 +412,7 @@
 </section>
 
 <!-- Slide 5 — Roles -->
-<section class="slide">
+<section class="slide" id="stage-5">
   <div class="kicker blue">תפקידים והרשאות</div>
   <h2>כל אחד רואה בדיוק<br>את מה שמותר לו.</h2>
   <p class="lead">בקרת גישה מבוססת תפקידים, אכופה ברמת מסד הנתונים — לא רק בממשק.</p>
@@ -328,8 +441,32 @@
   </div>
 </section>
 
+<!-- Slide 5b — Built around the cart, not a flat list -->
+<section class="slide" id="stage-6">
+  <div class="kicker green">היתרון שלנו</div>
+  <h2>בנוי סביב העגלה —<br>לא רשימה שטוחה.</h2>
+  <p class="lead">רוב הכלים בשוק הם רשימת פריטים שטוחה שצריך "לכופף" כדי לתאר עגלה עם מגירות. אצלנו המכל הוא אובייקט חי: מחלקה ← מיקום ← מכל ← ארון/מגירה ← כלי. כך שהמערכת מדברת בשפה של השטח, בלי פשרות.</p>
+  <div class="grid grid-3">
+    <div class="card b-blue">
+      <div class="icon blue">▤</div>
+      <h3>מודל פיזי אמיתי</h3>
+      <p>היררכיה ייעודית למכל‑עם‑מגירות, לא תיקיות מאולתרות מעל רשימה כללית.</p>
+    </div>
+    <div class="card">
+      <div class="icon amber">◎</div>
+      <h3>כיול בליבה</h3>
+      <p>סטטוס, מספר סידורי ותוקף הם חלק מעמוד‑השדרה — לא שדה נוסף או מודול נפרד בתשלום.</p>
+    </div>
+    <div class="card">
+      <div class="icon purple">⟳</div>
+      <h3>ריטואל אחריות קבוע</h3>
+      <p>חתימה יומית, ביקורת רבעונית ו‑sign‑off בלחיצה — קצב מובנה, לא רק השאלה‑והחזרה מזדמנת.</p>
+    </div>
+  </div>
+</section>
+
 <!-- Slide 6 — Calibration -->
-<section class="slide">
+<section class="slide" id="stage-7">
   <div class="split">
     <div>
       <img class="shot" src="../../lab/reports/view-owner.png" alt="תצוגת בעל מכל">
@@ -349,7 +486,7 @@
 </section>
 
 <!-- Slide 7 — Sign-offs (operational, no attendance) -->
-<section class="slide">
+<section class="slide" id="stage-8">
   <div class="kicker green">חתימות תפעוליות</div>
   <h2>מי חתם,<br>ומה עוד פתוח.</h2>
   <p class="lead">תהליך חתימה תפעולי טהור: אילו מכלים נחתמו ואילו לא. אין כאן עניין של נוכחות אנשים — רק תמונת מצב על המכלים עצמם.</p>
@@ -369,21 +506,78 @@
 </section>
 
 <!-- Slide 8 — Containers / cloning / scale -->
-<section class="slide">
+<section class="slide" id="stage-9">
   <div class="kicker purple">מבנה גמיש</div>
   <h2>מכל אחד,<br>מוכפל לרבים.</h2>
   <p class="lead">"מכל" אצלנו הוא גנרי — "עגלה", ארון או אזור עבודה. מגדירים פריסה פעם אחת, ומשכפלים אותה למספר מכלים זהים הנבדלים רק במספר. כל מכל נושא דור/סוג משלו.</p>
   <div class="grid grid-4">
     <div class="card"><div class="icon purple">▤</div><h3>מכל גנרי</h3><p>"עגלה", ארון או אזור עבודה — אותו ניהול.</p></div>
-    <div class="card"><div class="icon blue">⧉</div><h3>שכפול פריסה</h3><p>הגדרה אחת, N מכלים זהים. לדוגמה: כמה "דור א" וכמה "דור ב".</p></div>
+    <div class="card"><div class="icon blue">⧉</div><h3>שכפול פריסה</h3><p>הגדרה אחת, N מכלים זהים — מספר דורות או סוגים זה לצד זה.</p></div>
     <div class="card"><div class="icon green">∞</div><h3>קנה מידה</h3><p>מסדנת בית בודדת ועד כמות כלים אסטרונומית.</p></div>
     <div class="card"><div class="icon amber">⌗</div><h3>זיהוי וחריטה</h3><p>קוד למיקום, למכל, למגירה ולכלי — נושא את שרשרת השיוך שלו.</p></div>
   </div>
   <p class="lead" style="margin-top:26px;font-size:clamp(16px,1.8vw,20px)">כל הכמויות בכל מקום הן דוגמאות בלבד — המערכת אינה כבולה לגודל מסוים.</p>
 </section>
 
+<!-- Slide 8b — Ownership & dual-signature handover -->
+<section class="slide" id="stage-10">
+  <div class="kicker blue">בעלות ומסירה</div>
+  <h2>שרשרת אחריות<br>שלא נשברת.</h2>
+  <p class="lead">לכל מכל יש בעלים. מסירה בין אנשים נעשית בחתימה דו‑צדדית — מוסר ומקבל מאשרים, מתוך רשימת עובדים אמיתית ולא טקסט חופשי — עם שיוך מוגבל‑בזמן. כך תמיד ברור מי מחזיק במה, ומאיזה רגע.</p>
+  <div class="grid grid-3">
+    <div class="card">
+      <div class="icon green">✍</div>
+      <h3>חתימה דו‑צדדית</h3>
+      <p>מוסר ומקבל מאשרים את המסירה — לחיצת יד דיגיטלית שמתועדת ביומן.</p>
+    </div>
+    <div class="card">
+      <div class="icon blue">⏱</div>
+      <h3>שיוך מוגבל‑בזמן</h3>
+      <p>אפשר לשייך מכל לתקופה מוגדרת, לא רק "עד שיוחזר" — אחריות עם תאריך.</p>
+    </div>
+    <div class="card">
+      <div class="icon amber">↺</div>
+      <h3>ביטול הפיך</h3>
+      <p>שינויי סטטוס הפיכים ניתנים לביטול בלחיצה — טעות אינה הופכת לנזק קבוע.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Slide 8c — Onboarding / smart import -->
+<section class="slide" id="stage-11">
+  <div class="split">
+    <div>
+      <div class="kicker purple">התחלה מהירה</div>
+      <h2>מקובץ מבולגן —<br>למערכת מסודרת.</h2>
+      <p class="lead">לא צריך להזין הכול ביד. ייבוא חכם בונה מכל שלם, על מגירותיו וכליו, מתוך קובץ מקור אחד — גם אם הוא מבולגן. ייבוא וייצוא CSV, בורר קבצים וחיפוש גלובלי על כל הכלים משלימים את התמונה.</p>
+      <ul class="checks">
+        <li>ייבוא חכם שיוצר עגלה + מגירות מקובץ בודד</li>
+        <li>ייבוא/ייצוא CSV ובורר קבצים נוח</li>
+        <li>חיפוש גלובלי מיידי על פני כל הכלים</li>
+        <li>חיכוך הקמה נמוך — בלי הזנת מאסטר‑דאטה מתישה</li>
+      </ul>
+    </div>
+    <div>
+      <img class="shot" src="../../lab/reports/view-admin.png" alt="ייבוא וניהול">
+    </div>
+  </div>
+</section>
+
+<!-- Slide 8d — Governance, versions, notifications -->
+<section class="slide" id="stage-12">
+  <div class="kicker amber">ממשל ושליטה</div>
+  <h2>שינוי בשליטה,<br>בלי הפתעות.</h2>
+  <p class="lead">כלים שמעטים מאוד בשוק מציעים: גרסאות ושחזור, איפוס מבוקר, מנגנון הקפאה וסיסמת‑עריכה — change‑control קל, בלי המחיר של מערכת כבדה. ולצדם, יומן מלא והתראות אישיות לכל בעלים.</p>
+  <div class="grid grid-4">
+    <div class="card"><div class="icon blue">⎘</div><h3>גרסאות ושחזור</h3><p>Alpha ריק, Beta לניסוי, snapshot ואיפוס שנתי — חזרה אחורה בכל רגע.</p></div>
+    <div class="card"><div class="icon red">⛒</div><h3>הקפאה וסיסמת‑עריכה</h3><p>kill‑switch לעריכות וסיסמה ייעודית — שכבת הגנה מפני שינוי לא מכוון.</p></div>
+    <div class="card"><div class="icon green">≣</div><h3>יומן מלא</h3><p>כל פעולה מתועדת: מי, מה ומתי — מקור אמת אחד לבדיקה.</p></div>
+    <div class="card"><div class="icon purple">🔔</div><h3>התראות אישיות</h3><p>לכל בעלים מונה "לא נקראו" וסימון כנקרא — מה שחשוב לו, אצלו.</p></div>
+  </div>
+</section>
+
 <!-- Slide 9 — Anywhere / mission -->
-<section class="slide">
+<section class="slide" id="stage-13">
   <div class="split">
     <div>
       <div class="kicker blue">זמין מכל מקום</div>
@@ -393,7 +587,7 @@
         <li>גישה מהשטח, ליד "העגלה", הארון או אזור העבודה</li>
         <li>ענן — בלי התקנה ובלי שרת מקומי לתחזק</li>
         <li>סנכרון מיידי — כולם רואים אותו מצב אמת</li>
-        <li>עברית RTL מהיסוד</li>
+        <li>עברית RTL מהיסוד — לא תוסף שפה</li>
       </ul>
     </div>
     <div>
@@ -402,8 +596,40 @@
   </div>
 </section>
 
+<!-- Slide 9b — Why us / competitive edge (honest, benefit-led) -->
+<section class="slide" id="stage-14">
+  <div class="kicker green">למה אנחנו</div>
+  <h2>מותאם בדיוק<br>לעבודה שלכם.</h2>
+  <p class="lead">בדקנו את עצמנו מול עשרות מערכות מובילות. הנה היכן שאנחנו נותנים יתרון אמיתי — וגם איפה אנחנו ישרים לגבי הגבולות.</p>
+  <div class="vs">
+    <div class="col us">
+      <h3 class="green">הקצה שלנו</h3>
+      <ul>
+        <li>מודל עגלה‑עם‑מגירות אמיתי, לא רשימה שטוחה</li>
+        <li>כיול בליבה — סטטוס, סידורי ותוקף, לא מודול בתשלום</li>
+        <li>קצב אחריות חוזר: חתימה יומית, רבעונית ו‑sign‑off בלחיצה</li>
+        <li>מסירה דו‑חתימה ושיוך מוגבל‑בזמן</li>
+        <li>ממשל: גרסאות, איפוס, הקפאה וסיסמת‑עריכה</li>
+        <li>עברית RTL מהיסוד, על הטלפון</li>
+      </ul>
+    </div>
+    <div class="col old">
+      <h3 class="purple">מה בדרך</h3>
+      <ul>
+        <li>סריקת QR בטלפון למציאה ופעולה מהירה</li>
+        <li>הדפסת מדבקות QR לכלים, מגירות ומכלים</li>
+        <li>התראות כיול יזומות במדרגות 30/14/0 ימים</li>
+        <li>נעילת פעולה לכלי שכיולו פג</li>
+        <li>צירוף תעודות‑כיול ומחולל תעודה</li>
+        <li>עבודה גם ללא רשת עם סנכרון מאוחר</li>
+      </ul>
+    </div>
+  </div>
+  <p class="lead" style="margin-top:26px;font-size:clamp(16px,1.8vw,20px)">אנחנו לא מתחזים לכל דבר — אנחנו עושים את הליבה היטב, ובונים את ההמשך בשקיפות.</p>
+</section>
+
 <!-- Slide 10 — Excel vs us -->
-<section class="slide">
+<section class="slide" id="stage-15">
   <div class="kicker green">למה לעבור</div>
   <h2>מגיליון מנוהל —<br>למערכת שנושמת.</h2>
   <div class="vs">
@@ -423,21 +649,22 @@
         <li>סטטוס חי, מתעדכן מיידית לכולם</li>
         <li>ניהול קל לפי מחלקה ומכל</li>
         <li>מקור אמת אחד בענן</li>
-        <li>שרשרת אחריות מתועדת</li>
+        <li>שרשרת אחריות מתועדת עם חתימה דו‑צדדית</li>
         <li>צבע אחד לכל מצב, הפרדה מלאה</li>
+        <li>כיול, ממשל ויומן מובנים בליבה</li>
       </ul>
     </div>
   </div>
 </section>
 
 <!-- Slide 11 — CTA -->
-<section class="slide">
+<section class="slide" id="stage-16">
   <div class="kicker blue">בואו נדבר</div>
   <h2 style="text-align:center">מוכנים לראות כל כלי<br>בזמן אמת?</h2>
   <div class="cta-box">
-    <p class="lead" style="margin:0 auto 26px">נשמח להציג הדגמה חיה המותאמת למחלקות, למכלים ולתהליכי הכיול שלכם — בכל קנה מידה.</p>
+    <p class="lead" style="margin:0 auto 26px">נשמח להציג הדגמה חיה המותאמת למחלקות, למכלים ולתהליכי הכיול שלכם — בכל קנה מידה, ובלי שרת מקומי לתחזק.</p>
     <div style="font-size:26px;font-weight:800" class="blue">ניהול כלים</div>
-    <div style="color:#9fb0c3;margin-top:10px">סטטוס חי לכל כלי · עברית · מאובטח · בזמן אמת</div>
+    <div style="color:#9fb0c3;margin-top:10px">סטטוס חי לכל כלי · עברית RTL · מאובטח · בזמן אמת</div>
   </div>
 </section>
 

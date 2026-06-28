@@ -109,29 +109,140 @@
   .quote{
     font-size:15px; color:var(--muted); margin-top:8px;
   }
+
+  /* ===== Table of contents (clickable stage index) ===== */
+  .toc-list{list-style:none; margin-top:20px; display:grid; gap:12px}
+  .toc-list li{margin:0}
+  .toc-list a{
+    display:flex; align-items:center; gap:16px; text-decoration:none;
+    color:var(--text); background:var(--surface); border:1px solid var(--border);
+    border-radius:14px; padding:14px 20px; font-size:20px; font-weight:700;
+    transition:border-color .15s, background .15s;
+  }
+  .toc-list a:hover{border-color:var(--blue); background:var(--surface2)}
+  .toc-list .toc-n{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:38px; height:38px; border-radius:50%; flex:0 0 auto;
+    background:rgba(59,130,246,.18); color:var(--blue);
+    font-size:17px; font-weight:900;
+  }
+  .toc-list .toc-arrow{margin-inline-start:auto; color:var(--muted); font-size:18px}
+  .toc-grid{grid-template-columns:1fr 1fr}
+  @media(max-width:680px){ .toc-grid{grid-template-columns:1fr} }
+
+  /* "back to index" small link on each slide */
+  .toindex{
+    position:absolute; top:24px; inset-inline-end:28px;
+    color:var(--muted); font-size:14px; font-weight:700; text-decoration:none;
+    border:1px solid var(--border); border-radius:999px; padding:4px 14px;
+  }
+  .toindex:hover{color:var(--blue); border-color:var(--blue)}
+
+  /* ===== PRINT / SAVE-AS-PDF ===== */
+  @media print{
+    @page{ size:A4 landscape; margin:12mm; }
+    html{scroll-behavior:auto}
+    body{
+      background:#fff !important; color:#10202e !important;
+      font-size:14px; line-height:1.5;
+    }
+    /* one slide = one printed page */
+    .slide{
+      min-height:auto !important; height:auto !important;
+      width:100% !important; padding:18px 14px !important;
+      border:none !important; background:#fff !important;
+      display:block !important;
+      break-inside:avoid; page-break-inside:avoid;
+      break-after:page; page-break-after:always;
+    }
+    .slide:last-of-type{ break-after:auto; page-break-after:auto; }
+    .wrap{max-width:100% !important}
+
+    /* hide on-screen-only chrome */
+    .toindex{ display:none !important; }
+    .num-tag{ color:#5b6b7d !important; border-color:#c7d2dd !important; }
+
+    /* print-safe colors */
+    h1,h2,h3,p,.lead,.big{ color:#10202e !important; }
+    .muted,.quote,.footer{ color:#42566a !important; }
+    .kicker{ color:#1d4ed8 !important; }
+    .card,.colorcard{
+      background:#f5f8fb !important; border:1px solid #c7d2dd !important;
+      break-inside:avoid; page-break-inside:avoid;
+      box-shadow:none !important;
+    }
+    .card.alt{ background:#eef3f8 !important; }
+    .tip{ background:#fbf3e3 !important; color:#3a2e12 !important; }
+    .badge{ border-color:#c7d2dd !important; }
+    img.shot{ box-shadow:none !important; max-width:320px; }
+
+    /* TOC links become page references in PDF */
+    .toc-list a{
+      background:#f5f8fb !important; border:1px solid #c7d2dd !important;
+      color:#10202e !important;
+    }
+    .toc-list .toc-n{ background:#e2ecf6 !important; color:#1d4ed8 !important; }
+
+    /* keep colored buttons/swatches readable but flat */
+    .btnfake{ box-shadow:none !important; }
+    .step-num,.icon-circle{ box-shadow:none !important; }
+
+    /* make sure backgrounds/colors actually print */
+    *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+  }
 </style>
 </head>
 <body>
 
 <!-- 1. TITLE -->
-<section class="slide center" style="background:linear-gradient(160deg,#0f1620 0%,#16202d 100%)">
+<section id="s-title" class="slide center" style="background:linear-gradient(160deg,#0f1620 0%,#16202d 100%)">
   <div class="wrap">
     <div class="hero-icon">🛠️</div>
     <span class="kicker">מדריך פשוט · שימוש יומי</span>
     <h1>ניהול כלים</h1>
     <p class="lead">המדריך שלך לעבודה היומית מהטלפון.<br>פשוט, ברור, בלי לחץ — נעבור על הכול ביחד.</p>
     <div class="pill-row center" style="justify-content:center; margin-top:30px">
-      <span class="badge" style="color:var(--green); border-color:var(--green)">חתימה יומית</span>
-      <span class="badge" style="color:var(--blue); border-color:var(--blue)">צבעי מצב</span>
+      <span class="badge" style="color:var(--green); border-color:var(--green)">חתימה בקליק אחד</span>
+      <span class="badge" style="color:var(--purple); border-color:var(--purple)">התראות אישיות</span>
+      <span class="badge" style="color:var(--blue); border-color:var(--blue)">חיפוש כלים</span>
       <span class="badge" style="color:var(--amber); border-color:var(--amber)">בקשות</span>
       <span class="badge" style="color:var(--red); border-color:var(--red)">דיווח שבור</span>
-      <span class="badge" style="color:var(--purple); border-color:var(--purple)">דוח אישי</span>
     </div>
   </div>
 </section>
 
+<!-- TOC / INDEX — clickable stage list -->
+<section id="s-index" class="slide">
+  <span class="num-tag">תוכן</span>
+  <div class="wrap">
+    <span class="kicker">תוכן עניינים</span>
+    <h2>מה נעבור במדריך</h2>
+    <p class="lead">לחיצה על כל שלב קופצת ישר אליו.</p>
+    <ul class="toc-list toc-grid">
+      <li><a href="#s-welcome"><span class="toc-n">1</span><span>מה המערכת עושה בשבילך</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-login"><span class="toc-n">2</span><span>כניסה למערכת</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-home"><span class="toc-n">3</span><span>מסך הבית — ה"עגלה" שלך</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-visibility"><span class="toc-n">4</span><span>מה מוצג לך</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-signoff"><span class="toc-n">5</span><span>חתימה יומית בקליק אחד</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-notifications"><span class="toc-n">6</span><span>ההתראות האישיות שלך</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-search"><span class="toc-n">7</span><span>חיפוש כלים</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-closet"><span class="toc-n">8</span><span>חתימה על ארון מחלקתי</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-colors-intro"><span class="toc-n">9</span><span>צבעי המצב — הקדמה</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-colors-legend"><span class="toc-n">10</span><span>מקרא הצבעים</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-calibration"><span class="toc-n">11</span><span>בקשת שליחה לכיול</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-why-calibration"><span class="toc-n">12</span><span>למה כיול חשוב</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-external"><span class="toc-n">13</span><span>בקשת כלי לשימוש בחוץ</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-broken"><span class="toc-n">14</span><span>דיווח על כלי שבור</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-export"><span class="toc-n">15</span><span>הוצאת הדוח האישי</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-cheatsheet"><span class="toc-n">16</span><span>הכול במקום אחד — סיכום</span><span class="toc-arrow">‹</span></a></li>
+      <li><a href="#s-closing"><span class="toc-n">17</span><span>סיום</span><span class="toc-arrow">‹</span></a></li>
+    </ul>
+  </div>
+</section>
+
 <!-- 2. WELCOME / WHAT IS THIS -->
-<section class="slide">
+<section id="s-welcome" class="slide">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
   <span class="num-tag">2</span>
   <div class="wrap">
     <span class="kicker">ברוכים הבאים</span>
@@ -154,7 +265,8 @@
 </section>
 
 <!-- 3. LOGIN -->
-<section class="slide">
+<section id="s-login" class="slide">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
   <span class="num-tag">3</span>
   <div class="wrap">
     <span class="kicker">להתחיל</span>
@@ -178,7 +290,8 @@
 </section>
 
 <!-- 4. THE HOME SCREEN -->
-<section class="slide">
+<section id="s-home" class="slide">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
   <span class="num-tag">4</span>
   <div class="wrap">
     <span class="kicker">מסך הבית</span>
@@ -203,7 +316,8 @@
 </section>
 
 <!-- 4b. WHAT YOU SEE (visibility) -->
-<section class="slide">
+<section id="s-visibility" class="slide">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
   <span class="num-tag">5</span>
   <div class="wrap">
     <span class="kicker" style="color:var(--blue)">מה מוצג לך</span>
@@ -225,19 +339,20 @@
   </div>
 </section>
 
-<!-- 5. DAILY SIGN-OFF (the most important) -->
-<section class="slide" style="background:linear-gradient(160deg,#0f1620,#13201a)">
+<!-- 5. DAILY SIGN-OFF (the most important) — NOW ONE-CLICK -->
+<section id="s-signoff" class="slide" style="background:linear-gradient(160deg,#0f1620,#13201a)">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
   <span class="num-tag">6</span>
   <div class="wrap">
-    <span class="kicker" style="color:var(--green)">הפעולה הכי חשובה ביום</span>
-    <h2>חתימה יומית ✍️</h2>
-    <p class="lead">אם ה"עגלה" שלך דורשת חתימה יומית — פעם אחת בכל יום עבודה אתה בודק וחותם. זהו.</p>
+    <span class="kicker" style="color:var(--green)">הפעולה הכי חשובה ביום · עכשיו בלחיצה אחת</span>
+    <h2>חתימה יומית — קליק אחד ✍️</h2>
+    <p class="lead">שדרגנו: כבר <b>לא צריך לפתוח</b> את ה"עגלה" ולחפש כפתור. ישר מ<b>תווית ה"עגלה"</b> במסך הבית — לחיצה אחת, וחתמת על היום.</p>
     <div class="card" style="border-color:var(--green)">
       <div class="row">
         <span class="step-num" style="background:var(--green); box-shadow:0 8px 24px rgba(34,197,94,.35)">1</span>
         <div>
-          <h3>פתח את ה"עגלה"</h3>
-          <p class="muted">תסתכל שהכול במקום ותקין.</p>
+          <h3>מצא את תווית ה"עגלה" שלך</h3>
+          <p class="muted">היא ממש למעלה במסך הבית — עם שם ה"עגלה".</p>
         </div>
       </div>
     </div>
@@ -245,20 +360,96 @@
       <div class="row">
         <span class="step-num" style="background:var(--green); box-shadow:0 8px 24px rgba(34,197,94,.35)">2</span>
         <div>
-          <h3>לחץ על הכפתור הירוק</h3>
-          <span class="btnfake green">✍️ חתימה על ה"עגלה" היום</span>
+          <h3>לחץ על כפתור החתימה שעל התווית</h3>
+          <span class="btnfake green">✍️ חתום על ה"עגלה" היום</span>
+          <p class="muted" style="margin-top:10px">זהו. אין מסכים נוספים, אין מה למלא — קליק אחד וסיימת.</p>
+        </div>
+      </div>
+    </div>
+    <div class="card alt" style="border-color:var(--green)">
+      <div class="row">
+        <span class="icon-circle" style="background:rgba(34,197,94,.15)">✅</span>
+        <div>
+          <h3>תג "נחתם היום" 🟢</h3>
+          <p class="muted">אחרי שחתמת, על התווית מופיע תג ירוק <b>"נחתם היום"</b>. כך אתה (וגם האחראים) רואים במבט אחד שה"עגלה" כבר נחתמה — בלי לזכור ובלי לבדוק פעמיים.</p>
+          <span class="badge" style="color:var(--green); border-color:var(--green); margin-top:10px">✓ נחתם היום</span>
         </div>
       </div>
     </div>
     <div class="tip" style="border-color:var(--green); background:rgba(34,197,94,.08)">
-      <b>שים לב:</b> ביום <b>שישי ושבת</b> אין צורך בחתימה כלל. בשאר ימי העבודה — פשוט תחתום בבוקר. החתימה רושמת באופן תפעולי שה"עגלה" נבדקה היום.
+      <b>שים לב:</b> ביום <b>שישי ושבת</b> אין צורך בחתימה כלל. בשאר ימי העבודה — קליק אחד בבוקר. כל עוד אין תג "נחתם היום" — עוד לא חתמת. החתימה רושמת באופן תפעולי שה"עגלה" נבדקה היום.
     </div>
   </div>
 </section>
 
-<!-- 6. CLOSET SIGN-OFF (separate flow) -->
-<section class="slide">
+<!-- NEW: PERSONAL NOTIFICATIONS -->
+<section id="s-notifications" class="slide" style="background:linear-gradient(160deg,#0f1620,#171426)">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
   <span class="num-tag">7</span>
+  <div class="wrap">
+    <span class="kicker" style="color:var(--purple)">חדש · רק בשבילך</span>
+    <h2>ההתראות האישיות שלך 🔔</h2>
+    <p class="lead">עכשיו אתה מקבל <b>התראות משלך</b> — ישר אליך, על דברים שקשורים <b>אליך בלבד</b>. לא צריך לרדוף אחרי אף אחד כדי לדעת מה קורה.</p>
+    <div class="grid two" style="margin-top:22px">
+      <div class="card" style="border-color:var(--purple)">
+        <div class="icon-circle" style="background:rgba(167,139,250,.15)">🤝</div>
+        <h3 style="margin-top:14px">העברה מחכה לחתימתך</h3>
+        <p class="muted">כשמעבירים אליך עגלה / כלי וצריך את חתימתך כדי להשלים — תקבל על כך התראה. נכנס, חותם, וזהו.</p>
+      </div>
+      <div class="card" style="border-color:var(--purple)">
+        <div class="icon-circle" style="background:rgba(167,139,250,.15)">✅</div>
+        <h3 style="margin-top:14px">החלטה על הבקשה שלך</h3>
+        <p class="muted">שלחת בקשה (כיול / הוצאת כלי)? כשהיא מאושרת או נדחית — תקבל התראה עם התשובה. בלי לשאול שוב ושוב.</p>
+      </div>
+    </div>
+    <div class="card alt" style="border-color:var(--purple); margin-top:18px">
+      <div class="row">
+        <span class="icon-circle" style="background:rgba(167,139,250,.15)">🔢</span>
+        <div>
+          <h3>מונה "לא נקרא" 🔴</h3>
+          <p class="muted">על פעמון ההתראות מופיע <b>מספר</b> — כמה התראות חדשות לא קראת. פותחים, קוראים, ולוחצים <b>"סמן כנקרא"</b> — והמונה מתאפס.</p>
+          <span class="btnfake purple" style="margin-top:10px">🔔 התראות <span style="background:var(--red); color:#fff; border-radius:999px; padding:1px 10px; font-size:15px; margin-inline-start:6px">3</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="tip" style="border-color:var(--purple); background:rgba(167,139,250,.08)">ההתראות הן שלך בלבד — אתה רואה רק מה שנוגע לך. הצצה מהירה לפעמון בבוקר, וכבר אתה יודע אם מחכה לך משהו.</div>
+  </div>
+</section>
+
+<!-- NEW: GLOBAL SEARCH -->
+<section id="s-search" class="slide">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
+  <span class="num-tag">8</span>
+  <div class="wrap">
+    <span class="kicker" style="color:var(--blue)">חדש · מוצא הכול מהר</span>
+    <h2>חיפוש כלים 🔍</h2>
+    <p class="lead">צריך כלי מסוים ולא זוכר באיזו מגירה הוא? פשוט <b>מקלידים בחיפוש</b> — והכלי קופץ עם המיקום והמצב שלו.</p>
+    <div class="grid two" style="margin-top:22px">
+      <div class="card">
+        <h3>איך מחפשים</h3>
+        <ul class="clean">
+          <li>מקלידים שם כלי או מזהה חקוק</li>
+          <li>התוצאות מסתננות בזמן אמת תוך כדי הקלדה</li>
+          <li>לוחצים על התוצאה — וקופצים ישר לכלי</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>מה רואים בתוצאה</h3>
+        <ul class="clean">
+          <li>שם הכלי והמזהה</li>
+          <li>המיקום המדויק — מגירה / מדף</li>
+          <li>נקודת הצבע של מצב הכלי</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tip" style="border-color:var(--blue); background:rgba(59,130,246,.08)">החיפוש עובד על הכלים שבתצוגה שלך — מהיר במיוחד כשיש הרבה כלים ב"עגלה" ולא בא לך לגלול.</div>
+  </div>
+</section>
+
+<!-- 6. CLOSET SIGN-OFF (separate flow) -->
+<section id="s-closet" class="slide">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
+  <span class="num-tag">9</span>
   <div class="wrap">
     <span class="kicker" style="color:var(--cyan)">פעולה נפרדת</span>
     <h2>חתימה על ארון מחלקתי 🗄️</h2>
@@ -282,8 +473,9 @@
 </section>
 
 <!-- 7. STATUS COLORS - intro -->
-<section class="slide">
-  <span class="num-tag">8</span>
+<section id="s-colors-intro" class="slide">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
+  <span class="num-tag">10</span>
   <div class="wrap">
     <span class="kicker" style="color:var(--blue)">להבין את הצבעים</span>
     <h2>צבעי המצב — לכל מצב צבע משלו</h2>
@@ -292,8 +484,9 @@
 </section>
 
 <!-- 8. STATUS COLORS - the legend (one colour per status) -->
-<section class="slide">
-  <span class="num-tag">9</span>
+<section id="s-colors-legend" class="slide">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
+  <span class="num-tag">11</span>
   <div class="wrap">
     <span class="kicker" style="color:var(--blue)">מקרא הצבעים</span>
     <h2>צבע אחד לכל מצב</h2>
@@ -328,8 +521,9 @@
 </section>
 
 <!-- 9. REQUEST CALIBRATION -->
-<section class="slide">
-  <span class="num-tag">10</span>
+<section id="s-calibration" class="slide">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
+  <span class="num-tag">12</span>
   <div class="wrap">
     <span class="kicker" style="color:var(--blue)">משימה</span>
     <h2>בקשת שליחה לכיול 🔧</h2>
@@ -348,8 +542,9 @@
 </section>
 
 <!-- 10. WHY CALIBRATION MATTERS -->
-<section class="slide">
-  <span class="num-tag">11</span>
+<section id="s-why-calibration" class="slide">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
+  <span class="num-tag">13</span>
   <div class="wrap">
     <span class="kicker" style="color:var(--amber)">למה זה משנה</span>
     <h2>למה לא להשתמש בכלי לא מכויל?</h2>
@@ -362,8 +557,9 @@
 </section>
 
 <!-- 11. REQUEST EXTERNAL USE -->
-<section class="slide">
-  <span class="num-tag">12</span>
+<section id="s-external" class="slide">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
+  <span class="num-tag">14</span>
   <div class="wrap">
     <span class="kicker" style="color:var(--amber)">משימה</span>
     <h2>בקשת כלי לשימוש בחוץ 📍</h2>
@@ -382,8 +578,9 @@
 </section>
 
 <!-- 12. REPORT BROKEN -->
-<section class="slide" style="background:linear-gradient(160deg,#0f1620,#1c1416)">
-  <span class="num-tag">13</span>
+<section id="s-broken" class="slide" style="background:linear-gradient(160deg,#0f1620,#1c1416)">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
+  <span class="num-tag">15</span>
   <div class="wrap">
     <span class="kicker" style="color:var(--red)">משימה</span>
     <h2>דיווח על כלי שבור 🚨</h2>
@@ -412,8 +609,9 @@
 </section>
 
 <!-- 13. EXPORT REPORT -->
-<section class="slide">
-  <span class="num-tag">14</span>
+<section id="s-export" class="slide">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
+  <span class="num-tag">16</span>
   <div class="wrap">
     <span class="kicker" style="color:var(--purple)">לקחת איתך</span>
     <h2>הוצאת הדוח האישי שלך 📄</h2>
@@ -433,13 +631,16 @@
 </section>
 
 <!-- 14. CHEAT SHEET -->
-<section class="slide" style="background:linear-gradient(160deg,#16202d,#0f1620)">
-  <span class="num-tag">15</span>
+<section id="s-cheatsheet" class="slide" style="background:linear-gradient(160deg,#16202d,#0f1620)">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
+  <span class="num-tag">17</span>
   <div class="wrap">
     <span class="kicker">לסיכום</span>
     <h2>הכול במקום אחד</h2>
     <div class="grid two" style="margin-top:24px">
-      <div class="card"><div class="row"><span class="icon-circle" style="background:rgba(34,197,94,.15)">✍️</span><div><h3>כל יום עבודה</h3><p class="muted">חתום על ה"עגלה" (לא בשישי/שבת).</p></div></div></div>
+      <div class="card"><div class="row"><span class="icon-circle" style="background:rgba(34,197,94,.15)">✍️</span><div><h3>כל יום עבודה</h3><p class="muted">חתום מתווית ה"עגלה" בקליק אחד — עד שמופיע תג "נחתם היום" (לא בשישי/שבת).</p></div></div></div>
+      <div class="card"><div class="row"><span class="icon-circle" style="background:rgba(167,139,250,.15)">🔔</span><div><h3>התראות</h3><p class="muted">הצץ בפעמון — העברה לחתימתך או החלטה על בקשה. סמן כנקרא.</p></div></div></div>
+      <div class="card"><div class="row"><span class="icon-circle" style="background:rgba(59,130,246,.15)">🔍</span><div><h3>חיפוש</h3><p class="muted">הקלד שם או מזהה — וקפוץ ישר לכלי.</p></div></div></div>
       <div class="card"><div class="row"><span class="icon-circle" style="background:rgba(34,211,238,.15)">🗄️</span><div><h3>ארון</h3><p class="muted">אם התבקשת — חתום בזרימה נפרדת.</p></div></div></div>
       <div class="card"><div class="row"><span class="icon-circle" style="background:rgba(59,130,246,.15)">🎨</span><div><h3>צבעים</h3><p class="muted">לכל מצב צבע משלו — שונה ובולט.</p></div></div></div>
       <div class="card"><div class="row"><span class="icon-circle" style="background:rgba(59,130,246,.15)">🔧</span><div><h3>כיול</h3><p class="muted">בקש שליחה לכלי אדום / כתום.</p></div></div></div>
@@ -450,7 +651,8 @@
 </section>
 
 <!-- 15. REASSURANCE / CLOSING -->
-<section class="slide center" style="background:linear-gradient(160deg,#0f1620,#13201a)">
+<section id="s-closing" class="slide center" style="background:linear-gradient(160deg,#0f1620,#13201a)">
+  <a class="toindex" href="#s-index">☰ תוכן</a>
   <div class="wrap">
     <div class="hero-icon">👍</div>
     <h2>זהו — אתה מוכן</h2>

@@ -110,12 +110,62 @@
   .scale{background:var(--s2); border:1px solid var(--bd); border-radius:var(--r); padding:22px 28px; flex:1; min-width:220px}
   .scale .big{font-size:1.5rem; font-weight:800; color:var(--blue); line-height:1.2}
   .scale .lbl{color:var(--mut); margin-top:8px; font-size:1rem}
+  /* ===== TABLE OF CONTENTS (clickable stage index) ===== */
+  .toc{list-style:none; margin-top:40px; display:grid; grid-template-columns:repeat(2,1fr); gap:14px}
+  @media(max-width:980px){.toc{grid-template-columns:1fr}}
+  .toc a{
+    display:flex; align-items:center; gap:16px; text-decoration:none;
+    background:var(--s1); border:1px solid var(--bd); border-radius:14px;
+    padding:16px 20px; color:var(--tx); transition:border-color .15s, background .15s;
+  }
+  .toc a:hover{border-color:var(--blue); background:var(--s2)}
+  .toc a .num{
+    flex:none; width:40px; height:40px; border-radius:10px; display:grid; place-items:center;
+    font-weight:800; font-size:1.05rem; background:rgba(59,130,246,.14); color:var(--blue);
+    border:1px solid rgba(59,130,246,.4);
+  }
+  .toc a .lbl{font-weight:700; font-size:1.08rem}
+  .toc a .lbl small{display:block; color:var(--mut); font-weight:400; font-size:.88rem; margin-top:2px}
+  /* ===== PRINT / SAVE-AS-PDF ===== */
+  @media print{
+    :root{
+      --bg:#ffffff; --s1:#ffffff; --s2:#f1f5f9; --tx:#0f1620; --mut:#475569; --bd:#cbd5e1;
+    }
+    html{scroll-behavior:auto}
+    body{background:#fff; color:#0f1620; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+    .slide{
+      background:#fff !important;
+      min-height:auto; padding:36px 40px;
+      border-bottom:none;
+      break-after:page; page-break-after:always;
+      break-inside:avoid; page-break-inside:avoid;
+    }
+    .slide:last-of-type{break-after:auto; page-break-after:auto}
+    .slide-inner{max-width:100%}
+    .card,.matrix,.shot,.compare .col,.swatch,.phase,.scale,.arch-node,.toc a{
+      break-inside:avoid; page-break-inside:avoid;
+    }
+    h1{font-size:2.4rem}
+    h2{font-size:1.9rem}
+    .lead{font-size:1.1rem; color:#334155}
+    p.body{color:#475569}
+    .kicker{color:#1d4ed8}
+    .matrix thead th{background:#e2e8f0}
+    .matrix tbody th{background:#f8fafc}
+    .yes{color:#15803d}
+    .no{color:#b91c1c}
+    .badge-grad{-webkit-text-fill-color:#1d4ed8; color:#1d4ed8; background:none}
+    .shot img{border:1px solid #cbd5e1}
+    /* hide on-screen-only chrome in print */
+    .no-print{display:none !important}
+    a{color:inherit; text-decoration:none}
+  }
 </style>
 </head>
 <body>
 
 <!-- 1. TITLE -->
-<section class="slide" style="background:radial-gradient(1200px 600px at 80% 0%,rgba(59,130,246,.12),transparent),radial-gradient(900px 500px at 10% 100%,rgba(167,139,250,.10),transparent),var(--bg)">
+<section id="slide-title" class="slide" style="background:radial-gradient(1200px 600px at 80% 0%,rgba(59,130,246,.12),transparent),radial-gradient(900px 500px at 10% 100%,rgba(167,139,250,.10),transparent),var(--bg)">
   <div class="slide-inner">
     <div class="kicker">מערכת ענן · ניהול כלים מדויק · בזמן אמת</div>
     <h1>מערכת ניהול כלים<br><span class="badge-grad">מקור אמת אחד, חי ונושם</span></h1>
@@ -125,8 +175,30 @@
   </div>
 </section>
 
+<!-- 1b. TABLE OF CONTENTS — clickable stage index -->
+<section id="slide-toc" class="slide">
+  <div class="slide-inner">
+    <div class="kicker">תוכן העניינים</div>
+    <h2>שלבי הסקירה</h2>
+    <p class="lead">לחיצה על שלב מקפיצה ישירות אליו.</p>
+    <ul class="toc">
+      <li><a href="#slide-why"><span class="num">1</span><span class="lbl">למה מערכת ייעודית<small>גיליון מול מערכת חיה</small></span></a></li>
+      <li><a href="#slide-model"><span class="num">2</span><span class="lbl">מודל הארגון<small>מאורגן לפי מחלקה</small></span></a></li>
+      <li><a href="#slide-roles"><span class="num">3</span><span class="lbl">תפקידים והרשאות<small>מטריצת הרשאות</small></span></a></li>
+      <li><a href="#slide-windows"><span class="num">4</span><span class="lbl">חוויית עבודה<small>חלונות לפי תפקיד</small></span></a></li>
+      <li><a href="#slide-status"><span class="num">5</span><span class="lbl">סטטוס במבט אחד<small>צבע אחד לכל סטטוס</small></span></a></li>
+      <li><a href="#slide-arch"><span class="num">6</span><span class="lbl">ארכיטקטורת ענן<small>חיה · ניידת · מסונכרנת</small></span></a></li>
+      <li><a href="#slide-screens"><span class="num">7</span><span class="lbl">מסכים אמיתיים<small>תצוגות מתוך המערכת</small></span></a></li>
+      <li><a href="#slide-scope"><span class="num">8</span><span class="lbl">היקף המערכת<small>מה המערכת מכסה</small></span></a></li>
+      <li><a href="#slide-scale"><span class="num">9</span><span class="lbl">קנה מידה<small>מהסדנה ועד היקף עצום</small></span></a></li>
+      <li><a href="#slide-roadmap"><span class="num">10</span><span class="lbl">מפת דרכים<small>הצעדים הבאים</small></span></a></li>
+      <li><a href="#slide-closing"><span class="num">11</span><span class="lbl">סיכום<small>מקור אמת אחד</small></span></a></li>
+    </ul>
+  </div>
+</section>
+
 <!-- 2. WHY — EXCEL vs LIVE -->
-<section class="slide">
+<section id="slide-why" class="slide">
   <div class="slide-inner">
     <div class="kicker">למה מערכת ייעודית</div>
     <h2>גיליון מנהל — אבל לא חי, לא נושם</h2>
@@ -156,7 +228,7 @@
 </section>
 
 <!-- 3. DEPARTMENT-CENTRIC MODEL -->
-<section class="slide" style="background:var(--s1)">
+<section id="slide-model" class="slide" style="background:var(--s1)">
   <div class="slide-inner">
     <div class="kicker">מודל הארגון</div>
     <h2>מאורגן לפי מחלקה — לא לפי מיקום פיזי</h2>
@@ -171,7 +243,7 @@
 </section>
 
 <!-- 4. ROLES TABLE -->
-<section class="slide">
+<section id="slide-roles" class="slide">
   <div class="slide-inner">
     <div class="kicker">תפקידים והרשאות</div>
     <h2>שלוש רמות משתמש — מטריצת הרשאות</h2>
@@ -205,7 +277,7 @@
 </section>
 
 <!-- 5. WINDOW SWITCHING UX -->
-<section class="slide" style="background:var(--s1)">
+<section id="slide-windows" class="slide" style="background:var(--s1)">
   <div class="slide-inner">
     <div class="kicker">חוויית עבודה</div>
     <h2>מסך אחד · חלונות לפי תפקיד</h2>
@@ -231,7 +303,7 @@
 </section>
 
 <!-- 6. STATUS COLORS -->
-<section class="slide">
+<section id="slide-status" class="slide">
   <div class="slide-inner">
     <div class="kicker">סטטוס במבט אחד</div>
     <h2>צבע אחד לכל סטטוס</h2>
@@ -249,7 +321,7 @@
 </section>
 
 <!-- 7. CLOUD ARCHITECTURE -->
-<section class="slide" style="background:var(--s1)">
+<section id="slide-arch" class="slide" style="background:var(--s1)">
   <div class="slide-inner">
     <div class="kicker">ארכיטקטורת ענן</div>
     <h2>בנויה על ענן · חיה · ניידת</h2>
@@ -272,7 +344,7 @@
 </section>
 
 <!-- 8. REAL SCREENS -->
-<section class="slide">
+<section id="slide-screens" class="slide">
   <div class="slide-inner">
     <div class="kicker">המוצר · מסכים אמיתיים</div>
     <h2>מסכים אמיתיים מתוך המערכת</h2>
@@ -301,7 +373,7 @@
 </section>
 
 <!-- 9. WHAT THE SYSTEM COVERS -->
-<section class="slide" style="background:var(--s1)">
+<section id="slide-scope" class="slide" style="background:var(--s1)">
   <div class="slide-inner">
     <div class="kicker">היקף המערכת</div>
     <h2>מה המערכת מכסה</h2>
@@ -324,7 +396,7 @@
 </section>
 
 <!-- 10. SCALE -->
-<section class="slide">
+<section id="slide-scale" class="slide">
   <div class="slide-inner">
     <div class="kicker">קנה מידה</div>
     <h2>מהבית מלאכה ועד מספר עצום של כלים</h2>
@@ -339,7 +411,7 @@
 </section>
 
 <!-- 11. ROADMAP -->
-<section class="slide" style="background:var(--s1)">
+<section id="slide-roadmap" class="slide" style="background:var(--s1)">
   <div class="slide-inner">
     <div class="kicker">מפת דרכים</div>
     <h2>הצעדים הבאים</h2>
@@ -379,7 +451,7 @@
 </section>
 
 <!-- 12. CLOSING -->
-<section class="slide" style="background:radial-gradient(1100px 600px at 50% 0%,rgba(34,197,94,.10),transparent),var(--bg)">
+<section id="slide-closing" class="slide" style="background:radial-gradient(1100px 600px at 50% 0%,rgba(34,197,94,.10),transparent),var(--bg)">
   <div class="slide-inner" style="text-align:center">
     <div class="kicker" style="justify-self:center">סיכום</div>
     <h2 style="max-width:22ch; margin:0 auto"><span class="badge-grad">ניהול כלים חי ונושם — מקור אמת אחד</span></h2>

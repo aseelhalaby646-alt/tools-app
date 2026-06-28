@@ -143,7 +143,10 @@
   .toc-row{
     display:flex;align-items:center;gap:18px;padding:16px 20px;
     border:1px solid var(--border);border-radius:12px;background:var(--surface);margin-bottom:12px;
+    color:inherit;text-decoration:none;transition:border-color .15s,background .15s;
   }
+  a.toc-row:hover{border-color:var(--blue);background:var(--surface2)}
+  a.toc-row:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
   .toc-row .n{
     width:38px;height:38px;border-radius:10px;flex:none;
     display:flex;align-items:center;justify-content:center;
@@ -177,22 +180,60 @@
   .winbtn .s{font-size:13px;color:var(--muted)}
   .winbtn.active{border-color:var(--blue);background:rgba(59,130,246,.10)}
   .swatch{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:middle;margin-inline-end:8px}
+
+  /* ===== PRINT / SAVE-AS-PDF ===== */
+  @media print{
+    @page{size:A4 landscape;margin:12mm}
+    html{scroll-behavior:auto}
+    /* Print-safe: dark-on-light instead of the dark theme */
+    :root{
+      --bg:#ffffff;--surface:#ffffff;--surface2:#f1f5f9;
+      --text:#0f1620;--muted:#475569;--border:#cbd5e1;
+    }
+    body{background:#fff;color:var(--text);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    /* Each slide = its own page */
+    .slide{
+      min-height:auto;height:auto;page-break-after:always;break-after:page;
+      page-break-inside:avoid;break-inside:avoid;
+      padding:0 0 8mm 0;border-bottom:none;justify-content:flex-start;
+      background:#fff!important;
+    }
+    .slide:last-of-type{page-break-after:auto;break-after:auto}
+    .inner{max-width:100%}
+    /* Keep cards/tables/notes from splitting across pages */
+    .card,.stat,table,.note,.toc-row,.winbtn,.flow .step,figure,ol.steps li{
+      break-inside:avoid;page-break-inside:avoid;
+    }
+    /* Hide on-screen nav chrome that is meaningless on paper */
+    .footer-note,.page-tag{display:none!important}
+    /* Tame oversized type so a slide fits one page */
+    h1{font-size:34px;margin-bottom:12px}
+    h2{font-size:26px;margin-bottom:10px}
+    h3{font-size:17px}
+    .lead{font-size:15px;margin-bottom:14px;max-width:100%}
+    p,li,td,th{font-size:12px}
+    .stat .num{font-size:30px}
+    .icon{font-size:22px}
+    /* Make TOC links print as plain text with their target as a hint */
+    a.toc-row{color:inherit;text-decoration:none}
+  }
 </style>
 </head>
 <body>
 
 <!-- 1 — TITLE -->
 <section class="slide" style="justify-content:center;background:radial-gradient(1200px 600px at 80% -10%,rgba(59,130,246,.10),transparent),radial-gradient(900px 500px at 10% 110%,rgba(167,139,250,.08),transparent)">
-  <span class="page-tag">1 / 19</span>
+  <span class="page-tag">1 / 20</span>
   <div class="inner">
     <span class="kicker">ניהול כלים · ענן חי · Firebase</span>
     <h1>מדריך מנהל המערכת /<br>בעל הכלים</h1>
-    <p class="lead">מדריך הפעלה מקצה לקצה: מעבר בין תצוגת אחראי למצב ניהול, לוח ניהול עם גרפים, תחנת בנייה ותחנת בעיות נסתרות, נראות ביצירה, סיסמת עריכה והקפאה, ממשל, ואתחול/שחזור — לצד ניהול מכלים, משתמשים, אישורים, שכפול דורות, חתימות וכיול. שלב-אחר-שלב, עם צילומי מסך.</p>
+    <p class="lead">מדריך הפעלה מקצה לקצה: מעבר בין תצוגת אחראי למצב ניהול, לוח ניהול עם גרפים, תחנת בנייה ותחנת בעיות נסתרות, נראות ביצירה, סיסמת עריכה והקפאה, ממשל, ואתחול/שחזור — לצד ניהול מכלים, משתמשים, אישורים, שכפול דורות, חתימות וכיול, חיפוש גלובלי, ביטול פעולה, חתימה בלחיצה, בורר עובדים והתראות. שלב-אחר-שלב, עם צילומי מסך.</p>
     <div class="badge-row">
       <span class="pill blue">מצב ניהול · לוח ניהול</span>
       <span class="pill purple">תחנות אדמין</span>
       <span class="pill amber">סיסמת עריכה · הקפאה</span>
       <span class="pill teal">אתחול · שחזור</span>
+      <span class="pill pink">חיפוש · ביטול · התראות</span>
       <span class="pill ok">עברית · RTL</span>
     </div>
   </div>
@@ -201,41 +242,42 @@
 
 <!-- 2 — TABLE OF CONTENTS -->
 <section class="slide">
-  <span class="page-tag">2 / 19</span>
+  <span class="page-tag">2 / 20</span>
   <div class="inner">
     <span class="kicker">מפת המדריך</span>
     <h2>מה נלמד</h2>
-    <p class="lead">19 פרקים קצרים. כל פרק עומד בפני עצמו — אפשר לחזור לכל אחד בנפרד. הפרקים 13–17 הם <b>החדשים</b>: מצב ניהול, לוח ניהול, התחנות, נראות, סיסמה/הקפאה/ממשל ואתחול.</p>
+    <p class="lead">20 פרקים קצרים. כל פרק עומד בפני עצמו — אפשר לחזור לכל אחד בנפרד. הפרקים 13–18 הם <b>החדשים</b>: מצב ניהול, לוח ניהול, התחנות, נראות, סיסמה/הקפאה/ממשל, אתחול, ו<b>כלי-עזר ואבטחה מוחמרת</b>.</p>
     <div class="grid g2">
       <div>
-        <div class="toc-row"><span class="n">1</span><span class="t">תפקיד מנהל המערכת / בעל הכלים</span><span class="d">מי רשאי לעשות מה</span></div>
-        <div class="toc-row"><span class="n">2</span><span class="t">התחברות וזיהוי</span><span class="d">Google · זיהוי לפי מייל</span></div>
-        <div class="toc-row"><span class="n">3</span><span class="t">חלונות העבודה ומצב ניהול</span><span class="d">מעבר בלחיצת כפתור</span></div>
-        <div class="toc-row"><span class="n">4</span><span class="t">מודל מחלקתי ומכלים גנריים</span><span class="d">"עגלה" / ארון / אזור עבודה</span></div>
-        <div class="toc-row"><span class="n">5</span><span class="t">המכלים שבבעלותך</span><span class="d">חלון "הכלים שלי"</span></div>
-        <div class="toc-row"><span class="n">6</span><span class="t">צבעי סטטוס — צבע לכל סטטוס</span><span class="d">הפרדה מלאה</span></div>
-        <div class="toc-row"><span class="n">7</span><span class="t">משתמשים והרשאות</span><span class="d">הוספה · שדרוג · מחיקה</span></div>
-        <div class="toc-row"><span class="n">8</span><span class="t">אישורי מנהל המערכת</span><span class="d">מחיקות ושדרוגים</span></div>
-        <div class="toc-row"><span class="n">9</span><span class="t">כלי ללא מיקום ידוע</span><span class="d">יצירה · החזרה · ביטול</span></div>
-        <div class="toc-row"><span class="n">10</span><span class="t">חתימות — "עגלה" מול ארון</span><span class="d">שני מסלולים נפרדים</span></div>
+        <a class="toc-row" href="#ch1"><span class="n">1</span><span class="t">תפקיד מנהל המערכת / בעל הכלים</span><span class="d">מי רשאי לעשות מה</span></a>
+        <a class="toc-row" href="#ch2"><span class="n">2</span><span class="t">התחברות וזיהוי</span><span class="d">Google · זיהוי לפי מייל</span></a>
+        <a class="toc-row" href="#ch3"><span class="n">3</span><span class="t">חלונות העבודה ומצב ניהול</span><span class="d">מעבר בלחיצת כפתור</span></a>
+        <a class="toc-row" href="#ch4"><span class="n">4</span><span class="t">מודל מחלקתי ומכלים גנריים</span><span class="d">"עגלה" / ארון / אזור עבודה</span></a>
+        <a class="toc-row" href="#ch5"><span class="n">5</span><span class="t">המכלים שבבעלותך</span><span class="d">חלון "הכלים שלי"</span></a>
+        <a class="toc-row" href="#ch6"><span class="n">6</span><span class="t">צבעי סטטוס — צבע לכל סטטוס</span><span class="d">הפרדה מלאה</span></a>
+        <a class="toc-row" href="#ch7"><span class="n">7</span><span class="t">משתמשים והרשאות</span><span class="d">הוספה · שדרוג · מחיקה</span></a>
+        <a class="toc-row" href="#ch8"><span class="n">8</span><span class="t">אישורי מנהל המערכת</span><span class="d">מחיקות ושדרוגים</span></a>
+        <a class="toc-row" href="#ch9"><span class="n">9</span><span class="t">כלי ללא מיקום ידוע</span><span class="d">יצירה · החזרה · ביטול</span></a>
+        <a class="toc-row" href="#ch10"><span class="n">10</span><span class="t">חתימות — "עגלה" מול ארון</span><span class="d">שני מסלולים נפרדים</span></a>
       </div>
       <div>
-        <div class="toc-row"><span class="n">11</span><span class="t">פיקוח על כיול</span><span class="d">חלון 30 יום · אישור</span></div>
-        <div class="toc-row"><span class="n">12</span><span class="t">שכפול מכלים וגרסאות (דורות)</span><span class="d">דור א' / דור ב'</span></div>
-        <div class="toc-row"><span class="n">13</span><span class="t">מצב ניהול — מעבר תצוגות</span><span class="d">⚙️ מצב ניהול · יציאה</span></div>
-        <div class="toc-row"><span class="n">14</span><span class="t">לוח ניהול וגרפים</span><span class="d">פאי · בעיות בכלים</span></div>
-        <div class="toc-row"><span class="n">15</span><span class="t">תחנת בנייה ובעיות נסתרות</span><span class="d">אדמין בלבד</span></div>
-        <div class="toc-row"><span class="n">16</span><span class="t">נראות ביצירה · סיסמה · ממשל</span><span class="d">מי רואה · הקפאה</span></div>
-        <div class="toc-row"><span class="n">17</span><span class="t">אתחול / שחזור</span><span class="d">Alpha · Beta · גרסה</span></div>
-        <div class="toc-row"><span class="n">18</span><span class="t">שגרת מנהל המערכת</span><span class="d">צ׳ק-ליסט</span></div>
-        <div class="toc-row"><span class="n">19</span><span class="t">סיכום ושאלות נפוצות</span><span class="d">פתרון תקלות</span></div>
+        <a class="toc-row" href="#ch11"><span class="n">11</span><span class="t">פיקוח על כיול</span><span class="d">חלון 30 יום · אישור</span></a>
+        <a class="toc-row" href="#ch12"><span class="n">12</span><span class="t">שכפול מכלים וגרסאות (דורות)</span><span class="d">מספר דורות / גרסאות</span></a>
+        <a class="toc-row" href="#ch13"><span class="n">13</span><span class="t">מצב ניהול — מעבר תצוגות</span><span class="d">⚙️ מצב ניהול · יציאה</span></a>
+        <a class="toc-row" href="#ch14"><span class="n">14</span><span class="t">לוח ניהול וגרפים</span><span class="d">פאי · בעיות בכלים</span></a>
+        <a class="toc-row" href="#ch15"><span class="n">15</span><span class="t">תחנת בנייה ובעיות נסתרות</span><span class="d">אדמין בלבד</span></a>
+        <a class="toc-row" href="#ch16"><span class="n">16</span><span class="t">נראות ביצירה · סיסמה · ממשל</span><span class="d">מי רואה · הקפאה</span></a>
+        <a class="toc-row" href="#ch17"><span class="n">17</span><span class="t">אתחול / שחזור</span><span class="d">Alpha · Beta · גרסה</span></a>
+        <a class="toc-row" href="#ch18"><span class="n">18</span><span class="t">כלי-עזר ואבטחה מוחמרת</span><span class="d">חיפוש · ביטול · חתימה · התראות</span></a>
+        <a class="toc-row" href="#ch19"><span class="n">19</span><span class="t">שגרת מנהל המערכת</span><span class="d">צ׳ק-ליסט</span></a>
+        <a class="toc-row" href="#ch20"><span class="n">20</span><span class="t">סיכום ושאלות נפוצות</span><span class="d">פתרון תקלות</span></a>
       </div>
     </div>
   </div>
 </section>
 
 <!-- 3 — THE ROLE -->
-<section class="slide">
+<section class="slide" id="ch1">
   <span class="page-tag">פרק 1 · <span class="tag-em">תפקיד</span></span>
   <div class="inner">
     <span class="kicker purple">פרק 1</span>
@@ -280,7 +322,7 @@
 </section>
 
 <!-- 4 — LOGGING IN -->
-<section class="slide">
+<section class="slide" id="ch2">
   <span class="page-tag">פרק 2 · <span class="tag-em">התחברות</span></span>
   <div class="inner">
     <span class="kicker green">פרק 2</span>
@@ -304,7 +346,7 @@
 </section>
 
 <!-- 5 — WORK WINDOWS & MANAGEMENT MODE -->
-<section class="slide">
+<section class="slide" id="ch3">
   <span class="page-tag">פרק 3 · <span class="tag-em">חלונות עבודה</span></span>
   <div class="inner">
     <span class="kicker teal">פרק 3</span>
@@ -343,7 +385,7 @@
 </section>
 
 <!-- 6 — DEPARTMENT MODEL & GENERIC CONTAINERS -->
-<section class="slide">
+<section class="slide" id="ch4">
   <span class="page-tag">פרק 4 · <span class="tag-em">מודל מחלקתי</span></span>
   <div class="inner">
     <span class="kicker">פרק 4</span>
@@ -371,7 +413,7 @@
 </section>
 
 <!-- 7 — MY CONTAINERS -->
-<section class="slide">
+<section class="slide" id="ch5">
   <span class="page-tag">פרק 5 · <span class="tag-em">הכלים שלי</span></span>
   <div class="inner">
     <span class="kicker green">פרק 5</span>
@@ -397,7 +439,7 @@
 </section>
 
 <!-- 8 — STATUS COLORS -->
-<section class="slide">
+<section class="slide" id="ch6">
   <span class="page-tag">פרק 6 · <span class="tag-em">צבעי סטטוס</span></span>
   <div class="inner">
     <span class="kicker amber">פרק 6</span>
@@ -426,7 +468,7 @@
 </section>
 
 <!-- 9 — USERS & PERMISSIONS -->
-<section class="slide">
+<section class="slide" id="ch7">
   <span class="page-tag">פרק 7 · <span class="tag-em">משתמשים</span></span>
   <div class="inner">
     <span class="kicker purple">פרק 7</span>
@@ -458,7 +500,7 @@
 </section>
 
 <!-- 10 — ADMIN APPROVALS -->
-<section class="slide">
+<section class="slide" id="ch8">
   <span class="page-tag">פרק 8 · <span class="tag-em">אישורים</span></span>
   <div class="inner">
     <span class="kicker red">פרק 8</span>
@@ -493,7 +535,7 @@
 </section>
 
 <!-- 11 — UNLOCATED TOOLS -->
-<section class="slide">
+<section class="slide" id="ch9">
   <span class="page-tag">פרק 9 · <span class="tag-em">ללא מיקום</span></span>
   <div class="inner">
     <span class="kicker amber">פרק 9</span>
@@ -524,7 +566,7 @@
 </section>
 
 <!-- 12 — SIGN-OFFS CART vs CLOSET -->
-<section class="slide">
+<section class="slide" id="ch10">
   <span class="page-tag">פרק 10 · <span class="tag-em">חתימות</span></span>
   <div class="inner">
     <span class="kicker green">פרק 10</span>
@@ -557,7 +599,7 @@
 </section>
 
 <!-- 13 — CALIBRATION OVERSIGHT -->
-<section class="slide">
+<section class="slide" id="ch11">
   <span class="page-tag">פרק 11 · <span class="tag-em">כיול</span></span>
   <div class="inner">
     <span class="kicker">פרק 11</span>
@@ -586,7 +628,7 @@
 </section>
 
 <!-- 14 — CLONING / GENERATIONS -->
-<section class="slide">
+<section class="slide" id="ch12">
   <span class="page-tag">פרק 12 · <span class="tag-em">שכפול ודורות</span></span>
   <div class="inner">
     <span class="kicker teal">פרק 12</span>
@@ -597,9 +639,9 @@
         <ol class="steps">
           <li><b>הגדר פריסה</b> של מכל אחד: מגירות, מדפים וכלים.</li>
           <li><b>שכפל ל-N עותקים</b> זהים — נבדלים רק במספר המזהה.</li>
-          <li><b>שייך דור/גרסה</b> לכל מכל: <span class="pill blue">דור א'</span> / <span class="pill teal">דור ב'</span>.</li>
+          <li><b>שייך דור/גרסה</b> לכל מכל: <span class="pill blue">דור / גרסה</span> לפי הצורך.</li>
         </ol>
-        <div class="note teal" style="margin-top:16px">דוגמה (להמחשה בלבד): כמה "עגלות" זהות בדור ב', וכמה זהות בדור א'. הכמויות הן <b>דוגמה</b>, לא מספר קבוע.</div>
+        <div class="note teal" style="margin-top:16px">דוגמה (להמחשה בלבד): מספר "עגלות" זהות בכל דור/גרסה. מספר הדורות והכמויות הם <b>גמישים</b> ומוגדרים לפי הצורך — לא מספר קבוע.</div>
       </div>
       <div class="card raised">
         <h3>למה זה חשוב</h3>
@@ -616,7 +658,7 @@
 </section>
 
 <!-- 15 — MANAGEMENT MODE (VIEW SWITCH) -->
-<section class="slide">
+<section class="slide" id="ch13">
   <span class="page-tag">פרק 13 · <span class="tag-em">מצב ניהול</span></span>
   <div class="inner">
     <span class="kicker purple">פרק 13 · חדש</span>
@@ -658,7 +700,7 @@
 </section>
 
 <!-- 16 — MANAGEMENT DASHBOARD & CHARTS -->
-<section class="slide">
+<section class="slide" id="ch14">
   <span class="page-tag">פרק 14 · <span class="tag-em">לוח ניהול</span></span>
   <div class="inner">
     <span class="kicker blue">פרק 14 · חדש</span>
@@ -695,7 +737,7 @@
 </section>
 
 <!-- 17 — BUILD & HIDDEN STATIONS -->
-<section class="slide">
+<section class="slide" id="ch15">
   <span class="page-tag">פרק 15 · <span class="tag-em">תחנות אדמין</span></span>
   <div class="inner">
     <span class="kicker teal">פרק 15 · חדש</span>
@@ -731,7 +773,7 @@
 </section>
 
 <!-- 18 — VISIBILITY-AT-CREATION + EDIT-PASSWORD + GOVERNANCE -->
-<section class="slide">
+<section class="slide" id="ch16">
   <span class="page-tag">פרק 16 · <span class="tag-em">נראות · סיסמה · ממשל</span></span>
   <div class="inner">
     <span class="kicker amber">פרק 16 · חדש</span>
@@ -779,7 +821,7 @@
 </section>
 
 <!-- 19 — RESET / RESTORE -->
-<section class="slide">
+<section class="slide" id="ch17">
   <span class="page-tag">פרק 17 · <span class="tag-em">אתחול / שחזור</span></span>
   <div class="inner">
     <span class="kicker red">פרק 17 · חדש</span>
@@ -813,20 +855,75 @@
   </div>
 </section>
 
-<!-- 20 — ROUTINE CHECKLIST -->
-<section class="slide">
-  <span class="page-tag">פרק 18 · <span class="tag-em">שגרה</span></span>
+<!-- 20 — QoL + HARDENED SECURITY -->
+<section class="slide" id="ch18">
+  <span class="page-tag">פרק 18 · <span class="tag-em">כלי-עזר · אבטחה</span></span>
   <div class="inner">
-    <span class="kicker green">פרק 18</span>
+    <span class="kicker pink" style="color:var(--pink);background:rgba(244,114,182,.12);border-color:rgba(244,114,182,.3)">פרק 18 · חדש</span>
+    <h2>כלי-עזר ואבטחה מוחמרת</h2>
+    <p class="lead">חמישה שדרוגי <b>נוחות יומיומית</b> שמקצרים כל פעולה לכמה שניות — ולצידם <b>אבטחה מוחמרת</b> שאכופה את כללי המשחק ב<b>כללי Firestore</b> בצד-שרת, לא רק בדפדפן.</p>
+    <div class="grid g3">
+      <div class="card">
+        <span class="icon">🔎</span>
+        <h3>חיפוש גלובלי</h3>
+        <p class="muted">תיבת חיפוש אחת מעל <b>כל הכלים</b> בכל המחלקות והמכלים — לפי שם / מזהה / מק״ט. תוצאה לחיצה אחת קופצת ישר לכלי ולמיקומו.</p>
+        <div class="badge-row" style="margin-top:6px"><span class="pill blue">בלי לדפדף בעצים</span></div>
+      </div>
+      <div class="card">
+        <span class="icon">↩️</span>
+        <h3>ביטול פעולה (Undo)</h3>
+        <p class="muted">שינויי סטטוס הפיכים (שבור · נפסל · ללא מיקום · חוסר) מציגים מיד <kbd>בטל</kbd> — חזרה במצב אחד לפני, בלי לתקן ידנית.</p>
+        <div class="badge-row" style="margin-top:6px"><span class="pill amber">רק על שינויים הפיכים</span></div>
+      </div>
+      <div class="card">
+        <span class="icon">🖊️</span>
+        <h3>חתימה יומית בלחיצה</h3>
+        <p class="muted">חתימה על מכל ישירות מ<b>שבב המכל</b> — לחיצה אחת. מכל שנחתם היום מקבל <span class="pill ok">נחתם היום ✓</span>, כך שרואים במבט מה נשאר.</p>
+        <div class="badge-row" style="margin-top:6px"><span class="pill ok">תג "נחתם היום"</span></div>
+      </div>
+      <div class="card">
+        <span class="icon">👥</span>
+        <h3>בורר עובדים אמיתי</h3>
+        <p class="muted">בעלות, שיוך מוגבל-בזמן ומסירה דו-חתימה בוחרים עובד מ<b>רשימת המשתמשים</b> — לא הקלדת UID חופשי. בלי טעויות-הקלדה ובלי "רוחות".</p>
+        <div class="badge-row" style="margin-top:6px"><span class="pill purple">בלי uid חופשי</span></div>
+      </div>
+      <div class="card">
+        <span class="icon">🔔</span>
+        <h3>מונה התראות</h3>
+        <p class="muted">התראות פר-בעלים עם <b>מונה לא-נקראו</b>. בקשת חתימת ארון, אישור ממתין או מסירה — הכל מגיע לפעמון, עם <kbd>סמן כנקרא</kbd>.</p>
+        <div class="badge-row" style="margin-top:6px"><span class="pill no">בועה אדומה = ממתין</span></div>
+      </div>
+      <div class="card raised">
+        <span class="icon">🛡️</span>
+        <h3>אבטחה אכופה ב-Firestore</h3>
+        <p class="muted">שלושת הכללים הקריטיים אכופים <b>בצד-שרת</b> — גם דרך כלים טכניים אי אפשר לעקוף אותם.</p>
+        <div class="badge-row" style="margin-top:6px"><span class="pill no">לא רק בצד-לקוח</span></div>
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:20px">
+      <div class="note red"><b>אחראי לא מזייף כלי-תחנה.</b> אחראי כלים <b>אינו יכול</b> ליצור או להזריק כלי לתחנת בנייה / בעיות נסתרות — הכתיבה נחסמת בכללים, לא רק מוסתרת בתפריט.</div>
+      <div class="note purple"><b>אישור דורש בעלות על המכל.</b> אישור בקשת כיול/חוסר מותנה בכך שהמאשר <b>קשור למכל</b> (בעלים/אחראי מורשה) — לא כל משתמש מאושר יכול לאשר כל בקשה.</div>
+      <div class="note teal"><b>מסירה רק בידי צד מעורב.</b> מסירה דו-חתימה נכתבת <b>רק</b> בידי מי שהוא צד בה (מוסר או מקבל) — אי אפשר לזייף מסירה בשם שני אנשים אחרים.</div>
+    </div>
+    <div class="note blue" style="margin-top:18px"><b>הקו המנחה:</b> כל יכולת-נוחות נשענת על אותה שכבת-אמת — מה שהדפדפן מסתיר, כללי Firestore גם <b>אוסרים</b>. כך ש"קל לשימוש" ו"קשה לזיוף" חיים יחד.</div>
+  </div>
+</section>
+
+<!-- 21 — ROUTINE CHECKLIST -->
+<section class="slide" id="ch19">
+  <span class="page-tag">פרק 19 · <span class="tag-em">שגרה</span></span>
+  <div class="inner">
+    <span class="kicker green">פרק 19</span>
     <h2>שגרת מנהל המערכת</h2>
     <div class="grid g3">
       <div class="card raised">
         <h3>🗓️ יומי</h3>
         <ul class="clean">
+          <li>מבט על <kbd>🔔 מונה ההתראות</kbd> — לטפל בלא-נקראו</li>
           <li>מבט על <kbd>📊 לוח ניהול</kbd> וכרטיס "בעיות בכלים"</li>
           <li>אישור בקשות ממתינות (מחיקה / שדרוג)</li>
-          <li>מבט על מכלים שלא נחתמו היום (גרף החתימות)</li>
-          <li>טיפול בכלים שדווחו כשבורים</li>
+          <li>מכלים ללא תג <span class="pill ok">נחתם היום ✓</span> — תזכורת חתימה</li>
+          <li>טיפול בכלים שדווחו כשבורים (עם <kbd>בטל</kbd> בהישג-יד)</li>
         </ul>
       </div>
       <div class="card raised">
@@ -852,11 +949,11 @@
   </div>
 </section>
 
-<!-- 21 — SUMMARY / FAQ -->
-<section class="slide" style="background:radial-gradient(1000px 500px at 90% 110%,rgba(34,197,94,.08),transparent)">
-  <span class="page-tag">פרק 19 · <span class="tag-em">סיכום</span></span>
+<!-- 22 — SUMMARY / FAQ -->
+<section class="slide" id="ch20" style="background:radial-gradient(1000px 500px at 90% 110%,rgba(34,197,94,.08),transparent)">
+  <span class="page-tag">פרק 20 · <span class="tag-em">סיכום</span></span>
   <div class="inner">
-    <span class="kicker">פרק 19</span>
+    <span class="kicker">פרק 20</span>
     <h2>סיכום ושאלות נפוצות</h2>
     <div class="grid g2">
       <div class="card">
@@ -883,9 +980,17 @@
         <h3>מה צריך לפני אתחול?</h3>
         <p class="muted">ייצוא דוח וסימון <b>"קובץ הדוח נשמר אצלי"</b> — אחרת הכפתור ההרסני נעול. אתחול שנתי שומר כלים, סטטוס וכיול.</p>
       </div>
+      <div class="card">
+        <h3>איך מוצאים כלי מהר וחותמים בלחיצה?</h3>
+        <p class="muted"><kbd>🔎 חיפוש גלובלי</kbd> מאתר כל כלי לפי שם/מזהה/מק״ט בכל המכלים. חתימה יומית — לחיצה אחת על שבב המכל; מי שנחתם מקבל <span class="pill ok">נחתם היום ✓</span>. טעית? <kbd>↩️ בטל</kbd> מחזיר שינוי סטטוס הפיך.</p>
+      </div>
+      <div class="card">
+        <h3>מה מחוזק באבטחה — ולמה זה חשוב לי?</h3>
+        <p class="muted">שלושה כללים אכופים ב-Firestore: אחראי <b>לא</b> מזייף כלי-תחנה; אישור כיול דורש <b>בעלות על המכל</b>; מסירה נכתבת רק בידי <b>צד מעורב</b> בה. מה שמוסתר בדפדפן — גם <b>אסור</b> בצד-שרת.</p>
+      </div>
     </div>
     <div class="note green" style="margin-top:28px">
-      <b>הליבה שלך כמנהל המערכת / בעל הכלים:</b> מצב הניהול ולוח הניהול נותנים תמונה חיה · התחנות מפרידות בין כלים בבנייה/מוסתרים לבין החיים · נראות, סיסמה והקפאה נותנות שליטה · אתחול/שחזור בטוח עם שער ייצוא. ניהול כלים <b>חי</b> — לא גיליון שטוח, אלא סטטוס שמתעדכן בזמן אמת.
+      <b>הליבה שלך כמנהל המערכת / בעל הכלים:</b> מצב הניהול ולוח הניהול נותנים תמונה חיה · התחנות מפרידות בין כלים בבנייה/מוסתרים לבין החיים · נראות, סיסמה והקפאה נותנות שליטה · אתחול/שחזור בטוח עם שער ייצוא · חיפוש גלובלי, ביטול, חתימה בלחיצה, בורר עובדים ומונה התראות מקצרים כל פעולה — והכול אכוף ב-Firestore, לא רק בדפדפן. ניהול כלים <b>חי</b> — לא גיליון שטוח, אלא סטטוס שמתעדכן בזמן אמת.
     </div>
     <p class="muted" style="margin-top:24px;text-align:center">ניהול כלים · מדריך מנהל המערכת / בעל הכלים · עברית RTL · ענן Firebase</p>
   </div>

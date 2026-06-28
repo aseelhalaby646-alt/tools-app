@@ -12,6 +12,8 @@
     --border:#2a3a4d; --r:16px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  section.slide{scroll-margin-top:24px}
   html,body{background:var(--bg);color:var(--text);
     font-family:"Segoe UI",Arial,"Noto Sans Hebrew",sans-serif;
     line-height:1.6;-webkit-font-smoothing:antialiased}
@@ -101,6 +103,46 @@
     border-radius:var(--r);padding:24px;position:relative}
   .win .w .tab{position:absolute;top:-13px;right:20px;font-size:13px;font-weight:700;
     padding:4px 12px;border-radius:999px;background:var(--s2);border:1px solid var(--border)}
+  /* clickable TOC links — keep slide look, no underline */
+  a.item{text-decoration:none}
+  a.item:hover{border-color:var(--blue)}
+  a.item:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+  /* ===== PRINT / SAVE-AS-PDF ===== */
+  @media print{
+    @page{size:A4 landscape;margin:12mm}
+    html,body{background:#fff !important;color:#111 !important;font-size:12pt}
+    .slide{
+      min-height:auto;height:auto;width:100%;
+      padding:0 0 8mm 0;margin:0;
+      background:#fff !important;border:0 !important;overflow:visible;
+      display:block;justify-content:flex-start;
+      break-after:page;page-break-after:always;
+      break-inside:avoid;page-break-inside:avoid;
+    }
+    .slide:last-child{break-after:auto;page-break-after:auto}
+    .slide:nth-child(even){background:#fff !important}
+    .wrap{max-width:100%}
+    h1{font-size:30pt;color:#0b1b34}
+    h2{font-size:22pt;color:#0b1b34}
+    h3{font-size:14pt;color:#111}
+    p.lead{font-size:13pt;color:#333;max-width:100%}
+    .muted,.chip,ol.steps p,.foot,.shot .cap{color:#444 !important}
+    .kicker{color:#1d4ed8;background:#eef3fb;border-color:#cdd9ea}
+    .card,.card.s2,.toc a.item,.toc div.item,.win .w,.flow .step,
+    ol.steps>li,table.legend td{
+      background:#fff !important;border-color:#c7d2e0 !important;
+      box-shadow:none !important;
+    }
+    .card,.win .w,.flow .step,ol.steps>li{break-inside:avoid;page-break-inside:avoid}
+    .note{background:#f4f7fb !important;color:#222 !important;break-inside:avoid;page-break-inside:avoid}
+    .badge{border:1px solid #c7d2e0}
+    .shot{box-shadow:none !important;border-color:#c7d2e0 !important;break-inside:avoid}
+    .shot img{max-height:120mm;width:auto;margin:0 auto}
+    a.item{color:#111 !important}
+    a[href^="#"]{color:inherit;text-decoration:none}
+    ol.steps>li::before{box-shadow:none !important;color:#fff !important}
+  }
 </style>
 </head>
 <body>
@@ -218,13 +260,21 @@
     <h2>שש משימות עיקריות</h2>
     <p class="lead">כל אחת מוסברת בהמשך, שלב אחר שלב.</p>
     <div class="toc">
-      <div class="item"><span class="n">1</span><span><strong>עריכת כלים ומיקומים</strong><br><span class="chip">הוספה ועדכון מלאי</span></span></div>
-      <div class="item"><span class="n">2</span><span><strong>מיקום ידוע / לא-ידוע</strong><br><span class="chip">החלפת סטטוס לכלי קיים</span></span></div>
-      <div class="item"><span class="n">3</span><span><strong>ניהול מלאי הארונות</strong><br><span class="chip">+ חתימת ארון לפי הצורך</span></span></div>
-      <div class="item"><span class="n">4</span><span><strong>חתימות עגלה מול ארון</strong><br><span class="chip">שני זרמים נפרדים</span></span></div>
-      <div class="item"><span class="n">5</span><span><strong>אישור בקשות</strong><br><span class="chip">כיול / חוסר</span></span></div>
-      <div class="item"><span class="n">6</span><span><strong>הוספת משתמש ובקשת שדרוג</strong><br><span class="chip">+ הצהרה על שבור</span></span></div>
+      <a class="item" href="#t1"><span class="n">1</span><span><strong>עריכת כלים ומיקומים</strong><br><span class="chip">הוספה ועדכון מלאי</span></span></a>
+      <a class="item" href="#t2"><span class="n">2</span><span><strong>מיקום ידוע / לא-ידוע</strong><br><span class="chip">החלפת סטטוס לכלי קיים</span></span></a>
+      <a class="item" href="#t3"><span class="n">3</span><span><strong>ניהול מלאי הארונות</strong><br><span class="chip">+ חתימת ארון לפי הצורך</span></span></a>
+      <a class="item" href="#t4"><span class="n">4</span><span><strong>חתימות עגלה מול ארון</strong><br><span class="chip">שני זרמים נפרדים</span></span></a>
+      <a class="item" href="#t5"><span class="n">5</span><span><strong>אישור בקשות</strong><br><span class="chip">כיול / חוסר</span></span></a>
+      <a class="item" href="#t6"><span class="n">6</span><span><strong>הוספת משתמש ובקשת שדרוג</strong><br><span class="chip">+ הצהרה על שבור</span></span></a>
     </div>
+    <div class="pill-row" style="margin-top:22px">
+      <span class="badge b-blue">🔎 חיפוש גלובלי</span>
+      <span class="badge b-green">✍️ חתימה בלחיצה אחת</span>
+      <span class="badge b-amber">↩︎ ביטול פעולה (UNDO)</span>
+      <span class="badge b-teal">👤 בורר עובדים לשיוך/מסירה</span>
+      <span class="badge b-red">🔔 התראות עם מונה</span>
+    </div>
+    <p class="muted" style="margin-top:14px;font-size:15px">היכולות האלה מלוות אותך לאורך כל המשימות — לא משימה נפרדת, אלא כלים שזמינים תמיד.</p>
   </div>
 </section>
 
@@ -317,10 +367,25 @@
           לבדוק ולחתום על ארון מחלקתי מסוים — וגם אחראי כלים ומנהל המערכת / בעל הכלים יכולים לחתום.</p>
       </div>
     </div>
+    <div class="card" style="margin-top:24px">
+      <span class="badge b-green">חדש · חתימה בלחיצה אחת</span>
+      <h3 style="margin-top:12px;color:var(--green)">חותמים ישר מצ'יפ המיכל — בלי טופס</h3>
+      <p class="muted">החתימה היומית עכשיו בלחיצה <strong>אחת</strong> מתוך צ'יפ ה"עגלה"/הארון במסך הראשי.
+        ברגע שנחתם — מופיע <strong>תג "נחתם היום"</strong> על המיכל, והוא יורד מתצוגת "לא נחתמו" בזמן אמת.</p>
+      <div class="flow" style="margin-top:14px">
+        <div class="step"><strong>צ'יפ המיכל</strong><br><span class="chip">לפני: ללא תג</span></div>
+        <div class="arrow">→</div>
+        <div class="step"><strong>לחיצה אחת</strong><br><span class="chip">✍️ חתום</span></div>
+        <div class="arrow">→</div>
+        <div class="step"><strong>תג "נחתם היום"</strong><br><span class="chip">יורד מ"לא נחתמו"</span></div>
+      </div>
+    </div>
     <div class="grid g2" style="margin-top:24px">
       <div class="note blue">תצוגת "לא נחתמו" היא <strong>תפעולית בלבד</strong>: היא אומרת אילו מיכלים לא נחתמו — לא דבר על נוכחות אנשים.</div>
       <div class="note green">דוח "מי חתם ומתי" זמין <strong>שנה לאחור</strong> — לכל "עגלה" וכל ארון בנפרד.</div>
     </div>
+    <div class="note purple" style="margin-top:18px"><strong>הקצה שלנו:</strong> רוב המתחרים מסתפקים ב‑check‑out/return אד‑הוק.
+      אצלנו זה <strong>קצב‑accountability חוזר</strong> — חתימה יומית + ביקורת רבעונית — והפכנו אותו לחיכוך אפס: לחיצה אחת.</div>
   </div>
 </section>
 
@@ -352,6 +417,22 @@
         <p class="muted" style="margin-top:14px">כשאתה מחליט להוציא לכיול בעצמך — <strong>אין צורך בשני אימותים</strong>, ישר חוסר מאושר.</p>
       </div>
     </div>
+    <div class="card" style="margin-top:22px">
+      <span class="badge b-amber">חדש · ביטול פעולה (UNDO)</span>
+      <h3 style="margin-top:12px;color:var(--amber)">טעית? אפשר לבטל — על שינויי-סטטוס הפיכים</h3>
+      <p class="muted">סימנת כלי כ<strong>שבור</strong> בטעות, או <strong>דחית</strong> בקשה שלא צריך?
+        על פעולות סטטוס <strong>הפיכות</strong> מופיע כפתור <span class="kbd">↩︎ בטל</span> שמחזיר את הכלי
+        למצבו הקודם <strong>בלי לשחזר ידנית</strong> — כולל המיקום והסטטוס. הביטול עצמו נרשם ביומן.</p>
+      <div class="flow" style="margin-top:14px">
+        <div class="step"><strong>הצהרת "שבור" / "נדחה"</strong><br><span class="chip">שינוי סטטוס</span></div>
+        <div class="arrow">→</div>
+        <div class="step"><strong>↩︎ בטל</strong><br><span class="chip">חזרה למצב הקודם</span></div>
+        <div class="arrow">→</div>
+        <div class="step"><strong>סטטוס מקורי</strong><br><span class="chip">הביטול מתועד</span></div>
+      </div>
+      <p class="muted" style="margin-top:14px">שים לב: ה‑UNDO הוא ל<strong>שינויים הפיכים</strong> בלבד. פעולות ששמורות
+        ל<strong>מנהל המערכת / בעל הכלים</strong> (כמו ביטול כלי "לא ידוע" מעל חצי שנה) אינן נפתחות לך לביטול עצמאי.</p>
+    </div>
     <div class="grid g2" style="margin-top:22px">
       <div class="note blue"><strong>כיול:</strong> כלי מכויל נכנס ל-30 הימים האחרונים לתוקפו → נפתחת לבעל העגלה אופציה לבקש שליחה לכיול. אישורך שולח את הכלי למיקום "כיול".</div>
       <div class="note"><strong>למה זה חשוב:</strong> כלי לא-מכויל "מזייף" — השימוש בו כמו שימוש בכלי לא מדויק: גורם לאי-דיוק בעבודה ולפגיעה בציוד.</div>
@@ -376,13 +457,115 @@
       </div>
       <div class="card">
         <h3 style="color:var(--red)">הצהרה על שבור</h3>
-        <p class="muted">הכלי עובר למיקום "שבור", נשלחת התראה, והוא נכנס לדוח השבורים עם המק"ט — נוח להזמנת החלפה.</p>
+        <p class="muted">הכלי עובר למיקום "שבור", נשלחת התראה, והוא נכנס לדוח השבורים עם המק"ט — נוח להזמנת החלפה.
+          <strong>טעות? יש ↩︎ ביטול</strong> (ראה משימה 5).</p>
       </div>
     </div>
     <div class="note blue">בעל עגלה רואה <strong>רק את המיכל שלו</strong> (צפייה בלבד) + דוח על המיכל שלו. את ההרשאות הגבוהות יותר מנהל <strong>מנהל המערכת / בעל הכלים</strong>.</div>
     <div class="shot">
       <img src="../../lab/reports/view-owner.png" alt="תצוגת בעל עגלה">
       <div class="cap">כך נראית התצוגה המוגבלת של בעל העגלה (צפייה בלבד)</div>
+    </div>
+  </div>
+</section>
+
+<!-- 11d · GLOBAL SEARCH -->
+<section class="slide" id="search">
+  <div class="wrap">
+    <span class="kicker">חדש · חיפוש גלובלי</span>
+    <h2>חיפוש גלובלי — מוצאים כל כלי בשנייה</h2>
+    <p class="lead">במקום לדפדף מיכל-אחר-מיכל, יש <strong>שורת חיפוש אחת</strong> שסורקת את כל הכלים
+      שתחת אחריותך — לפי <strong>יצרן, תיאור, מק"ט או מזהה</strong> — וקופצת ישר לכלי ולמיקומו.</p>
+    <div class="grid g3">
+      <div class="card">
+        <span class="badge b-blue">מה מחפשים</span>
+        <h3 style="margin-top:12px">לפי כל שדה</h3>
+        <p class="muted">יצרן, תיאור, מק"ט, או המזהה החרוט. הקלדה חלקית מספיקה — התוצאות מסתננות תוך כדי הקלדה.</p>
+      </div>
+      <div class="card s2">
+        <span class="badge b-teal">לאן זה מוביל</span>
+        <h3 style="margin-top:12px">ישר לכלי</h3>
+        <p class="muted">כל תוצאה מראה את המיקום המלא (מיקום ← מיכל ← מגירה) ואת הסטטוס בצבע — לחיצה מקפיצה אותך לכלי לטיפול.</p>
+      </div>
+      <div class="card">
+        <span class="badge b-gray">מה בתחום</span>
+        <h3 style="margin-top:12px">רק האחריות שלך</h3>
+        <p class="muted">החיפוש מכבד את גבולות התצוגה: תחנות פנימיות ומיכלים מוגבלים שאינך מורשה להם <strong>לא יופיעו</strong> בתוצאות.</p>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:24px">
+      <div class="note green">למה זה חוסך זמן: ביקורת או איתור תקלה שדרשו דפדוף ידני — עכשיו שאילתה אחת.</div>
+      <div class="note purple"><strong>הקצה שלנו:</strong> מתחרים רבים מסתמכים על סריקת QR לאיתור. אצלנו החיפוש החי
+        מכסה את אותו הצורך <strong>בלי חומרה ובלי מדבקות</strong> — ישר מהמסך.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 11e · OWNERSHIP / ASSIGNMENT / HANDOVER + EMPLOYEE PICKER -->
+<section class="slide" id="assign">
+  <div class="wrap">
+    <span class="kicker">חדש · בעלות, שיוך ומסירה</span>
+    <h2>שיוך והעברת מיכל — עם בורר עובדים אמיתי</h2>
+    <p class="lead">כשמשייכים מיכל לעובד או מעבירים אותו ביניהם — אתה <strong>בוחר עובד מרשימה אמיתית</strong>,
+      לא מקליד מזהה ביד. השיוך יכול להיות <strong>מוגבל-בזמן</strong>, וההעברה דורשת <strong>חתימה כפולה</strong>.</p>
+    <div class="grid g3">
+      <div class="card">
+        <span class="badge b-blue">בורר עובדים</span>
+        <h3 style="margin-top:12px">👤 בחירה מרשימה</h3>
+        <p class="muted">בוחרים את העובד מ<strong>רשימת משתמשים אמיתית</strong> — בלי הקלדת uid חופשי
+          ובלי טעויות-העתקה. מה שמונע שיוך לאדם שלא קיים.</p>
+      </div>
+      <div class="card s2">
+        <span class="badge b-teal">מוגבל-בזמן</span>
+        <h3 style="margin-top:12px">⏳ שיוך עם תוקף</h3>
+        <p class="muted">אפשר להגביל את השיוך לטווח זמן. בתום התקופה השיוך פג — האחריות חוזרת
+          ולא "נשכחת" אצל אדם שכבר לא מחזיק במיכל.</p>
+      </div>
+      <div class="card">
+        <span class="badge b-green">חתימה כפולה</span>
+        <h3 style="margin-top:12px">✍️ מסירה דו-חתימה</h3>
+        <p class="muted">העברת מיכל בין עובדים סוגרת ב<strong>שתי חתימות</strong> — מוסר ומקבל —
+          כך ששרשרת האחריות לעולם לא נשברת.</p>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:24px">
+      <div class="note blue">כל שיוך/מסירה נרשם ביומן עם שמות אמיתיים, חותמות-זמן ומי חתם — תיעוד מלא, לא הערכה.</div>
+      <div class="note purple"><strong>הקצה שלנו:</strong> שילוב של בורר-עובדים + שיוך מוגבל-בזמן + מסירה דו-חתימה
+        חזק מ"accept" של מתחרים — handshake תעשייתי מלא, בעברית.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 11f · NOTIFICATIONS -->
+<section class="slide" id="notif">
+  <div class="wrap">
+    <span class="kicker">חדש · התראות</span>
+    <h2>התראות — מונה לא-נקראו וסימון כנקרא</h2>
+    <p class="lead">כל אירוע שנוגע אליך — בקשה ממתינה, אישור, כלי שהוצהר שבור, שיוך אליך —
+      מגיע כ<strong>התראה אישית</strong>, עם <strong>מונה "לא נקראו"</strong> שאי-אפשר לפספס.</p>
+    <div class="grid g3">
+      <div class="card">
+        <span class="badge b-red">מונה</span>
+        <h3 style="margin-top:12px">🔔 לא נקראו</h3>
+        <p class="muted">תג מספרי על פעמון ההתראות מראה כמה התראות חדשות מחכות. יורד אוטומטית
+          כשאתה קורא אותן — תמיד יודעים מה פתוח.</p>
+      </div>
+      <div class="card s2">
+        <span class="badge b-blue">סימון</span>
+        <h3 style="margin-top:12px">✓ סמן כנקרא</h3>
+        <p class="muted">לחיצה על התראה — או "סמן הכל כנקרא" — מאפסת את המונה. ההתראות נשמרות
+          לעיון, אבל מפסיקות "לצעוק".</p>
+      </div>
+      <div class="card">
+        <span class="badge b-teal">פר-נמען</span>
+        <h3 style="margin-top:12px">📬 אישי לכל אחד</h3>
+        <p class="muted">ההתראות <strong>פר-נמען</strong>: כל אחד רואה רק את שלו. בעל עגלה מקבל על המיכל שלו,
+          אתה מקבל על מה שבאחריותך.</p>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:24px">
+      <div class="note green">למה זה חשוב: בקשת-כיול ממתינה או כלי שבור כבר לא נבלעים — המונה מבטיח שתטפל לפני שמשהו "נופל".</div>
+      <div class="note blue">משלים את לוח הניהול: הלוח מראה <strong>תמונת מצב</strong>, וההתראות <strong>דוחפות אליך</strong> את מה שחדש ודורש פעולה.</div>
     </div>
   </div>
 </section>
@@ -521,6 +704,13 @@
       <span class="badge b-teal">4 · חתימות</span>
       <span class="badge b-green">5 · אישורים</span>
       <span class="badge b-purple">6 · משתמשים ושדרוג</span>
+    </div>
+    <div class="pill-row" style="justify-content:center;margin-top:14px">
+      <span class="badge b-blue">🔎 חיפוש גלובלי</span>
+      <span class="badge b-green">✍️ חתימה בלחיצה אחת</span>
+      <span class="badge b-amber">↩︎ ביטול (UNDO)</span>
+      <span class="badge b-teal">👤 בורר עובדים</span>
+      <span class="badge b-red">🔔 התראות עם מונה</span>
     </div>
     <div class="pill-row" style="justify-content:center;margin-top:14px">
       <span class="badge b-teal">📊 לוח ניהול · קריאה בלבד</span>

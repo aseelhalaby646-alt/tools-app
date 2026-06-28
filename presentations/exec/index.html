@@ -156,28 +156,115 @@
 
   .footer-note{font-size:14px;color:var(--muted);margin-top:40px;text-align:center}
   .divider{height:1px;background:var(--border);margin:26px 0}
+
+  /* ===== Table of contents (clickable stage index) ===== */
+  .toc{display:grid;gap:14px;margin-top:8px}
+  .toc a{
+    display:flex;
+    align-items:center;
+    gap:16px;
+    text-decoration:none;
+    color:var(--text);
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px 20px;
+    transition:border-color .15s ease,background .15s ease;
+  }
+  .toc a:hover{border-color:var(--blue);background:var(--surface2)}
+  .toc a .n{
+    flex:0 0 auto;width:38px;height:38px;border-radius:10px;
+    background:var(--surface2);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;color:var(--blue);font-size:16px;
+  }
+  .toc a .t{font-size:18px;font-weight:700}
+  .toc a .d{font-size:14px;color:var(--muted);margin-top:2px}
+
+  /* ===== Print / Save-as-PDF: one slide per page, print-safe colors ===== */
+  @media print{
+    @page{size:A4 landscape;margin:14mm}
+    html{scroll-behavior:auto}
+    :root{
+      --bg:#ffffff;
+      --surface:#ffffff;
+      --surface2:#f3f6fa;
+      --text:#0f1620;
+      --muted:#475569;
+      --border:#cbd5e1;
+    }
+    body{
+      background:#ffffff;
+      color:#0f1620;
+      -webkit-print-color-adjust:exact;
+      print-color-adjust:exact;
+    }
+    .slide{
+      min-height:0;
+      padding:24px 18px;
+      border-bottom:none;
+      break-after:page;
+      page-break-after:always;
+      break-inside:avoid;
+      page-break-inside:avoid;
+      justify-content:flex-start;
+    }
+    .slide:last-of-type{break-after:auto;page-break-after:auto}
+    h1{font-size:38px}
+    h2{font-size:30px}
+    .lead{font-size:17px}
+    .stat .num{font-size:34px}
+    .card,.stat,.toc a{break-inside:avoid;page-break-inside:avoid}
+    .kicker{
+      color:var(--blue) !important;
+      background:#eaf1fe !important;
+      border-color:#bcd3fb !important;
+    }
+    .shot{background:#f3f6fa}
+    a[href^="#"]{color:inherit;text-decoration:none}
+  }
 </style>
 </head>
 <body>
 
 <!-- 1. TITLE -->
-<section class="slide" style="text-align:center">
+<section id="slide-1" class="slide" style="text-align:center">
   <div class="inner">
     <span class="kicker">מערכת ייצור · גרסה חדשה</span>
     <h1>ניהול כלים<br><span class="accent-blue">מערכת ניהול מלאי כלים</span></h1>
-    <p class="lead" style="margin-inline:auto">פתרון ענן מקצועי לניהול עגלות הכלים במחלקת התעופה והתעשייה —
+    <p class="lead" style="margin-inline:auto">פתרון ענן מקצועי לניהול עגלות כלים —
       מעקב מלא, הרשאות, כיול ובקרה, בזמן אמת, ממחשב ומהטלפון.</p>
     <div class="grid g3" style="margin-top:36px">
-      <div class="stat"><div class="num accent-blue">2,000</div><div class="lbl">כלים בניהול</div></div>
-      <div class="stat"><div class="num accent-green">11</div><div class="lbl">עגלות כלים</div></div>
-      <div class="stat"><div class="num accent-purple">3</div><div class="lbl">רמות הרשאה</div></div>
+      <div class="stat"><div class="num accent-blue">☁️</div><div class="lbl">ניהול מלאי בענן</div></div>
+      <div class="stat"><div class="num accent-green">🔐</div><div class="lbl">הרשאות ובקרה</div></div>
+      <div class="stat"><div class="num accent-purple">📱</div><div class="lbl">מחשב וטלפון</div></div>
     </div>
     <p class="footer-note">מוצר חי, נבדק ומאובטח — בנוי לתפעול יומיומי בקנה מידה ארגוני.</p>
   </div>
 </section>
 
+<!-- TABLE OF CONTENTS (clickable stage index) -->
+<section id="toc" class="slide">
+  <div class="inner">
+    <span class="kicker">תוכן המצגת</span>
+    <h2>שלבי המצגת</h2>
+    <p class="lead">לחיצה על שלב קופצת ישירות אליו.</p>
+    <nav class="toc" aria-label="תוכן עניינים">
+      <a href="#slide-2"><span class="n">1</span><span><span class="t">האתגר</span><span class="d">למה הניסיון הקודם לא הספיק</span></span></a>
+      <a href="#slide-3"><span class="n">2</span><span><span class="t">הארכיטקטורה החדשה</span><span class="d">אפליקציית ענן אמיתית — מקור אמת אחד</span></span></a>
+      <a href="#slide-4"><span class="n">3</span><span><span class="t">אבטחה והרשאות</span><span class="d">שלוש רמות תפקיד מופרדות ברמת המסד</span></span></a>
+      <a href="#slide-5"><span class="n">4</span><span><span class="t">איכות הנדסית ואמינות</span><span class="d">בדיקות, גרסאות וגיבויים</span></span></a>
+      <a href="#slide-6"><span class="n">5</span><span><span class="t">יכולות תפעוליות</span><span class="d">בנויה סביב העבודה בשטח</span></span></a>
+      <a href="#slide-7"><span class="n">6</span><span><span class="t">המוצר, באמת</span><span class="d">מודל ההרשאות עובד — הוכחה חיה</span></span></a>
+      <a href="#slide-8"><span class="n">7</span><span><span class="t">אז מול עכשיו</span><span class="d">השוואה בין הפתרון הקודם לחדש</span></span></a>
+      <a href="#slide-9"><span class="n">8</span><span><span class="t">מפת דרכים</span><span class="d">מה הלאה</span></span></a>
+      <a href="#slide-10"><span class="n">9</span><span><span class="t">סיכום</span><span class="d">מערכת ברמה אחרת לגמרי</span></span></a>
+    </nav>
+  </div>
+</section>
+
 <!-- 2. THE CHALLENGE -->
-<section class="slide">
+<section id="slide-2" class="slide">
   <div class="inner">
     <span class="kicker" style="color:#fca5a5;background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3)">האתגר · למה הניסיון הקודם נכשל</span>
     <h2>הפתרון הקודם לא היה מערכת — היה קובץ</h2>
@@ -208,7 +295,7 @@
 </section>
 
 <!-- 3. NEW ARCHITECTURE -->
-<section class="slide">
+<section id="slide-3" class="slide">
   <div class="inner">
     <span class="kicker">הארכיטקטורה החדשה</span>
     <h2>אפליקציית ענן אמיתית — מקור אמת אחד</h2>
@@ -250,7 +337,7 @@
 </section>
 
 <!-- 4. SECURITY & ROLES -->
-<section class="slide">
+<section id="slide-4" class="slide">
   <div class="inner">
     <span class="kicker">אבטחה והרשאות</span>
     <h2>שלוש רמות תפקיד — מופרדות ברמת המסד</h2>
@@ -289,7 +376,7 @@
 </section>
 
 <!-- 5. RELIABILITY / ENGINEERING -->
-<section class="slide">
+<section id="slide-5" class="slide">
   <div class="inner">
     <span class="kicker">איכות הנדסית ואמינות</span>
     <h2>נבנתה לסטנדרט של מערכת ייצור</h2>
@@ -320,7 +407,7 @@
 </section>
 
 <!-- 6. KEY OPERATIONAL FEATURES -->
-<section class="slide">
+<section id="slide-6" class="slide">
   <div class="inner">
     <span class="kicker">יכולות תפעוליות מרכזיות</span>
     <h2>בנויה סביב העבודה האמיתית בשטח</h2>
@@ -365,7 +452,7 @@
 </section>
 
 <!-- 7. THE PRODUCT, REAL -->
-<section class="slide">
+<section id="slide-7" class="slide">
   <div class="inner">
     <span class="kicker">המוצר, באמת</span>
     <h2>מודל ההרשאות עובד — הוכחה חיה</h2>
@@ -373,12 +460,12 @@
       בעל העגלה רואה <strong>רק את העגלה שלו</strong>, בצפייה בלבד.</p>
     <div class="grid g2">
       <figure>
-        <div class="shot-head"><span class="badge">👑 תצוגת מנהל</span><span class="muted">160 כלים · 5 עגלות</span></div>
+        <div class="shot-head"><span class="badge">👑 תצוגת מנהל</span><span class="muted">כלל העגלות והכלים</span></div>
         <img class="shot" src="../../lab/reports/view-admin.png" alt="תצוגת מנהל — מבט על כל העגלות">
         <figcaption>המנהל רואה את כלל העגלות והכלים, עם שליטה מלאה.</figcaption>
       </figure>
       <figure>
-        <div class="shot-head"><span class="badge green">📋 תצוגת בעל עגלה</span><span class="muted">32 כלים · עגלה אחת · צפייה בלבד</span></div>
+        <div class="shot-head"><span class="badge green">📋 תצוגת בעל עגלה</span><span class="muted">עגלה אחת · צפייה בלבד</span></div>
         <img class="shot" src="../../lab/reports/view-owner.png" alt="תצוגת בעל עגלה — עגלה אחת בלבד">
         <figcaption>בעל העגלה רואה רק את העגלה שלו — בידוד אמיתי ברמת המסד.</figcaption>
       </figure>
@@ -388,9 +475,9 @@
 </section>
 
 <!-- 8. OLD VS NEW COMPARISON -->
-<section class="slide">
+<section id="slide-8" class="slide">
   <div class="inner">
-    <span class="kicker">פער הדורות</span>
+    <span class="kicker">השוואה</span>
     <h2>אז מול עכשיו</h2>
     <table>
       <thead>
@@ -411,7 +498,7 @@
 </section>
 
 <!-- 9. ROADMAP -->
-<section class="slide">
+<section id="slide-9" class="slide">
   <div class="inner">
     <span class="kicker">מפת דרכים</span>
     <h2>מה הלאה</h2>
@@ -442,12 +529,12 @@
 </section>
 
 <!-- 10. CLOSE -->
-<section class="slide" style="text-align:center">
+<section id="slide-10" class="slide" style="text-align:center">
   <div class="inner">
     <span class="kicker">סיכום</span>
     <h2>זו מערכת ברמה אחרת לגמרי</h2>
     <p class="lead" style="margin-inline:auto">לא קובץ — מערכת. נבדקת, מאובטחת, מבוססת ענן, ועובדת על כל מכשיר.
-      בנויה לסטנדרט תעשייתי, ומוכנה לפריסה רוחבית בכל החברה.</p>
+      בנויה לסטנדרט תעשייתי, ומוכנה לפריסה רוחבית בקנה מידה ארגוני.</p>
     <div class="grid g4" style="margin-top:14px">
       <div class="stat"><div class="num accent-green">✓</div><div class="lbl">נבדקת · 52+ בדיקות</div></div>
       <div class="stat"><div class="num accent-blue">✓</div><div class="lbl">מאובטחת · 3 תפקידים</div></div>
@@ -455,7 +542,7 @@
       <div class="stat"><div class="num accent-amber">✓</div><div class="lbl">מובייל · להתקנה</div></div>
     </div>
     <div class="divider"></div>
-    <p style="font-size:24px;font-weight:700">מוכנה לפריסה רוחבית בכל החברה.</p>
+    <p style="font-size:24px;font-weight:700">מוכנה לפריסה רוחבית בקנה מידה ארגוני.</p>
     <p class="footer-note">ניהול כלים — מערכת ניהול מלאי כלים · גרסת ייצור</p>
   </div>
 </section>

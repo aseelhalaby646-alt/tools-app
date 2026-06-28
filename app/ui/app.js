@@ -443,6 +443,9 @@ function renderDashboard(db, actor, opts = {}) {
   const pingBtn = (!opts.demo && actor.role === ROLES.ADMIN && opts.onPing)
     ? `<button class="logout" id="ping">🔌 בדיקת ענן</button><span id="ping-res" style="font-size:12px;margin-inline-start:8px;color:var(--mut)"></span>` : '';
   const right = opts.demo ? '' : `${pingBtn}<button class="logout" id="logout">התנתק</button>`;
+  // in-app access to the training deck for THIS role (generic decks, open in a new tab → printable to PDF)
+  const helpDeck = ({ admin: 'training-admin', manager: 'training-manager', cart_owner: 'training-owner' })[actor.role] || 'training-owner';
+  const helpBtn = `<a class="logout" href="../presentations/${helpDeck}/index.html" target="_blank" rel="noopener" style="text-decoration:none">📖 הדרכה</a>`;
   // admin's "enter work mode / return" buttons (req 1,3): a state chip in mgmt mode + an exit,
   // a single enter button in normal mode. A label-flipping button hides current state, so we don't.
   const modeCtl = (canSwitch && isAdmin)
@@ -456,7 +459,7 @@ function renderDashboard(db, actor, opts = {}) {
       <div class="logo">🧰</div>
       <div><h1>ניהול כלים</h1><div class="who">${esc(scopeNote)}</div></div>
       <span class="rolebadge ${actor.role}">${ROLE_LABEL_HE[actor.role] || actor.role}</span>
-      ${modeCtl}${right}
+      ${helpBtn}${modeCtl}${right}
     </div>
     <div class="wrap">
       ${(!opts.demo && typeof navigator !== 'undefined' && navigator.onLine === false)
