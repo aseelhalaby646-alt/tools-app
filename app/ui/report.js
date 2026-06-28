@@ -56,11 +56,65 @@ export function cartReportHtml(db, cartId) {
   </body></html>`;
 }
 
-// Open the report in a new window and trigger the print dialog (user picks "Save as PDF").
-export function printCartReport(db, cartId) {
-  const html = cartReportHtml(db, cartId);
+// A report for an ARBITRARY tool subset (used by the clickable stat cards / charts) — grouped by cart.
+export function toolsReportHtml(db, title, tools) {
+  const byCart = {};
+  for (const t of tools) (byCart[t.cartId] = byCart[t.cartId] || []).push(t);
+  const cartName = (id) => { const c = (db.carts || []).find(x => x.id === id); return c ? `${c.name} · ${c.id}` : id; };
+  const today = new Date().toLocaleDateString('he-IL');
+  const section = ([cid, ts]) => {
+    const rows = ts.map(t => {
+      const s = calibrationStatus(t, db.specialLocations);
+      return `<tr><td class="id">${esc(t.id)}</td><td>${esc(t.desc)}</td><td>${esc(t.vendor)}</td>` +
+        `<td><span class="pill" style="background:${STATUS_COLOR[s] || '#888'}">${STATUS_LABEL_HE[s] || s}</span></td>` +
+        `<td>${esc(t.calDate || '—')}</td><td>${esc(t.calID || '—')}</td></tr>`;
+    }).join('');
+    return `<h3>${esc(cartName(cid))} <small>(${ts.length})</small></h3>` +
+      `<table><thead><tr><th>מזהה</th><th>תיאור</th><th>מק"ט יצרן</th><th>סטטוס</th><th>תאריך כיול</th><th>סידורי כיול</th></tr></thead><tbody>${rows}</tbody></table>`;
+  };
+  return `<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title>
+  <style>
+    *{box-sizing:border-box} body{font-family:"Segoe UI",Arial,sans-serif;color:#111;margin:22px;font-size:13px}
+    h1{font-size:20px;margin:0 0 4px} h3{margin:16px 0 6px;font-size:15px;border-bottom:2px solid #2563eb;padding-bottom:3px} h3 small{color:#888;font-weight:400}
+    .meta{color:#444;font-size:12px;margin-bottom:8px}
+    .pill{color:#fff;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:700;display:inline-block;white-space:nowrap}
+    table{width:100%;border-collapse:collapse;margin-bottom:6px} th,td{border:1px solid #ccc;padding:5px 8px;text-align:right}
+    th{background:#f1f5f9;font-size:12px} td{font-size:12px} td.id{font-family:Consolas,monospace;font-size:11px;color:#1e40af;white-space:nowrap}
+    .ft{margin-top:18px;color:#999;font-size:10px;border-top:1px solid #ddd;padding-top:6px}
+    @media print{body{margin:10mm} tr{break-inside:avoid}}
+  </style></head><body>
+    <h1>${esc(title)}</h1>
+    <div class="meta">סה"כ כלים: <b>${tools.length}</b> · הופק: <b>${today}</b></div>
+    ${Object.entries(byCart).map(section).join('') || '<p style="color:#888">אין כלים בקטגוריה זו.</p>'}
+    <div class="ft">ניהול כלים · ${esc(title)} · ${today}</div>
+  </body></html>`;
+}
+
+function openPrint(html) {
   const w = window.open('', '_blank');
-  if (!w) { alert('חלון קופץ נחסם — אפשר חלונות קופצים כדי להפיק PDF'); return; }
+  if (!w) { alert('חלון קופץ נחסם — אפשר חלונות קופצים כדי להפיק דוח/PDF'); return; }
   w.document.open(); w.document.write(html); w.document.close();
   w.focus(); setTimeout(() => { try { w.print(); } catch (e) {} }, 400);
 }
+// Sign-off status report for one day (used by the sign-off chart).
+export function signoffReportHtml(db, scopedCartIds, date) {
+  const signed = new Set((db.signoffs || []).filter(s => s.date === date).map(s => s.cartId));
+  const inScope = new Set(scopedCartIds);
+  const carts = (db.carts || []).filter(c => inScope.has(c.id) && c.requiresDailySignoff);
+  const rows = carts.map(c => `<tr><td>${esc(c.name)} · <span style="font-family:Consolas,monospace;color:#1e40af">${esc(c.id)}</span></td>` +
+    `<td><span class="pill" style="background:${signed.has(c.id) ? '#2e7d32' : '#c62828'}">${signed.has(c.id) ? '✓ נחתם' : '✗ לא נחתם'}</span></td></tr>`).join('');
+  const done = carts.filter(c => signed.has(c.id)).length;
+  return `<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><title>דוח חתימות יומיות</title>
+  <style>*{box-sizing:border-box}body{font-family:"Segoe UI",Arial,sans-serif;color:#111;margin:22px;font-size:13px}
+    h1{font-size:20px;margin:0 0 4px}.meta{color:#444;font-size:12px;margin-bottom:10px}
+    .pill{color:#fff;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:700}
+    table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px 9px;text-align:right}th{background:#f1f5f9}
+    .ft{margin-top:18px;color:#999;font-size:10px;border-top:1px solid #ddd;padding-top:6px}@media print{body{margin:10mm}}</style></head><body>
+    <h1>דוח חתימות יומיות — ${esc(date)}</h1>
+    <div class="meta">נחתמו: <b>${done}</b> מתוך <b>${carts.length}</b> עגלות הדורשות חתימה</div>
+    <table><thead><tr><th>עגלה</th><th>סטטוס חתימה</th></tr></thead><tbody>${rows || '<tr><td colspan="2">אין עגלות הדורשות חתימה</td></tr>'}</tbody></table>
+    <div class="ft">ניהול כלים · דוח חתימות · ${esc(date)}</div></body></html>`;
+}
+export function printCartReport(db, cartId) { openPrint(cartReportHtml(db, cartId)); }
+export function printToolsReport(db, title, tools) { openPrint(toolsReportHtml(db, title, tools)); }
+export function printSignoffReport(db, scopedCartIds, date) { openPrint(signoffReportHtml(db, scopedCartIds, date)); }

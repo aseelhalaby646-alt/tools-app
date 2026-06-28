@@ -11,7 +11,7 @@ import { viewsFor, resolveView, inMgmtMode } from '../core/views.js';
 import { signoffPie, calibrationPie, problemSummary, calibrationDueSoon, redCarts, pendingQueue,
   PROBLEM_STATUSES } from '../core/dashboard.js';
 import { svgPie, svgLegend } from './charts.js';
-import { printCartReport } from './report.js';
+import { printCartReport, printToolsReport, printSignoffReport } from './report.js';
 import { EDIT_GATED, hashPwd, isUnlocked, EDIT_UNLOCK_MS } from '../core/security.js';
 import { parseCSV, importTools, smartImport } from '../core/import.js';
 import * as WF from '../core/workflows.js';
@@ -191,6 +191,11 @@ function setView(v) {
 }
 let problemFilter = false;   // set by the dashboard "בעיות בכלים" card → filters the main tool list
 let lastUndo = null;         // {action,payload} of the last reversible status change (#4 Undo)
+// PWA: re-render when the network drops/returns so the offline banner + edit-block update live
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => _rerender());
+  window.addEventListener('offline', () => _rerender());
+}
 
 // run the right model add-op; returns { coll, entity } for persistence. Throws on error.
 function applyAdd(db, actor, kind, payload) {
@@ -264,12 +269,15 @@ async function bootLive() {
       if (actor.role === 'none') return renderNoAccess(actor, () => fb.logout());
       const render = async (flash) => {
         const db = await fa.loadDb(actor);                             // cloud is the source of truth (role-scoped)
+        const offlineBlock = () => navigator.onLine === false;   // PWA: no editing while disconnected
         const onAdd = async (kind, payload) => {
+          if (offlineBlock()) return render('📴 אין חיבור לרשת — לא ניתן להוסיף כעת');
           const { coll, entity } = applyAdd(db, actor, kind, payload); // mutate loaded db
           await fa.putEntity(coll, entity.id, entity);                  // persist to Firestore
           await render();                                               // reload from cloud + re-render
         };
         const onImport = async (text, smart) => {
+          if (offlineBlock()) return render('📴 אין חיבור לרשת — לא ניתן לייבא כעת');
           const rows = parseCSV(text);
           if (smart) {
             const r = smartImport(db, actor, rows);                     // mutates loaded db (carts+drawers+tools)
@@ -285,6 +293,7 @@ async function bootLive() {
         };
         const FORCE_KINDS = new Set(['reset', 'annualreset', 'restore']);   // deliberately overwrite everything
         const onAction = async (kind, payload) => {
+          if (offlineBlock()) return render('📴 אין חיבור לרשת — לא ניתן לערוך כעת');
           const r = applyAction(db, actor, kind, payload);
           lastUndo = r.undo || null;
           const force = FORCE_KINDS.has(kind);
@@ -378,8 +387,8 @@ function mgmtDashboardHtml(db, actor) {
     <div class="who" style="margin-bottom:10px">${esc(cap)}</div>
     ${probCard}
     <div class="charts">
-      <div class="chartcard"><h4>חתימות להיום (${dlabel})</h4>${svgPie(sp)}${svgLegend(sp.slices, sp.total)}</div>
-      <div class="chartcard"><h4>סטטוס כיול</h4>${svgPie(cp)}${svgLegend(cp.slices, cp.total)}</div>
+      <div class="chartcard" data-chartreport="sign" style="cursor:pointer" title="לחץ להפקת דוח"><h4>חתימות להיום (${dlabel}) 📄</h4>${svgPie(sp)}${svgLegend(sp.slices, sp.total)}</div>
+      <div class="chartcard" data-chartreport="cal" style="cursor:pointer" title="לחץ להפקת דוח"><h4>סטטוס כיול 📄</h4>${svgPie(cp)}${svgLegend(cp.slices, cp.total)}</div>
     </div>
     ${due.length ? `<div class="section-title">כיול קרב / פג (${due.length})</div><div class="card" style="padding:4px 0">${dueRows}</div>` : ''}
     ${reds.length ? `<div class="section-title">עגלות אדומות (${reds.length})</div><div class="card" style="padding:4px 0">${redRows}</div>` : ''}
@@ -447,6 +456,8 @@ function renderDashboard(db, actor, opts = {}) {
       ${modeCtl}${right}
     </div>
     <div class="wrap">
+      ${(!opts.demo && typeof navigator !== 'undefined' && navigator.onLine === false)
+        ? `<div class="flash" style="background:#7c2d12;border-inline-start:3px solid #f59e0b">📴 לא מחובר לרשת — צפייה בלבד. מוצגים הנתונים האחרונים שנטענו; פעולות עריכה יחזרו אוטומטית כשהחיבור יחזור.</div>` : ''}
       ${opts.flash ? `<div class="flash">${esc(opts.flash)}${lastUndo ? ` <button data-undo style="margin-inline-start:10px;padding:5px 13px;border-radius:8px;border:0;background:var(--brand);color:#fff;font-weight:700;font-size:12px;cursor:pointer">↩ בטל</button>` : ''}</div>` : ''}
       ${opts.demo ? demoSwitcher() : ''}
       ${canSwitch ? `<div class="viewsw">${mgmt
@@ -470,10 +481,10 @@ function renderDashboard(db, actor, opts = {}) {
       ${notificationsHtml(db, actor)}
       <div class="section-title">סטטוס כיול</div>
       <div class="stats">
-        <div class="stat brand"><div class="n">${stats.total}</div><div class="l">כלים בסך הכל</div></div>
-        <div class="stat red"><div class="n">${stats.expired}</div><div class="l">פג תוקף כיול</div></div>
-        <div class="stat amber"><div class="n">${stats.due60}</div><div class="l">מתקרב לכיול (60 יום)</div></div>
-        <div class="stat purple"><div class="n">${stats.special}</div><div class="l">בכיול / שבור</div></div>
+        <div class="stat brand" data-statreport="total" style="cursor:pointer" title="לחץ להפקת דוח"><div class="n">${stats.total}</div><div class="l">כלים בסך הכל 📄</div></div>
+        <div class="stat red" data-statreport="expired" style="cursor:pointer" title="לחץ להפקת דוח"><div class="n">${stats.expired}</div><div class="l">פג תוקף כיול 📄</div></div>
+        <div class="stat amber" data-statreport="due60" style="cursor:pointer" title="לחץ להפקת דוח"><div class="n">${stats.due60}</div><div class="l">מתקרב לכיול (60 יום) 📄</div></div>
+        <div class="stat purple" data-statreport="special" style="cursor:pointer" title="לחץ להפקת דוח"><div class="n">${stats.special}</div><div class="l">בכיול / שבור 📄</div></div>
       </div>
       <div class="section-title">עגלות (${carts.filter(c => c.type !== 'closet').length})</div>
       <div class="chips">${carts.filter(c => c.type !== 'closet').map(c => cartChip(db, tools, c, chipCtx)).join('') || '<div class="empty">אין עגלות</div>'}</div>
@@ -539,6 +550,18 @@ function renderDashboard(db, actor, opts = {}) {
   // cart-report PDF (read-only, opens a print window — not an onAction)
   const repBtn = document.querySelector('[data-report]');
   if (repBtn) repBtn.onclick = () => { const sel = document.getElementById('m-rep-cart'); if (sel && sel.value) printCartReport(db, sel.value); };
+  // clickable stat cubes + dashboard charts → instant printable report of what they show
+  document.querySelectorAll('[data-statreport]').forEach(b => b.onclick = () => {
+    const k = b.getAttribute('data-statreport');
+    const titles = { total: 'דוח כל הכלים', expired: 'דוח — פג תוקף כיול', due60: 'דוח — מתקרב לכיול', special: 'דוח — בכיול / שבור' };
+    const subset = k === 'total' ? tools : tools.filter(t => statusOf(db, t) === k);
+    printToolsReport(db, titles[k] || 'דוח כלים', subset);
+  });
+  document.querySelectorAll('[data-chartreport]').forEach(b => b.onclick = () => {
+    const k = b.getAttribute('data-chartreport');
+    if (k === 'cal') printToolsReport(db, 'דוח סטטוס כיול', visibleTools(db, actor));
+    else printSignoffReport(db, visibleCartIdsFor(db, actor), new Date().toISOString().slice(0, 10));
+  });
   wireMgmt(opts);
 }
 
