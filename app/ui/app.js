@@ -11,7 +11,8 @@ import { viewsFor, resolveView, inMgmtMode } from '../core/views.js';
 import { signoffPie, calibrationPie, problemSummary, calibrationDueSoon, redCarts, pendingQueue,
   PROBLEM_STATUSES } from '../core/dashboard.js';
 import { svgPie, svgLegend } from './charts.js';
-import { printCartReport, printToolsReport, printSignoffReport } from './report.js';
+import { printCartReport, printToolsReport, printSignoffReport,
+  viewToolsReport, viewSignoffReport } from './report.js';
 import { EDIT_GATED, hashPwd, isUnlocked, EDIT_UNLOCK_MS } from '../core/security.js';
 import { parseCSV, importTools, smartImport } from '../core/import.js';
 import * as WF from '../core/workflows.js';
@@ -216,7 +217,7 @@ function applyAdd(db, actor, kind, payload) {
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const params = new URLSearchParams(location.search);
 const DEMO = params.get('demo') === '1';
-const STATUS_HE = { expired: 'פג תוקף', due60: 'מתקרב', ok: 'תקין', none: '—',
+const STATUS_HE = { expired: 'פג תוקף', due30: 'קרוב (30)', due60: 'מתקרב (60)', ok: 'תקין', none: '—',
   broken: 'שבור', calibrating: 'בכיול', rejected: 'פסילה', unknown: 'לא ידוע', shortage: 'חוסר', special: 'בטיפול' };
 
 async function boot() {
@@ -390,8 +391,8 @@ function mgmtDashboardHtml(db, actor) {
     <div class="who" style="margin-bottom:10px">${esc(cap)}</div>
     ${probCard}
     <div class="charts">
-      <div class="chartcard" data-chartreport="sign" style="cursor:pointer" title="לחץ להפקת דוח"><h4>חתימות להיום (${dlabel}) 📄</h4>${svgPie(sp)}${svgLegend(sp.slices, sp.total)}</div>
-      <div class="chartcard" data-chartreport="cal" style="cursor:pointer" title="לחץ להפקת דוח"><h4>סטטוס כיול 📄</h4>${svgPie(cp)}${svgLegend(cp.slices, cp.total)}</div>
+      <div class="chartcard"><h4>חתימות להיום (${dlabel})</h4>${svgPie(sp)}${svgLegend(sp.slices, sp.total)}<div class="chartbtns"><button data-chartview="sign">👁️ צפה</button><button data-chartprint="sign">🖨️ הדפס</button></div></div>
+      <div class="chartcard"><h4>סטטוס כיול</h4>${svgPie(cp)}${svgLegend(cp.slices, cp.total)}<div class="chartbtns"><button data-chartview="cal">👁️ צפה</button><button data-chartprint="cal">🖨️ הדפס</button></div></div>
     </div>
     ${due.length ? `<div class="section-title">כיול קרב / פג (${due.length})</div><div class="card" style="padding:4px 0">${dueRows}</div>` : ''}
     ${reds.length ? `<div class="section-title">עגלות אדומות (${reds.length})</div><div class="card" style="padding:4px 0">${redRows}</div>` : ''}
@@ -436,7 +437,7 @@ function renderDashboard(db, actor, opts = {}) {
     ? tools.filter(t => PROBLEM_STATUSES.includes(statusOf(db, t))) : tools;
   const chipCtx = { todayIso: new Date().toISOString().slice(0, 10), canSign: !!opts.onAction };
   const by = (s) => tools.filter(t => statusOf(db, t) === s).length;
-  const stats = { total: tools.length, expired: by('expired'), due60: by('due60'), special: by('special') };
+  const stats = { total: tools.length, expired: by('expired'), due30: by('due30'), due60: by('due60') };
   const scopeNote = actor.role === ROLES.CART_OWNER
     ? `מציג רק את ${carts.map(c => c.name).join(', ') || 'העגלה שלך'} — צפייה בלבד`
     : 'תצוגת ניהול — כל המלאי';
@@ -487,10 +488,10 @@ function renderDashboard(db, actor, opts = {}) {
       ${notificationsHtml(db, actor)}
       <div class="section-title">סטטוס כיול</div>
       <div class="stats">
-        <div class="stat brand" data-statreport="total" style="cursor:pointer" title="לחץ להפקת דוח"><div class="n">${stats.total}</div><div class="l">כלים בסך הכל 📄</div></div>
-        <div class="stat red" data-statreport="expired" style="cursor:pointer" title="לחץ להפקת דוח"><div class="n">${stats.expired}</div><div class="l">פג תוקף כיול 📄</div></div>
-        <div class="stat amber" data-statreport="due60" style="cursor:pointer" title="לחץ להפקת דוח"><div class="n">${stats.due60}</div><div class="l">מתקרב לכיול (60 יום) 📄</div></div>
-        <div class="stat purple" data-statreport="special" style="cursor:pointer" title="לחץ להפקת דוח"><div class="n">${stats.special}</div><div class="l">בכיול / שבור 📄</div></div>
+        <div class="stat brand" data-statreport="total" style="cursor:pointer" title="לחץ לצפייה בדוח"><div class="n">${stats.total}</div><div class="l">כלים בסך הכל 👁️</div></div>
+        <div class="stat red" data-statreport="expired" style="cursor:pointer" title="לחץ לצפייה בדוח"><div class="n">${stats.expired}</div><div class="l">פג תוקף (0) 👁️</div></div>
+        <div class="stat amber" data-statreport="due30" style="cursor:pointer" title="לחץ לצפייה בדוח"><div class="n">${stats.due30}</div><div class="l">קרוב לכיול (30 יום) 👁️</div></div>
+        <div class="stat amber" data-statreport="due60" style="cursor:pointer" title="לחץ לצפייה בדוח"><div class="n">${stats.due60}</div><div class="l">מתקרב לכיול (60 יום) 👁️</div></div>
       </div>
       <div class="section-title">עגלות (${carts.filter(c => c.type !== 'closet').length})</div>
       <div class="chips">${carts.filter(c => c.type !== 'closet').map(c => cartChip(db, tools, c, chipCtx)).join('') || '<div class="empty">אין עגלות</div>'}</div>
@@ -556,18 +557,21 @@ function renderDashboard(db, actor, opts = {}) {
   // cart-report PDF (read-only, opens a print window — not an onAction)
   const repBtn = document.querySelector('[data-report]');
   if (repBtn) repBtn.onclick = () => { const sel = document.getElementById('m-rep-cart'); if (sel && sel.value) printCartReport(db, sel.value); };
-  // clickable stat cubes + dashboard charts → instant printable report of what they show
+  // clickable stat cubes → VIEW (open the report, no auto-print; the user prints from there if they want)
   document.querySelectorAll('[data-statreport]').forEach(b => b.onclick = () => {
     const k = b.getAttribute('data-statreport');
-    const titles = { total: 'דוח כל הכלים', expired: 'דוח — פג תוקף כיול', due60: 'דוח — מתקרב לכיול', special: 'דוח — בכיול / שבור' };
+    const titles = { total: 'דוח כל הכלים', expired: 'דוח — פג תוקף כיול (0)', due30: 'דוח — קרוב לכיול (30)', due60: 'דוח — מתקרב לכיול (60)' };
     const subset = k === 'total' ? tools : tools.filter(t => statusOf(db, t) === k);
-    printToolsReport(db, titles[k] || 'דוח כלים', subset);
+    viewToolsReport(db, titles[k] || 'דוח כלים', subset);
   });
-  document.querySelectorAll('[data-chartreport]').forEach(b => b.onclick = () => {
-    const k = b.getAttribute('data-chartreport');
-    if (k === 'cal') printToolsReport(db, 'דוח סטטוס כיול', visibleTools(db, actor));
-    else printSignoffReport(db, visibleCartIdsFor(db, actor), new Date().toISOString().slice(0, 10));
-  });
+  // dashboard charts → SEPARATE צפה / הדפס buttons (never both at once)
+  const today = new Date().toISOString().slice(0, 10);
+  const chartReport = (k, doPrint) => {
+    if (k === 'cal') (doPrint ? printToolsReport : viewToolsReport)(db, 'דוח סטטוס כיול', visibleTools(db, actor));
+    else (doPrint ? printSignoffReport : viewSignoffReport)(db, visibleCartIdsFor(db, actor), today);
+  };
+  document.querySelectorAll('[data-chartview]').forEach(b => b.onclick = () => chartReport(b.getAttribute('data-chartview'), false));
+  document.querySelectorAll('[data-chartprint]').forEach(b => b.onclick = () => chartReport(b.getAttribute('data-chartprint'), true));
   wireMgmt(opts);
 }
 

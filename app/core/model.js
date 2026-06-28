@@ -315,7 +315,9 @@ export function calibrationStatus(tool, specialLocations = SPECIAL_DEFAULT, ref 
   if (tool.cal !== 'כן') return 'none';
   if (!tool.calDate) return 'ok';
   const days = daysBetween(toDay(tool.calDate), ref); // both UTC days — consistent with workflows.js
+  // three alert tiers (owner request): expired(0/−), 30-day, 60-day. Per-client these could be config.
   if (days < 0) return 'expired';
+  if (days <= 30) return 'due30';
   if (days <= 60) return 'due60';
   return 'ok';
 }

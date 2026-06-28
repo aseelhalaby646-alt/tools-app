@@ -61,6 +61,7 @@ tr:last-child td{border-bottom:0}
 td .id{font-family:ui-monospace,Consolas,monospace;color:#9fb0c3;font-size:12px}
 .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700}
 .pill.expired{background:var(--redbg);color:#fca5a5}
+.pill.due30{background:#3a1c08;color:#fdba74}
 .pill.due60{background:var(--amberbg);color:#fcd34d}
 .pill.calibrating{background:var(--purplebg);color:#c4b5fd}
 .pill.rejected{background:#2b2b30;color:#d4d4d8}
@@ -72,6 +73,7 @@ tr.row-rejected{background:rgba(120,113,108,.08)}
 .pill.ok{background:var(--okbg);color:#86efac}
 .pill.none{background:#1b2533;color:var(--mut)}
 tr.row-expired{background:rgba(239,68,68,.06)}
+tr.row-due30{background:rgba(234,88,12,.06)}
 tr.row-due60{background:rgba(245,158,11,.05)}
 tr.row-calibrating{background:rgba(167,139,250,.05)}
 tr.row-broken{background:rgba(244,63,94,.07)}
@@ -136,6 +138,9 @@ body{overflow-x:hidden}
 @media(min-width:560px){.charts{grid-template-columns:1fr 1fr}}
 .chartcard{display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
 .chartcard h4{margin:0;font-size:13px;color:var(--mut)}
+.chartbtns{display:flex;gap:8px;justify-content:center;margin-top:4px;flex-wrap:wrap}
+.chartbtns button{padding:7px 16px;border-radius:999px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:12.5px;font-weight:700;cursor:pointer;min-height:36px}
+.chartbtns button:hover{border-color:var(--brand);color:var(--brand)}
 .legend{display:flex;flex-direction:column;gap:4px;width:100%}
 .lg{display:flex;align-items:center;gap:8px;font-size:13px}
 .lg .sw{width:12px;height:12px;border-radius:3px;display:inline-block}

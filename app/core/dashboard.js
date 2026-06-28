@@ -12,12 +12,12 @@ export const INFLIGHT_STATUSES = Object.freeze(['calibrating']);
 
 // must mirror .pill.<status> in app.css so chart and table never disagree:
 export const STATUS_COLOR = {
-  ok: '#2e7d32', due60: '#b8860b', expired: '#c62828', broken: '#8b1a1a',
+  ok: '#2e7d32', due60: '#b8860b', due30: '#ea580c', expired: '#c62828', broken: '#8b1a1a',
   calibrating: '#6d28d9', rejected: '#9333ea', unknown: '#6b7280', shortage: '#d97706',
   special: '#7c3aed', none: '#475569', done: '#2e7d32', notdone: '#c62828',
 };
 export const STATUS_LABEL_HE = {
-  expired: 'פג תוקף', due60: 'מתקרב', ok: 'תקין', none: 'ללא כיול', broken: 'שבור',
+  expired: 'פג תוקף', due30: 'קרוב (30)', due60: 'מתקרב (60)', ok: 'תקין', none: 'ללא כיול', broken: 'שבור',
   calibrating: 'בכיול', rejected: 'פסילה', unknown: 'לא ידוע', shortage: 'חוסר', special: 'בטיפול',
 };
 

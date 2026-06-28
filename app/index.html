@@ -13,12 +13,26 @@
 </head>
 <body>
   <div id="app"><div class="boot">טוען…</div></div>
+  <button id="installBtn" hidden style="position:fixed;left:12px;bottom:12px;z-index:9999;padding:11px 16px;border-radius:999px;border:0;background:#0d6efd;color:#fff;font-size:14px;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer;font-family:inherit">📲 התקן אפליקציה</button>
   <script type="module" src="./ui/app.js"></script>
   <script>
     // register the PWA service worker (offline app-shell). Automatic — nothing to run.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
     }
+    // Persistent install button — the browser's auto-prompt can disappear, so we keep our own.
+    (function () {
+      var btn = document.getElementById('installBtn');
+      var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      var deferred = null;
+      if (btn && !standalone) btn.hidden = false;                 // offer install until the app is installed
+      window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; if (btn && !standalone) btn.hidden = false; });
+      if (btn) btn.onclick = async function () {
+        if (deferred) { deferred.prompt(); await deferred.userChoice; deferred = null; btn.hidden = true; return; }
+        alert('להתקנת האפליקציה לאופליין:\n• כרום/אנדרואיד — תפריט ⋮ ← "התקן אפליקציה" / "הוסף למסך הבית".\n• אייפון/ספארי — כפתור שיתוף ⬆ ← "הוסף למסך הבית".');
+      };
+      window.addEventListener('appinstalled', function () { if (btn) btn.hidden = true; });
+    })();
   </script>
 </body>
 </html>
