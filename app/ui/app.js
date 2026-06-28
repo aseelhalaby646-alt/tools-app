@@ -12,7 +12,7 @@ import { signoffPie, calibrationPie, problemSummary, calibrationDueSoon, redCart
   PROBLEM_STATUSES } from '../core/dashboard.js';
 import { svgPie, svgLegend } from './charts.js';
 import { EDIT_GATED, hashPwd, isUnlocked, EDIT_UNLOCK_MS } from '../core/security.js';
-import { parseCSV, importTools } from '../core/import.js';
+import { parseCSV, importTools, smartImport } from '../core/import.js';
 import * as WF from '../core/workflows.js';
 
 let _editUnlockedUntil = 0;   // session edit-unlock (fat-finger gate; real control = Firebase + rules)
@@ -216,10 +216,12 @@ async function bootDemo() {
     : actorOf({ uid: 'demo-a', email: 'aseelhalaby646@gmail.com' });
   const show = (flash) => renderDashboard(db, actor, { demo: true, onAdd, onImport, onAction, flash });
   const onAdd = async (kind, payload) => { applyAdd(db, actor, kind, payload); await adapter.save(db); show(); };
-  const onImport = async (text) => {
-    const r = importTools(db, actor, parseCSV(text));
+  const onImport = async (text, smart) => {
+    const rows = parseCSV(text);
+    const r = smart ? smartImport(db, actor, rows) : importTools(db, actor, rows);
     await adapter.save(db);
-    show(`ייבוא: נוצרו ${r.created.length}, כפולים ${r.duplicates.length}, שגיאות ${r.errors.length}`);
+    const ex = smart ? ` (+${r.carts.length} עגלות, +${r.drawers.length} מגירות)` : '';
+    show(`ייבוא: נוצרו ${r.created.length} כלים${ex}, כפולים ${r.duplicates.length}, שגיאות ${r.errors.length} — שחרר ב🏗️ תחנת בנייה`);
   };
   const onAction = async (kind, payload) => { const { flash } = applyAction(db, actor, kind, payload); await adapter.save(db); show(flash); };
   show();
@@ -251,10 +253,19 @@ async function bootLive() {
           await fa.putEntity(coll, entity.id, entity);                  // persist to Firestore
           await render();                                               // reload from cloud + re-render
         };
-        const onImport = async (text) => {
-          const r = importTools(db, actor, parseCSV(text));            // mutates loaded db
-          if (r.created.length) await fa.bulkPut('tools', r.created);   // batched write to Firestore
-          await render(`ייבוא: נוצרו ${r.created.length}, כפולים ${r.duplicates.length}, שגיאות ${r.errors.length}`);
+        const onImport = async (text, smart) => {
+          const rows = parseCSV(text);
+          if (smart) {
+            const r = smartImport(db, actor, rows);                     // mutates loaded db (carts+drawers+tools)
+            for (const c of r.carts) await fa.putEntity('carts', c.id, c);
+            for (const d of r.drawers) await fa.putEntity('drawers', d.id, d);
+            if (r.created.length) await fa.bulkPut('tools', r.created);
+            await render(`ייבוא חכם: +${r.carts.length} עגלות, +${r.drawers.length} מגירות, ${r.created.length} כלים, שגיאות ${r.errors.length} — שחרר ב🏗️ תחנת בנייה`);
+          } else {
+            const r = importTools(db, actor, rows);                     // mutates loaded db
+            if (r.created.length) await fa.bulkPut('tools', r.created);  // batched write to Firestore
+            await render(`ייבוא: נוצרו ${r.created.length}, כפולים ${r.duplicates.length}, שגיאות ${r.errors.length}`);
+          }
         };
         const onAction = async (kind, payload) => {
           const { writes, deletes, flash } = applyAction(db, actor, kind, payload);
@@ -797,7 +808,8 @@ function addPanelHtml(db, actor) {
     </div>
     <div class="impbox">
       <textarea id="ad-imp" rows="3" placeholder="ייבוא בכמויות — הדבק CSV (כותרות: מזהה מגירה, מקט יצרן, תיאור, מקט לקוח, כיול, תאריך כיול, מזהה כיול, הערה)"></textarea>
-      <button data-import="1">📥 ייבא CSV</button>
+      <button class="btn-prim" data-smartimport="1">🧠 ייבוא חכם — יוצר עגלה+מגירות</button>
+      <button data-import="1">📥 ייבא לקיים</button>
       <button data-export="1">📤 ייצא CSV</button>
     </div>
     <div id="ad-msg" class="admsg"></div>
@@ -811,12 +823,15 @@ function wireAddPanel(opts) {
     const w = document.getElementById('ad-tool-calwrap');
     if (w) w.style.display = calCk.checked ? 'flex' : 'none';
   };
-  const imp = document.querySelector('[data-import]');
-  if (imp && opts.onImport) imp.onclick = async () => {
+  const runImport = async (btn, smart) => {
     const ta = document.getElementById('ad-imp'); const msg = document.getElementById('ad-msg');
-    try { imp.disabled = true; if (msg) { msg.textContent = 'מייבא…'; msg.style.color = 'var(--mut)'; } await opts.onImport(ta.value); }
-    catch (e) { if (msg) { msg.textContent = '❌ ' + (e.message || e); msg.style.color = 'var(--red)'; } imp.disabled = false; }
+    try { btn.disabled = true; if (msg) { msg.textContent = smart ? 'ייבוא חכם…' : 'מייבא…'; msg.style.color = 'var(--mut)'; } await opts.onImport(ta.value, smart); }
+    catch (e) { if (msg) { msg.textContent = '❌ ' + (e.message || e); msg.style.color = 'var(--red)'; } btn.disabled = false; }
   };
+  const imp = document.querySelector('[data-import]');
+  if (imp && opts.onImport) imp.onclick = () => runImport(imp, false);
+  const simp = document.querySelector('[data-smartimport]');
+  if (simp && opts.onImport) simp.onclick = () => runImport(simp, true);
   document.querySelectorAll('[data-add]').forEach(btn => btn.onclick = async () => {
     const kind = btn.getAttribute('data-add');
     let payload;

@@ -1,7 +1,8 @@
 // import.js — bulk import of tools from a Hebrew CSV (the integration surface).
 // Carts/drawers must already exist; the import links each tool to a drawer and
 // classifies every row as created / duplicate / error (so the source can be fixed).
-import { addTool, STAGES } from './model.js';
+import { addTool, addCart, addDrawer, STAGES } from './model.js';
+import { containerIdOf } from './ids.js';
 
 // ---- CSV parsing (handles quoted fields with commas / escaped quotes) ------
 function splitLine(line) {
@@ -63,4 +64,31 @@ export function importTools(db, actor, rows) {
     }
   });
   return result;
+}
+
+// smartImport — auto-create any missing CONTAINER + DRAWERS implied by the file's
+// "מזהה מגירה" column, then import the tools. Lets the owner load a whole cart from
+// one CSV (no manual cart+drawer creation). Cart name derives from the id (C0001 → "עגלה 1"),
+// or a "שם תא"/"שם עגלה" column if present. Returns the tool result + the carts/drawers created.
+export function smartImport(db, actor, rows) {
+  const carts = [], drawers = [], seen = new Set();
+  for (const row of rows) {
+    const did = (get(row, H.drawer) || '').toUpperCase();
+    if (!did || seen.has(did)) continue;
+    seen.add(did);
+    const cid = containerIdOf(did);
+    if (!cid) continue;                                   // bad drawer id → importTools reports the row
+    if (!db.carts.some(c => c.id === cid)) {
+      const type = cid[0] === 'B' ? 'closet' : 'cart';
+      const num = cid.slice(1).replace(/^0+/, '') || cid.slice(1);
+      const name = get(row, 'שם תא') || get(row, 'שם עגלה') || ((type === 'closet' ? 'ארון ' : 'עגלה ') + num);
+      try { carts.push(addCart(db, actor, { name, code: cid.slice(1), type })); } catch (e) {}
+    }
+    if (!db.drawers.some(d => d.id === did)) {
+      const suffix = did.slice(cid.length + 1);
+      if (suffix) { try { drawers.push(addDrawer(db, actor, { cartId: cid, suffix })); } catch (e) {} }
+    }
+  }
+  const r = importTools(db, actor, rows);
+  return { ...r, carts, drawers };
 }
