@@ -137,6 +137,11 @@ function applyAction(db, actor, kind, P = {}) {
   } else if (kind === 'order') {
     const ord = createOrder(db, actor, { cartId: P.cartId, toolIds: P.toolIds || [] });
     writes.push({ coll: 'orders', id: ord.id, data: ord }); flash = `הזמנה ${ord.id} נוצרה (${ord.lines.length} פריטים)`;
+  } else if (kind === 'markread') {
+    const mine = (db.notifications || []).filter(n => actor.role === ROLES.ADMIN
+      || (n.forRoles && n.forRoles.includes(actor.role)) || (n.forUids && n.forUids.includes(actor.uid)));
+    for (const n of mine) if (!n.read) { n.read = true; writes.push({ coll: 'notifications', id: n.id, data: n }); }
+    flash = 'ההתראות סומנו כנקראו';
   } else if (kind === 'assign') {
     const c = assignOwner(db, actor, P.cartId, P.uid, { until: P.until || '', makePrimary: !!P.makePrimary });
     writes.push({ coll: 'carts', id: c.id, data: c }); flash = `שויך בעלים ל-${c.id}`;
@@ -520,22 +525,27 @@ function renderDashboard(db, actor, opts = {}) {
   // #4 undo the last reversible status change
   const undoBtn = document.querySelector('[data-undo]');
   if (undoBtn) undoBtn.onclick = () => { const u = lastUndo; lastUndo = null; if (u && opts.onAction) opts.onAction(u.action, u.payload); };
+  // #6 mark notifications read
+  const mrBtn = document.querySelector('[data-markread]');
+  if (mrBtn) mrBtn.onclick = () => opts.onAction && opts.onAction('markread', {});
   wireMgmt(opts);
 }
 
 // ── notifications panel (🔔): role-relevant alerts ──────────────────────────
 function notificationsHtml(db, actor) {
-  const list = (db.notifications || [])
+  const mine = (db.notifications || [])
     .filter(n => actor.role === ROLES.ADMIN
       || (n.forRoles && n.forRoles.includes(actor.role))
-      || (n.forUids && n.forUids.includes(actor.uid)))   // owners now get their own alerts (#7)
-    .slice(-8).reverse();
-  if (!list.length) return '';
-  const icon = { calibration_request: '🔧', broken: '💥', external_request: '📤',
-    user_delete_request: '👤', transfer_request: '🔁', calibration: '🔧' };
-  return `<div class="section-title">🔔 התראות (${list.length})</div>
+      || (n.forUids && n.forUids.includes(actor.uid)));   // owners now get their own alerts (#7)
+  if (!mine.length) return '';
+  const unread = mine.filter(n => !n.read).length;        // #6 unread counter
+  const list = mine.slice(-8).reverse();
+  const icon = { calibration_request: '🔧', broken: '💥', external_request: '📤', rejection: '⛔',
+    hidden: '🕵️', request_decided: '✅', user_delete_request: '👤', transfer_request: '🔁', calibration: '🔧' };
+  const canMark = actor.role === ROLES.ADMIN || actor.role === ROLES.MANAGER;
+  return `<div class="section-title">🔔 התראות${unread ? ` · <span style="color:var(--brand)">${unread} חדשות</span>` : ''}${unread && canMark ? ` <button class="mini" data-markread="1">סמן נקראו</button>` : ''}</div>
     <div class="card" style="padding:4px 0">${list.map(n =>
-      `<div class="notif"><span class="ni">${icon[n.type] || '🔔'}</span><span>${esc(n.msg)}</span>` +
+      `<div class="notif"${n.read ? '' : ' style="font-weight:600"'}><span class="ni">${n.read ? '' : '🔵'}${icon[n.type] || '🔔'}</span><span>${esc(n.msg)}</span>` +
       `<span class="c">${n.ts ? new Date(n.ts).toLocaleDateString('he-IL') : ''}</span></div>`).join('')}</div>`;
 }
 
@@ -562,14 +572,17 @@ function mgmtPanelHtml(db, actor) {
   const cartOpts = db.carts.map(c => o(c.id, `${c.name} · ${c.id}`)).join('');
   const toolOpts = visibleTools(db, actor).slice(0, 800).map(t => o(t.id, `${t.id} · ${t.desc}`)).join('');
   const roleOpts = isAdmin ? o('cart_owner', 'בעל עגלה') + o('manager', 'אחראי כלים') : o('cart_owner', 'בעל עגלה');
+  // #5 real owner picker — from db.users (no more free-text uid → no "ghost owners")
+  const userOpts = (db.users || []).map(u => o(u.uid, `${u.email}${u.uid ? ' · ' + u.uid : ''}`)).join('');
+  const noUsers = !userOpts;
   return `<details class="addp"><summary>🛠️ ניהול מתקדם</summary><div class="addgrid">
     <div class="af"><h4>הוספת משתמש</h4><input id="m-user-email" placeholder="אימייל"><select id="m-user-role">${roleOpts}</select><select id="m-user-cart">${o('', '— ללא עגלה —')}${cartOpts}</select><button data-mgmt="adduser">הוסף משתמש</button></div>
     <div class="af"><h4>עריכת כלי</h4><select id="m-et-tool">${toolOpts}</select><input id="m-et-desc" placeholder="תיאור חדש (ריק=ללא שינוי)"><input id="m-et-vendor" placeholder="מק״ט חדש"><button data-mgmt="edittool">עדכן כלי</button></div>
     <div class="af"><h4>מחיקת כלי</h4><select id="m-dt-tool">${toolOpts}</select><span class="note" style="font-size:11px">רק כלי ב"פסילה", ע"י מנהל המערכת</span><button class="bad" data-mgmt="deltool">מחק כלי</button></div>
     ${isAdmin ? `<div class="af"><h4>מחיקת תא</h4><select id="m-dc-cart">${cartOpts}</select><button class="bad" data-mgmt="delcart">מחק תא + תכולה</button></div>` : ''}
-    <div class="af"><h4>שיוך בעלים</h4><select id="m-as-cart">${cartOpts}</select><input id="m-as-uid" placeholder="מזהה עובד (uid)"><input id="m-as-until" type="date" title="תאריך סיום (ריק=לצמיתות)"><label class="ck"><input type="checkbox" id="m-as-primary"> ראשי</label><button data-mgmt="assign">שייך</button></div>
+    <div class="af"><h4>שיוך בעלים</h4><select id="m-as-cart">${cartOpts}</select><select id="m-as-uid">${o('', noUsers ? '— הוסף משתמש קודם —' : '— בחר עובד —')}${userOpts}</select><input id="m-as-until" type="date" title="תאריך סיום (ריק=לצמיתות)"><label class="ck"><input type="checkbox" id="m-as-primary"> ראשי</label><button data-mgmt="assign">שייך</button></div>
     <div class="af"><h4>בניית הזמנה</h4><select id="m-ord-tools" multiple size="4" style="height:auto">${toolOpts}</select><button data-mgmt="order">צור הזמנה מהמסומנים</button></div>
-    <div class="af"><h4>מסירת תא</h4><select id="m-tr-cart">${cartOpts}</select><input id="m-tr-from" placeholder="מעובד (uid)"><input id="m-tr-to" placeholder="לעובד (uid)"><button data-mgmt="transfer">פתח מסירה</button></div>
+    <div class="af"><h4>מסירת תא</h4><select id="m-tr-cart">${cartOpts}</select><select id="m-tr-from">${o('', '— מעובד (ריק=מהמחלקה) —')}${userOpts}</select><select id="m-tr-to">${o('', '— לעובד —')}${userOpts}</select><button data-mgmt="transfer">פתח מסירה</button></div>
   </div><div id="m-msg" class="admsg"></div></details>`;
 }
 function wireMgmt(opts) {
