@@ -60,13 +60,22 @@ service cloud.firestore {
       allow read:  if isAdmin()
                    || (isManager() && liveStage(resource.data))
                    || (ownsCart(resource.data.cartId) && liveStage(resource.data));
-      allow create, update: if canEdit();
+      // FIELD-LOCK (#11): only the admin may put a tool into a station or move it between containers.
+      // A manager can edit vendor/desc/cal/loc/note but NOT stage / cartId / drawerId — otherwise he
+      // could forge stage:'hidden' via the SDK and bypass the whole station/visibility control.
+      allow create: if isAdmin() || (canEdit() && liveStage(request.resource.data));
+      allow update: if isAdmin() || (canEdit()
+                       && request.resource.data.cartId == resource.data.cartId
+                       && request.resource.data.drawerId == resource.data.drawerId
+                       && request.resource.data.stage == resource.data.stage);
       allow delete: if isAdmin();
     }
     match /transfers/{id} {
       allow read:   if isAdmin() || isManager() || ownsCart(resource.data.cartId);
       allow create: if canEdit();
-      allow update: if canEdit() || signedIn();   // dual-signature: each party signs its part
+      // (#9) only an INVOLVED party may sign — admin/manager (the responsible signature) or the
+      // receiving worker (toUid). A random signed-in user can no longer forge/complete a handover.
+      allow update: if isAdmin() || isManager() || (signedIn() && request.auth.uid == resource.data.toUid);
       allow delete: if isAdmin();
     }
     match /orders/{id} {
@@ -96,13 +105,19 @@ service cloud.firestore {
       allow create: if signedIn() && (canEdit() || ownsCart(request.resource.data.cartId))
                        && request.resource.data.by == request.auth.uid
                        && request.resource.data.status == 'pending';
-      // approve/reject: a manager/admin, OR a different user (second pair of eyes), only from pending
-      allow update: if (canEdit() || (signedIn() && resource.data.by != request.auth.uid))
-                       && resource.data.status == 'pending';
+      // approve/reject (#1): manager/admin, OR a DIFFERENT cart-OWNER of the same cart (second pair
+      // of eyes) — not just any signed-in user. Core fields (by/cartId/kind) stay immutable.
+      allow update: if resource.data.status == 'pending'
+                       && (isAdmin() || isManager()
+                           || (signedIn() && resource.data.by != request.auth.uid && ownsCart(resource.data.cartId)))
+                       && request.resource.data.by == resource.data.by
+                       && request.resource.data.cartId == resource.data.cartId
+                       && request.resource.data.kind == resource.data.kind;
       allow delete: if isAdmin();
     }
     match /notifications/{id} {
-      allow read:   if isAdmin() || isManager() || (signedIn() && role() in resource.data.forRoles);
+      allow read:   if isAdmin() || isManager() || (signedIn() && role() in resource.data.forRoles)
+                       || (signedIn() && 'forUids' in resource.data && request.auth.uid in resource.data.forUids); // #7
       allow create: if signedIn();
       allow update: if isAdmin() || isManager();   // mark-read
       allow delete: if isAdmin();

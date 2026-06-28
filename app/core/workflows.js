@@ -23,8 +23,8 @@ function nextId(db, prefix) {
 function pushAudit(db, actor, action, type, id, summary) {
   db.audit.push({ ts: Date.now(), uid: actor.uid, email: actor.email, action, entityType: type, entityId: id, summary });
 }
-function notify(db, { type, msg, forRoles = [ROLES.ADMIN, ROLES.MANAGER], refId = '' }) {
-  const n = { id: nextId(db, 'NTF'), type, msg, forRoles, refId, ts: Date.now(), read: false };
+function notify(db, { type, msg, forRoles = [ROLES.ADMIN, ROLES.MANAGER], forUids = [], refId = '' }) {
+  const n = { id: nextId(db, 'NTF'), type, msg, forRoles, forUids: forUids.filter(Boolean), refId, ts: Date.now(), read: false };
   db.notifications.push(n);
   return n;
 }
@@ -65,7 +65,7 @@ export function requestTransfer(db, actor, { cartId, fromUid, toUid, note = '' }
   const t = { id: nextId(db, 'TRF'), cartId, fromUid: fromUid || '', toUid, by: actor.uid,
     sigManager: false, sigNewWorker: false, note, status: 'pending', ts: Date.now() };
   db.transfers.push(t);
-  notify(db, { type: 'transfer_request', msg: `מסירת ${cartId} ל-${toUid} — דורשת 2 חתימות`, refId: t.id });
+  notify(db, { type: 'transfer_request', msg: `מסירת ${cartId} ל-${toUid} — דורשת 2 חתימות`, forUids: [toUid, fromUid], refId: t.id });
   pushAudit(db, actor, 'request', 'transfer', t.id, `${fromUid || '—'}→${toUid}`);
   return t;
 }
@@ -221,6 +221,8 @@ function decideRequest(db, actor, requestId, decision) {
   if (!authorizeDecision(actor, r)) throw new PermissionError(`not allowed to ${decision} this request`);
   r.status = spec.to; r.approvedBy = actor.uid; r.decidedTs = Date.now();
   if (spec.apply) applyApproval(db, r);   // side-effects only after all checks pass
+  // tell the requester (often a cart-owner) the outcome — they otherwise get NO notification
+  notify(db, { type: 'request_decided', msg: `הבקשה שלך (${r.kind}) ${spec.to === 'approved' ? 'אושרה' : 'נדחתה'}`, forUids: [r.by], refId: r.id });
   pushAudit(db, actor, spec.audit, 'request', r.id, r.kind);
   return r;
 }

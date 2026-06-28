@@ -498,7 +498,9 @@ function renderDashboard(db, actor, opts = {}) {
 // ── notifications panel (🔔): role-relevant alerts ──────────────────────────
 function notificationsHtml(db, actor) {
   const list = (db.notifications || [])
-    .filter(n => actor.role === ROLES.ADMIN || !n.forRoles || n.forRoles.includes(actor.role))
+    .filter(n => actor.role === ROLES.ADMIN
+      || (n.forRoles && n.forRoles.includes(actor.role))
+      || (n.forUids && n.forUids.includes(actor.uid)))   // owners now get their own alerts (#7)
     .slice(-8).reverse();
   if (!list.length) return '';
   const icon = { calibration_request: '🔧', broken: '💥', external_request: '📤',
