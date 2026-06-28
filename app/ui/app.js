@@ -5,7 +5,7 @@ import { LocalAdapter } from '../core/storage.js';
 import { calibrationStatus, visibleTools, visibleCartIdsFor, isLive, actorOf, newDb,
   addDepartment, addCart, addDrawer, addTool, snapshotVersion,
   editTool, deleteCart, removeTool, addUser, restoreVersion, restoreManaged, restorePlan,
-  annualReset, createOrder, assignOwner } from '../core/model.js';
+  annualReset, createOrder, assignOwner, needsDailySignoff, setCartLock } from '../core/model.js';
 import { ROLES, ROLE_LABEL_HE, visibleCartIds } from '../core/permissions.js';
 import { viewsFor, resolveView, inMgmtMode } from '../core/views.js';
 import { signoffPie, calibrationPie, problemSummary, calibrationDueSoon, redCarts, pendingQueue,
@@ -145,7 +145,10 @@ function applyAction(db, actor, kind, P = {}) {
     flash = 'ההתראות סומנו כנקראו';
   } else if (kind === 'assign') {
     const c = assignOwner(db, actor, P.cartId, P.uid, { until: P.until || '', makePrimary: !!P.makePrimary });
-    writes.push({ coll: 'carts', id: c.id, data: c }); flash = `שויך בעלים ל-${c.id}`;
+    writes.push({ coll: 'carts', id: c.id, data: c }); flash = `שויך בעלים ל-${c.id} (נפתחה אוטומטית)`;
+  } else if (kind === 'lock' || kind === 'unlock') {
+    const c = setCartLock(db, actor, P.cartId, kind === 'lock');
+    writes.push({ coll: 'carts', id: c.id, data: c }); flash = kind === 'lock' ? `🔒 ${c.name} ננעלה — ללא חתימה יומית` : `🔓 ${c.name} נפתחה`;
   } else if (kind === 'transfer') {
     const t = WF.requestTransfer(db, actor, { cartId: P.cartId, fromUid: P.fromUid, toUid: P.toUid });
     writes.push({ coll: 'transfers', id: t.id, data: t }); flash = 'בקשת מסירה נפתחה (דורשת 2 חתימות)';
@@ -618,6 +621,7 @@ function mgmtPanelHtml(db, actor) {
     <div class="af"><h4>בניית הזמנה</h4><select id="m-ord-tools" multiple size="4" style="height:auto">${toolOpts}</select><button data-mgmt="order">צור הזמנה מהמסומנים</button></div>
     <div class="af"><h4>מסירת תא</h4><select id="m-tr-cart">${cartOpts}</select><select id="m-tr-from">${o('', '— מעובד (ריק=מהמחלקה) —')}${userOpts}</select><select id="m-tr-to">${o('', '— לעובד —')}${userOpts}</select><button data-mgmt="transfer">פתח מסירה</button></div>
     <div class="af"><h4>דוח עגלה (PDF)</h4><select id="m-rep-cart">${cartOpts}</select><button data-report="1">📄 הפק דוח להדפסה/PDF</button></div>
+    <div class="af"><h4>נעילת עגלה</h4><select id="m-lk-cart">${cartOpts}</select><span class="note" style="font-size:11px">נעולה = בלי חתימה יומית, כן תקפים+ביקורת רבעונית</span><button data-mgmt="lock">🔒 נעל</button><button data-mgmt="unlock">🔓 פתח</button></div>
   </div><div id="m-msg" class="admsg"></div></details>`;
 }
 function wireMgmt(opts) {
@@ -632,6 +636,7 @@ function wireMgmt(opts) {
     else if (k === 'assign') payload = { cartId: val('m-as-cart'), uid: val('m-as-uid'), until: val('m-as-until'), makePrimary: document.getElementById('m-as-primary').checked };
     else if (k === 'order') payload = { toolIds: Array.from(document.getElementById('m-ord-tools').selectedOptions).map(o => o.value) };
     else if (k === 'transfer') payload = { cartId: val('m-tr-cart'), fromUid: val('m-tr-from'), toUid: val('m-tr-to') };
+    else if (k === 'lock' || k === 'unlock') payload = { cartId: val('m-lk-cart') };
     const msg = document.getElementById('m-msg');
     try { btn.disabled = true; if (msg) { msg.textContent = 'מבצע…'; msg.style.color = 'var(--mut)'; } await opts.onAction(k, payload); }
     catch (e) { if (msg) { msg.textContent = '❌ ' + (e.message || e); msg.style.color = 'var(--red)'; } btn.disabled = false; }
@@ -947,12 +952,13 @@ function cartChip(db, tools, c, ctx = {}) {
   const ct = tools.filter(t => t.cartId === c.id);
   const bad = ct.some(t => statusOf(db, t) === 'expired');
   const warn = ct.some(t => statusOf(db, t) === 'due60');
-  const signable = ctx.canSign && c.type !== 'closet' && c.requiresDailySignoff;
+  const signable = ctx.canSign && c.type !== 'closet' && needsDailySignoff(c);   // not locked / awaiting-owner
   const signed = signable && (db.signoffs || []).some(s => s.cartId === c.id && s.date === ctx.todayIso);
+  const lockBadge = (c.type !== 'closet' && c.locked) ? ` <span class="c" style="color:#fca5a5;font-weight:700">🔒 נעולה</span>` : '';
   const sig = !signable ? ''
     : signed ? ` <span class="c" style="color:var(--ok);font-weight:700">✓ נחתם היום</span>`
     : ` <button data-signcart="${esc(c.id)}" style="margin-inline-start:6px;padding:4px 11px;border-radius:999px;border:0;background:var(--brand);color:#fff;font-size:11px;font-weight:700;cursor:pointer">🖊️ חתום</button>`;
-  return `<div class="chip"><span class="dot ${bad ? 'bad' : warn ? 'warn' : ''}"></span><b>${esc(c.name)}</b><span class="c">${ct.length} כלים</span>${sig}</div>`;
+  return `<div class="chip"><span class="dot ${bad ? 'bad' : warn ? 'warn' : ''}"></span><b>${esc(c.name)}</b><span class="c">${ct.length} כלים</span>${lockBadge}${sig}</div>`;
 }
 
 function toolsTable(db, tools) {

@@ -1,7 +1,7 @@
 // dashboard.js — pure aggregations for the management dashboard. DOM-free, testable.
 // EVERY aggregation takes an ALREADY-SCOPED tool/cart list (visibleTools / visibleCartIdsFor),
 // never db.tools directly — that is how req 6 (managers' graphs exclude staged/hidden) holds.
-import { calibrationStatus } from './model.js';
+import { calibrationStatus, needsDailySignoff } from './model.js';
 import { cartsSignedOn, cartRedStatus, missingSignoffDays, cartSignoffHistory } from './workflows.js';
 import { toDay, daysBetween, isoDay, today as utcToday } from './dates.js';
 
@@ -23,7 +23,9 @@ export const STATUS_LABEL_HE = {
 
 // (1) sign-off pie — DONE vs NOT-DONE by quantity of carts, for one day (default today).
 export function signoffPie(db, scopedCartIds, date = isoDay(utcToday())) {
-  const r = cartsSignedOn(db, date, scopedCartIds);
+  // only carts that actually need a daily sign-off (in-service, owned, not locked)
+  const ids = (db.carts || []).filter(c => scopedCartIds.includes(c.id) && needsDailySignoff(c)).map(c => c.id);
+  const r = cartsSignedOn(db, date, ids);
   return { date, total: r.total, slices: [
     { key: 'done', label: 'נחתמו', value: r.signedCount, color: STATUS_COLOR.done },
     { key: 'notdone', label: 'לא נחתמו', value: r.total - r.signedCount, color: STATUS_COLOR.notdone },
@@ -63,7 +65,7 @@ export function calibrationDueSoon(db, scopedTools, ref = utcToday(), horizon = 
 // (5) per-cart sign-off compliance over last N working days (weekend-aware via missingSignoffDays).
 export function signoffCompliance(db, scopedCartIds, from, to) {
   const inScope = new Set(scopedCartIds);
-  return db.carts.filter(c => inScope.has(c.id) && c.requiresDailySignoff).map(c => ({
+  return db.carts.filter(c => inScope.has(c.id) && needsDailySignoff(c)).map(c => ({
     cartId: c.id, name: c.name, primaryOwnerUid: c.primaryOwnerUid || '',
     missed: missingSignoffDays(db, c.id, from, to),
     signed: cartSignoffHistory(db, c.id, from, to),

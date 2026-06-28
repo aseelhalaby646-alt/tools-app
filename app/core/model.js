@@ -126,6 +126,7 @@ export function addCart(db, actor, p) {
     ownerUids: [...ownerUids], primaryOwnerUid: primaryOwnerUid || ownerUids[0] || '',
     ownerUntil: {}, // { uid: 'YYYY-MM-DD' } — time-bound assignment; absent = permanent
     viewers: viewersAtCreate, // { scope:'all'|'restricted', uids:[] } — who may see it
+    locked: false, // נעולה/ממתינה לבעלים — no daily sign-off; calibration + quarterly still apply
   };
   db.carts.push(cart);
   audit(db, actor, 'add', type, id, name);
@@ -160,6 +161,21 @@ export function activeOwnerUids(cart, today = utcToday()) {
     return !until || until >= day;
   });
 }
+export function hasActiveOwner(cart, today = utcToday()) { return activeOwnerUids(cart, today).length > 0; }
+// A cart needs a DAILY sign-off only IN SERVICE: requires it, NOT locked, and has an active owner.
+// Locked / awaiting-owner carts are tracked for calibration + quarterly inspection only.
+export function needsDailySignoff(cart, today = utcToday()) {
+  return !!cart.requiresDailySignoff && !cart.locked && hasActiveOwner(cart, today);
+}
+// Lock / unlock a cart manually (e.g. owner went to work elsewhere). Auto-unlock happens on assignOwner.
+export function setCartLock(db, actor, cartId, locked) {
+  require(actor, ACTIONS.EDIT_LOCATIONS);
+  const cart = db.carts.find(c => c.id === cartId);
+  if (!cart) throw new ValidationError(`container ${cartId} not found`);
+  cart.locked = !!locked;
+  audit(db, actor, locked ? 'lock' : 'unlock', cart.type || 'cart', cartId, cart.name);
+  return cart;
+}
 // Ownership hierarchy (v2 §15): an (active) worker owner is PRIMARY and the
 // department is SECONDARY; with no active worker, the container is under the department.
 export function containerOwnership(db, cart, today = utcToday()) {
@@ -178,6 +194,7 @@ export function assignOwner(db, actor, cartId, uid, { until = '', makePrimary = 
   if (!cart.ownerUids.includes(uid)) cart.ownerUids.push(uid);
   if (until) cart.ownerUntil[uid] = until; else delete cart.ownerUntil[uid];
   if (makePrimary || !cart.primaryOwnerUid) cart.primaryOwnerUid = uid;
+  cart.locked = false;   // assigning an owner puts the cart back in service (auto-unlock)
   audit(db, actor, 'assign', 'owner', cartId, `${uid}${until ? ' until ' + until : ''}`);
   return cart;
 }
