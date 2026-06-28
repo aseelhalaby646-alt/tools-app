@@ -11,6 +11,7 @@ import { viewsFor, resolveView, inMgmtMode } from '../core/views.js';
 import { signoffPie, calibrationPie, problemSummary, calibrationDueSoon, redCarts, pendingQueue,
   PROBLEM_STATUSES } from '../core/dashboard.js';
 import { svgPie, svgLegend } from './charts.js';
+import { printCartReport } from './report.js';
 import { EDIT_GATED, hashPwd, isUnlocked, EDIT_UNLOCK_MS } from '../core/security.js';
 import { parseCSV, importTools, smartImport } from '../core/import.js';
 import * as WF from '../core/workflows.js';
@@ -282,12 +283,19 @@ async function bootLive() {
             await render(`ייבוא: נוצרו ${r.created.length}, כפולים ${r.duplicates.length}, שגיאות ${r.errors.length}`);
           }
         };
+        const FORCE_KINDS = new Set(['reset', 'annualreset', 'restore']);   // deliberately overwrite everything
         const onAction = async (kind, payload) => {
           const r = applyAction(db, actor, kind, payload);
           lastUndo = r.undo || null;
-          for (const w of r.writes) await fa.putEntity(w.coll, w.id, w.data);
-          for (const d of (r.deletes || [])) await fa.removeEntity(d.coll, d.id);
-          await render(r.flash);
+          const force = FORCE_KINDS.has(kind);
+          try {
+            for (const w of r.writes) await fa.putEntity(w.coll, w.id, w.data, { force });
+            for (const d of (r.deletes || [])) await fa.removeEntity(d.coll, d.id);
+            await render(r.flash);
+          } catch (e) {
+            if (e && e.code === 'stale-write') { lastUndo = null; await render('⚠️ ' + e.message); }
+            else throw e;
+          }
         };
         renderDashboard(db, actor, { onLogout: () => fb.logout(), onPing: () => fa.pingWrite(actor.uid), onAdd, onImport, onAction, flash });
       };
@@ -528,6 +536,9 @@ function renderDashboard(db, actor, opts = {}) {
   // #6 mark notifications read
   const mrBtn = document.querySelector('[data-markread]');
   if (mrBtn) mrBtn.onclick = () => opts.onAction && opts.onAction('markread', {});
+  // cart-report PDF (read-only, opens a print window — not an onAction)
+  const repBtn = document.querySelector('[data-report]');
+  if (repBtn) repBtn.onclick = () => { const sel = document.getElementById('m-rep-cart'); if (sel && sel.value) printCartReport(db, sel.value); };
   wireMgmt(opts);
 }
 
@@ -583,6 +594,7 @@ function mgmtPanelHtml(db, actor) {
     <div class="af"><h4>שיוך בעלים</h4><select id="m-as-cart">${cartOpts}</select><select id="m-as-uid">${o('', noUsers ? '— הוסף משתמש קודם —' : '— בחר עובד —')}${userOpts}</select><input id="m-as-until" type="date" title="תאריך סיום (ריק=לצמיתות)"><label class="ck"><input type="checkbox" id="m-as-primary"> ראשי</label><button data-mgmt="assign">שייך</button></div>
     <div class="af"><h4>בניית הזמנה</h4><select id="m-ord-tools" multiple size="4" style="height:auto">${toolOpts}</select><button data-mgmt="order">צור הזמנה מהמסומנים</button></div>
     <div class="af"><h4>מסירת תא</h4><select id="m-tr-cart">${cartOpts}</select><select id="m-tr-from">${o('', '— מעובד (ריק=מהמחלקה) —')}${userOpts}</select><select id="m-tr-to">${o('', '— לעובד —')}${userOpts}</select><button data-mgmt="transfer">פתח מסירה</button></div>
+    <div class="af"><h4>דוח עגלה (PDF)</h4><select id="m-rep-cart">${cartOpts}</select><button data-report="1">📄 הפק דוח להדפסה/PDF</button></div>
   </div><div id="m-msg" class="admsg"></div></details>`;
 }
 function wireMgmt(opts) {

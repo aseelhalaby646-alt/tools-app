@@ -2,7 +2,7 @@
 // db shape the app/model already use, resolve the signed-in user's role, and
 // expose entity writers (used by import + edits). Same db shape as LocalAdapter.
 import { fdb } from './firebase.js';
-import { collection, getDocs, doc, getDoc, setDoc, deleteDoc, writeBatch, query, where }
+import { collection, getDocs, doc, getDoc, setDoc, deleteDoc, writeBatch, query, where, runTransaction }
   from 'https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js';
 import { newDb } from './model.js';
 import { isAdminEmail } from './admins.js';
@@ -58,8 +58,22 @@ export async function pingWrite(uid) {
   return snap.exists() ? snap.data() : null;
 }
 
-// Entity writers (used by bulk import and edit screens).
-export const putEntity = (coll, id, data) => setDoc(doc(fdb, coll, id), data);
+// Entity writer with OPTIMISTIC LOCKING (#10): each doc carries a monotonic `rev`.
+// A normal write runs in a transaction that REFUSES to overwrite if the stored rev
+// no longer matches the rev we loaded — i.e. someone else edited it meanwhile — so
+// two concurrent edits never silently clobber each other. { force:true } (used by
+// reset/restore, which deliberately overwrite everything) skips the check.
+export async function putEntity(coll, id, data, opts = {}) {
+  const ref = doc(fdb, coll, id);
+  if (opts.force) { await setDoc(ref, { ...data, rev: (data.rev || 0) + 1 }); return; }
+  await runTransaction(fdb, async (tx) => {
+    const snap = await tx.get(ref);
+    if (snap.exists() && (snap.data().rev || 0) !== (data.rev || 0)) {
+      const e = new Error('הנתון עודכן בידי משתמש אחר בינתיים — רענן ונסה שוב'); e.code = 'stale-write'; throw e;
+    }
+    tx.set(ref, { ...data, rev: (data.rev || 0) + 1 });
+  });
+}
 export const removeEntity = (coll, id) => deleteDoc(doc(fdb, coll, id));
 
 // Bulk write (e.g. an Excel import of many tools) in batches of 450 (< Firestore's 500).
