@@ -398,6 +398,7 @@ function renderDashboard(db, actor, opts = {}) {
   if (view !== 'main') problemFilter = false;
   const shownTools = (problemFilter && view === 'main')
     ? tools.filter(t => PROBLEM_STATUSES.includes(statusOf(db, t))) : tools;
+  const chipCtx = { todayIso: new Date().toISOString().slice(0, 10), canSign: !!opts.onAction };
   const by = (s) => tools.filter(t => statusOf(db, t) === s).length;
   const stats = { total: tools.length, expired: by('expired'), due60: by('due60'), special: by('special') };
   const scopeNote = actor.role === ROLES.CART_OWNER
@@ -451,11 +452,12 @@ function renderDashboard(db, actor, opts = {}) {
         <div class="stat purple"><div class="n">${stats.special}</div><div class="l">בכיול / שבור</div></div>
       </div>
       <div class="section-title">עגלות (${carts.filter(c => c.type !== 'closet').length})</div>
-      <div class="chips">${carts.filter(c => c.type !== 'closet').map(c => cartChip(db, tools, c)).join('') || '<div class="empty">אין עגלות</div>'}</div>
+      <div class="chips">${carts.filter(c => c.type !== 'closet').map(c => cartChip(db, tools, c, chipCtx)).join('') || '<div class="empty">אין עגלות</div>'}</div>
       <div class="section-title">ארונות (${carts.filter(c => c.type === 'closet').length})</div>
-      <div class="chips">${carts.filter(c => c.type === 'closet').map(c => cartChip(db, tools, c)).join('') || '<div class="empty">אין ארונות</div>'}</div>
+      <div class="chips">${carts.filter(c => c.type === 'closet').map(c => cartChip(db, tools, c, chipCtx)).join('') || '<div class="empty">אין ארונות</div>'}</div>
       <div class="section-title">כלים (${shownTools.length})${problemFilter ? ` · בעיות בלבד <a data-clearfilter style="cursor:pointer;color:var(--brand);font-size:12px">נקה סינון</a>` : ''}</div>
-      <div class="card"><div class="tbl-scroll">${toolsTable(db, shownTools)}</div></div>`}
+      <input id="tool-search" type="search" placeholder="🔍 חיפוש — מזהה / תיאור / מק״ט / מיקום / סידורי כיול" style="width:100%;padding:11px 13px;margin:0 0 9px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:15px">
+      <div class="card"><div class="tbl-scroll" id="tools-tbox">${toolsTable(db, shownTools)}</div></div>`}
       ${opts.demo ? '<div class="demo-note">★ תצוגת הדגמה על נתונים מומצאים. בגרסה החיה הנתונים מהענן.</div>' : ''}
     </div>`;
   const lo = document.getElementById('logout');
@@ -492,6 +494,18 @@ function renderDashboard(db, actor, opts = {}) {
   document.querySelectorAll('[data-probfilter]').forEach(b => b.onclick = () => { problemFilter = true; setView('main'); });
   const clr = document.querySelector('[data-clearfilter]');
   if (clr) clr.onclick = () => { problemFilter = false; _rerender(); };
+  // #8 global search — filters the FULL visible list (not just the 300 shown) into the table box, keeps focus
+  const searchInp = document.getElementById('tool-search');
+  const tbox = document.getElementById('tools-tbox');
+  if (searchInp && tbox) searchInp.oninput = () => {
+    const q = searchInp.value.trim().toLowerCase();
+    const filt = q ? shownTools.filter(t => `${t.id} ${t.desc} ${t.vendor} ${t.loc} ${t.calID || ''} ${t.customer || ''}`.toLowerCase().includes(q)) : shownTools;
+    tbox.innerHTML = toolsTable(db, filt);
+  };
+  // #2 one-click sign-off from the cart chip
+  document.querySelectorAll('[data-signcart]').forEach(b => b.onclick = (e) => {
+    e.stopPropagation(); opts.onAction && opts.onAction('sign', { cartId: b.getAttribute('data-signcart') });
+  });
   wireMgmt(opts);
 }
 
@@ -867,11 +881,16 @@ function wireAddPanel(opts) {
   });
 }
 
-function cartChip(db, tools, c) {
+function cartChip(db, tools, c, ctx = {}) {
   const ct = tools.filter(t => t.cartId === c.id);
   const bad = ct.some(t => statusOf(db, t) === 'expired');
   const warn = ct.some(t => statusOf(db, t) === 'due60');
-  return `<div class="chip"><span class="dot ${bad ? 'bad' : warn ? 'warn' : ''}"></span><b>${esc(c.name)}</b><span class="c">${ct.length} כלים</span></div>`;
+  const signable = ctx.canSign && c.type !== 'closet' && c.requiresDailySignoff;
+  const signed = signable && (db.signoffs || []).some(s => s.cartId === c.id && s.date === ctx.todayIso);
+  const sig = !signable ? ''
+    : signed ? ` <span class="c" style="color:var(--ok);font-weight:700">✓ נחתם היום</span>`
+    : ` <button data-signcart="${esc(c.id)}" style="margin-inline-start:6px;padding:4px 11px;border-radius:999px;border:0;background:var(--brand);color:#fff;font-size:11px;font-weight:700;cursor:pointer">🖊️ חתום</button>`;
+  return `<div class="chip"><span class="dot ${bad ? 'bad' : warn ? 'warn' : ''}"></span><b>${esc(c.name)}</b><span class="c">${ct.length} כלים</span>${sig}</div>`;
 }
 
 function toolsTable(db, tools) {
