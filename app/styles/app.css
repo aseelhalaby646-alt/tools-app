@@ -154,3 +154,150 @@ body{overflow-x:hidden}
 .mini.ok{color:#86efac;border-color:rgba(34,197,94,.4)}
 .mini.bad{color:#fca5a5;border-color:rgba(239,68,68,.4)}
 .af select[multiple]{padding:4px;font-size:12px}
+
+/* =====================================================================
+   MOBILE REDESIGN — desktop (>=561px) unchanged (rules inside media queries;
+   the few all-width rules are subtle, verified no-ops at desktop). RTL-safe.
+   ===================================================================== */
+
+/* ---- (A) all-width: depth tokens + hierarchy + contrast (gentle) ---- */
+:root{
+  --card:#1b2533;
+  --radius-sm:11px;
+  --shadow:0 1px 2px rgba(0,0,0,.25), 0 2px 8px rgba(0,0,0,.22);
+  --shadow-lg:0 10px 30px rgba(0,0,0,.45);
+  --ring:inset 0 0 0 1px rgba(255,255,255,.05);
+}
+.card{box-shadow:var(--shadow)}
+.stat{box-shadow:var(--shadow)}
+.tbl-scroll th{box-shadow:0 2px 6px rgba(0,0,0,.28)}
+.section-title{display:flex;align-items:center;gap:9px;text-transform:none}
+.section-title::before{
+  content:"";flex:0 0 auto;width:3px;height:14px;border-radius:2px;
+  background:linear-gradient(180deg,var(--brand),var(--brand2));
+}
+.empty{border:1px dashed var(--line);border-radius:var(--radius);background:rgba(255,255,255,.015)}
+.chips > .empty{flex:1 1 100%}
+.pill{box-shadow:var(--ring);font-weight:800;letter-spacing:.1px}
+.chip{box-shadow:var(--ring);transition:border-color .12s ease, transform .04s ease}
+.chip .c{background:rgba(255,255,255,.05);border-radius:999px;padding:1px 7px}
+.flash{border-inline-start:3px solid var(--ok);box-shadow:var(--shadow);border-radius:var(--radius-sm)}
+.notif:nth-child(even){background:rgba(255,255,255,.018)}
+.notif .c{font-variant-numeric:tabular-nums}
+
+/* ---- (B) all-width: cap the donut so it can't balloon ---- */
+.chartcard svg{width:100%;max-width:170px;height:auto;display:block;margin:0 auto}
+
+/* ===================== (C) PHONE  @media (max-width:560px) ===================== */
+@media (max-width:560px){
+  .topbar{
+    flex-wrap:wrap;align-items:flex-start;gap:9px 8px;padding-block:12px;
+    padding-inline:max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-left));
+  }
+  .wrap{
+    padding-inline:max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-left));
+    padding-top:14px;padding-bottom:max(28px, env(safe-area-inset-bottom));
+  }
+  .topbar .logo{width:40px;height:40px;flex:0 0 auto}
+  .topbar > div:not(.logo){flex:1 1 auto;min-width:0}
+  .topbar h1{font-size:18px;line-height:1.15}
+  .topbar .who{font-size:11.5px;white-space:normal;overflow-wrap:anywhere}
+  .rolebadge{margin-inline-start:0;flex:0 0 auto}
+  .rolebadge,.modechip,.modebtn,.topbar .logout,#ping{
+    min-height:44px;display:inline-flex;align-items:center;box-sizing:border-box;margin-inline-start:0;
+  }
+  .modebtn,.topbar .logout{padding:0 16px;font-size:13px;border-radius:14px}
+  .modechip,.rolebadge{padding:0 14px;font-size:12px;border-radius:999px}
+  #ping{padding:0 14px}
+  #ping-res{flex:1 1 100%;margin-inline-start:0;margin-top:2px;white-space:normal;overflow-wrap:anywhere}
+  .viewsw{
+    position:sticky;top:0;z-index:4;margin:0 -14px 8px;padding:9px 14px;
+    background:var(--bg);border-bottom:1px solid var(--line);
+    flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    scroll-snap-type:x proximity;scrollbar-width:none;
+  }
+  .viewsw::-webkit-scrollbar{display:none}
+  .viewsw a{
+    flex:0 0 auto;scroll-snap-align:start;white-space:nowrap;min-height:44px;
+    display:inline-flex;align-items:center;padding:0 16px;font-size:13.5px;border-radius:999px;
+  }
+  .viewsw a.on{box-shadow:0 3px 12px rgba(59,130,246,.35)}
+  .viewsw a .navbadge{line-height:18px}
+  .addp{border-radius:var(--radius);margin:10px 0 6px}
+  .addp summary{padding:16px;font-size:15px;min-height:52px;display:flex;align-items:center}
+  .addgrid{grid-template-columns:1fr;gap:14px;padding:6px 12px 14px}
+  .af{padding:14px;gap:11px;border-radius:14px;min-width:0}
+  .af h4{font-size:14px;margin-bottom:1px}
+  .af input,.af select{
+    width:100%;max-width:100%;min-width:0;min-height:46px;padding:12px 13px;border-radius:var(--radius-sm);font-size:16px;
+  }
+  .af input[type="date"]{-webkit-appearance:none;appearance:none;line-height:1.2}
+  .af button{width:100%;min-height:48px;padding:13px;border-radius:var(--radius-sm);font-size:15px;margin-top:3px}
+  .af .ck{font-size:14px;min-height:40px;gap:9px}
+  .af .ck input{width:22px;height:22px;min-height:0;flex:0 0 auto}
+  .af select[multiple]{min-height:140px;padding:6px;font-size:14px}
+  .af .note{line-height:1.5}
+  .impbox{gap:10px;padding:4px 12px 14px}
+  .impbox textarea{min-height:96px;padding:12px 13px;border-radius:var(--radius-sm);font-size:15px}
+  .impbox button,.impbox .impbtn{flex:1 1 100%;min-height:48px;padding:13px 14px;border-radius:var(--radius-sm);font-size:15px}
+  .impbox button.btn-prim{flex-basis:100%;order:-1}
+  .admsg{padding:4px 12px 14px;font-size:14px}
+  .login input,input[type="text"],input[type="email"],input[type="password"],
+  input[type="date"],input[type="search"],select,textarea{font-size:16px}
+  .stats{gap:10px}
+  .stat{padding:15px 14px}
+  .stat .n{font-size:27px;overflow-wrap:anywhere}
+  .stat .l{font-size:12px;margin-top:6px;line-height:1.3}
+  .section-title{font-size:14px;margin:24px 2px 11px}
+  .chip{font-size:14px;padding:10px 13px}
+  .pill{font-size:12px;padding:4px 10px}
+  .charts{gap:12px;margin:6px 0}
+  .chartcard{padding:16px 14px;border-radius:var(--radius)}
+  .chartcard h4{font-size:13.5px;align-self:flex-start}
+  .chartcard svg{max-width:160px}
+  .legend{gap:6px;margin-top:2px}
+  .lg{font-size:13.5px;min-height:30px;padding:4px 2px;border-radius:8px}
+  .lg .sw{width:13px;height:13px;border-radius:4px;flex:0 0 auto}
+  .lg .lv{margin-inline-start:auto;font-variant-numeric:tabular-nums;color:var(--mut);white-space:nowrap}
+  .probcard{min-height:64px;padding:16px 18px;gap:14px;align-items:center;border-radius:var(--radius)}
+  .probcard .pn{font-size:34px;line-height:1;flex:0 0 auto}
+  .probcard > span{min-width:0}
+  .probcard > span b{font-size:15px;line-height:1.3;display:block}
+  .probcard .muted{font-size:12px;margin-top:3px}
+  .probcard.bad:active{transform:scale(.99);background:var(--surface2)}
+  .notif{font-size:14px;gap:10px;min-height:48px}
+  .notif .ni{font-size:18px}
+  .tbl-scroll{
+    -webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--line) transparent;
+    background:linear-gradient(to left, transparent 88%, rgba(15,22,32,.55)) right/100% 100% no-repeat;
+  }
+  .tbl-scroll::-webkit-scrollbar{height:7px}
+  .tbl-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+  .tbl-scroll::-webkit-scrollbar-track{background:transparent}
+  .tbl-scroll table{min-width:520px}
+  td .id,.pill{white-space:nowrap}
+  .mini{min-height:44px;padding:8px 14px;font-size:13px;display:inline-flex;align-items:center;justify-content:center}
+  .st-draw{min-height:44px;font-size:14px}
+  .card [style*="display:flex"] > input{flex:1 1 100% !important;min-width:0 !important}
+  .card [style*="display:flex"] > button{flex:1 1 100%}
+}
+
+/* ===================== (D) FORM-GRID @media (max-width:520px) ===================== */
+@media (max-width:520px){ .addgrid{grid-template-columns:1fr} }
+
+/* ===================== (E) ULTRA-NARROW @media (max-width:360px) ===================== */
+@media (max-width:360px){
+  .wrap{padding-inline:10px}
+  .addgrid{padding:6px 10px 12px}
+  .impbox,.admsg{padding-inline:10px}
+  .af{padding:13px}
+  .topbar h1{font-size:16px}
+  .topbar .who{font-size:11px}
+  .viewsw a{padding:0 14px}
+}
+
+/* ===================== (F) reduced-motion + keyboard focus ===================== */
+@media (prefers-reduced-motion:reduce){ .chip,.notif,.viewsw a,.probcard.bad{transition:none} }
+:where(button,a,input,select,textarea):focus-visible{
+  outline:2px solid var(--brand);outline-offset:2px;border-radius:8px;
+}
