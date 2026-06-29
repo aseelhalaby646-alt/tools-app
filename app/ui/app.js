@@ -194,6 +194,7 @@ function setView(v) {
   _rerender();
 }
 let problemFilter = false;   // set by the dashboard "בעיות בכלים" card → filters the main tool list
+let cartFilter = '';         // #1 — set by clicking a cart chip → show only THAT cart's problems
 let lastUndo = null;         // {action,payload} of the last reversible status change (#4 Undo)
 // PWA: re-render when the network drops/returns so the offline banner + edit-block update live
 if (typeof window !== 'undefined') {
@@ -418,6 +419,42 @@ function renderNoAccess(actor, onLogout) {
 
 const statusOf = (db, t) => calibrationStatus(t, db.specialLocations);
 
+// #3 — filter dialog shown BEFORE a view/print report (cart / status / calibrated-only)
+function openReportFilter(db, actor, title, baseTools) {
+  const carts = [...new Set(baseTools.map(t => t.cartId))].filter(Boolean).sort();
+  const cartName = (id) => { const c = (db.carts || []).find(x => x.id === id); return c ? `${c.name} · ${id}` : id; };
+  const statuses = ['expired', 'due30', 'due60', 'broken', 'rejected', 'unknown', 'shortage', 'ok'];
+  const ov = document.createElement('div');
+  ov.setAttribute('style', 'position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:18px');
+  const sel = 'width:100%;padding:10px;margin-top:4px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:15px';
+  const btn = 'flex:1;padding:11px;border:0;border-radius:10px;background:var(--brand);color:#fff;font-weight:700;font-size:15px;cursor:pointer';
+  ov.innerHTML = `<div style="width:100%;max-width:360px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+    <h3 style="margin:0 0 2px">${esc(title)}</h3>
+    <div style="color:var(--mut);font-size:12px;margin-bottom:14px">${baseTools.length} כלים — סנן לפני הפקת הדוח</div>
+    <label style="font-size:13px;display:block;margin-bottom:10px">עגלה<select id="rf-cart" style="${sel}"><option value="">כל העגלות</option>${carts.map(c => `<option value="${esc(c)}">${esc(cartName(c))}</option>`).join('')}</select></label>
+    <label style="font-size:13px;display:block;margin-bottom:10px">סטטוס<select id="rf-status" style="${sel}"><option value="">כל הסטטוסים</option>${statuses.map(s => `<option value="${s}">${STATUS_HE[s] || s}</option>`).join('')}</select></label>
+    <label style="font-size:14px;display:flex;align-items:center;gap:8px;margin:6px 0 4px"><input type="checkbox" id="rf-cal"> כלים מכויילים בלבד</label>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button id="rf-view" style="${btn}">👁️ צפה</button>
+      <button id="rf-print" style="${btn}">🖨️ הדפס</button>
+      <button id="rf-x" style="padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--txt);cursor:pointer">✕</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  const close = () => ov.remove();
+  ov.addEventListener('click', e => { if (e.target === ov) close(); });
+  ov.querySelector('#rf-x').onclick = close;
+  const apply = () => {
+    const cart = ov.querySelector('#rf-cart').value, st = ov.querySelector('#rf-status').value, calOnly = ov.querySelector('#rf-cal').checked;
+    let list = baseTools;
+    if (cart) list = list.filter(t => t.cartId === cart);
+    if (st) list = list.filter(t => statusOf(db, t) === st);
+    if (calOnly) list = list.filter(t => t.cal === 'כן');
+    return list;
+  };
+  ov.querySelector('#rf-view').onclick = () => { viewToolsReport(db, title, apply()); close(); };
+  ov.querySelector('#rf-print').onclick = () => { printToolsReport(db, title, apply()); close(); };
+}
+
 // ── management dashboard + stations — nav helpers (panels filled in Steps 3-4) ──
 const badge = (n) => n ? ` <span class="navbadge">${n}</span>` : '';
 function stationCount(db, which) {
@@ -432,9 +469,15 @@ function mgmtDashboardHtml(db, actor) {
                   : 'הגרפים מציגים את המלאי שבאחריותך (לא כולל תחנות פנימיות)';
   const ps = problemSummary(db, scopedTools);
   const sp = signoffPie(db, scopedCartIds);
-  const cp = calibrationPie(db, scopedTools);
+  const calTools = scopedTools.filter(t => t.cal === 'כן');     // calibration graph = calibrated tools ONLY
+  const cp = calibrationPie(db, calTools);
   const due = calibrationDueSoon(db, scopedTools, undefined, 60).slice(0, 8);
   const reds = redCarts(db, scopedCartIds);
+  const nCarts = (db.carts || []).filter(c => scopedCartIds.includes(c.id)).length;
+  const cartPie = { total: nCarts, slices: [
+    { key: 'red', label: 'דורשות טיפול', value: reds.length, color: '#c62828' },
+    { key: 'ok', label: 'תקינות', value: Math.max(0, nCarts - reds.length), color: '#2e7d32' },
+  ] };
   const pq = pendingQueue(db, scopedCartIds);
   const dlabel = (() => { const [y, m, d] = sp.date.split('-'); return `${d}/${m}`; })();
   const probCard = ps.total
@@ -449,9 +492,10 @@ function mgmtDashboardHtml(db, actor) {
     <div class="section-title">לוח ניהול</div>
     <div class="who" style="margin-bottom:10px">${esc(cap)}</div>
     ${probCard}
-    <div class="charts">
-      <div class="chartcard"><h4>חתימות להיום (${dlabel})</h4>${svgPie(sp)}${svgLegend(sp.slices, sp.total)}<div class="chartbtns"><button data-chartview="sign">👁️ צפה</button><button data-chartprint="sign">🖨️ הדפס</button></div></div>
-      <div class="chartcard"><h4>סטטוס כיול</h4>${svgPie(cp)}${svgLegend(cp.slices, cp.total)}<div class="chartbtns"><button data-chartview="cal">👁️ צפה</button><button data-chartprint="cal">🖨️ הדפס</button></div></div>
+    <div class="charts charts3">
+      <div class="chartcard accent-cart"><h4>🛻 מצב עגלות</h4>${svgPie(cartPie)}${svgLegend(cartPie.slices, cartPie.total)}<div class="chartbtns"><button data-chartrep="cart">📄 דוח</button></div></div>
+      <div class="chartcard accent-sign"><h4>🖊️ חתימות היום (${dlabel})</h4>${svgPie(sp)}${svgLegend(sp.slices, sp.total)}<div class="chartbtns"><button data-chartview="sign">👁️ צפה</button><button data-chartprint="sign">🖨️ הדפס</button></div></div>
+      <div class="chartcard accent-cal"><h4>🎯 סטטוס כיול <span class="muted" style="font-size:11px">(${calTools.length} מכויילים)</span></h4>${svgPie(cp)}${svgLegend(cp.slices, cp.total)}<div class="chartbtns"><button data-chartrep="cal">📄 דוח</button></div></div>
     </div>
     ${due.length ? `<div class="section-title">כיול קרב / פג (${due.length})</div><div class="card" style="padding:4px 0">${dueRows}</div>` : ''}
     ${reds.length ? `<div class="section-title">עגלות אדומות (${reds.length})</div><div class="card" style="padding:4px 0">${redRows}</div>` : ''}
@@ -491,12 +535,14 @@ function renderDashboard(db, actor, opts = {}) {
   const cset = new Set(carts.map(c => c.id));
   // main/mine lists show only LIVE tools — staged (build) & hidden tools live in their own admin views.
   const tools = visibleTools(db, actor).filter(t => (view === 'mine' ? cset.has(t.cartId) : true) && isLive(t));
-  if (view !== 'main') problemFilter = false;
-  const shownTools = (problemFilter && view === 'main')
-    ? tools.filter(t => PROBLEM_STATUSES.includes(statusOf(db, t))) : tools;
-  const chipCtx = { todayIso: new Date().toISOString().slice(0, 10), canSign: !!opts.onAction };
+  if (view !== 'main') { problemFilter = false; cartFilter = ''; }
+  const shownTools = view !== 'main' ? tools
+    : cartFilter ? tools.filter(t => t.cartId === cartFilter && PROBLEM_STATUSES.includes(statusOf(db, t)))  // #1 cart's problems only
+    : problemFilter ? tools.filter(t => PROBLEM_STATUSES.includes(statusOf(db, t)))
+    : tools;
+  const chipCtx = { todayIso: new Date().toISOString().slice(0, 10), canSign: !!opts.onAction, db };
   const by = (s) => tools.filter(t => statusOf(db, t) === s).length;
-  const stats = { total: tools.length, expired: by('expired'), due30: by('due30'), due60: by('due60') };
+  const stats = { total: tools.filter(t => t.cal === 'כן').length, expired: by('expired'), due30: by('due30'), due60: by('due60') };
   const scopeNote = actor.role === ROLES.CART_OWNER
     ? `מציג רק את ${carts.map(c => c.name).join(', ') || 'העגלה שלך'} — צפייה בלבד`
     : 'תצוגת ניהול — כל המלאי';
@@ -547,16 +593,18 @@ function renderDashboard(db, actor, opts = {}) {
       ${notificationsHtml(db, actor)}
       <div class="section-title">סטטוס כיול</div>
       <div class="stats">
-        <div class="stat brand" data-statreport="total" style="cursor:pointer" title="לחץ לצפייה בדוח"><div class="n">${stats.total}</div><div class="l">כלים בסך הכל 👁️</div></div>
+        <div class="stat brand" data-statreport="total" style="cursor:pointer" title="לחץ לצפייה בדוח"><div class="n">${stats.total}</div><div class="l">כלים מכויילים 👁️</div></div>
         <div class="stat red" data-statreport="expired" style="cursor:pointer" title="לחץ לצפייה בדוח"><div class="n">${stats.expired}</div><div class="l">פג תוקף (0) 👁️</div></div>
         <div class="stat amber" data-statreport="due30" style="cursor:pointer" title="לחץ לצפייה בדוח"><div class="n">${stats.due30}</div><div class="l">קרוב לכיול (30 יום) 👁️</div></div>
         <div class="stat amber" data-statreport="due60" style="cursor:pointer" title="לחץ לצפייה בדוח"><div class="n">${stats.due60}</div><div class="l">מתקרב לכיול (60 יום) 👁️</div></div>
       </div>
+      ${(() => { const calT = tools.filter(t => t.cal === 'כן'); if (!calT.length) return ''; const cpie = calibrationPie(db, calT);
+        return `<div class="chartcard accent-cal" style="flex-direction:row;justify-content:flex-start;gap:16px;margin-top:10px"><div style="flex:0 0 auto;max-width:128px">${svgPie(cpie, { size: 120 })}</div><div style="flex:1"><h4 style="justify-content:flex-start">🎯 גרף כיול — מכויילים בלבד</h4>${svgLegend(cpie.slices, cpie.total)}</div></div>`; })()}
       <div class="section-title">עגלות (${carts.filter(c => c.type !== 'closet').length})</div>
       <div class="chips">${carts.filter(c => c.type !== 'closet').map(c => cartChip(db, tools, c, chipCtx)).join('') || '<div class="empty">אין עגלות</div>'}</div>
       <div class="section-title">ארונות (${carts.filter(c => c.type === 'closet').length})</div>
       <div class="chips">${carts.filter(c => c.type === 'closet').map(c => cartChip(db, tools, c, chipCtx)).join('') || '<div class="empty">אין ארונות</div>'}</div>
-      <div class="section-title">כלים (${shownTools.length})${problemFilter ? ` · בעיות בלבד <a data-clearfilter style="cursor:pointer;color:var(--brand);font-size:12px">נקה סינון</a>` : ''}</div>
+      <div class="section-title">כלים (${shownTools.length})${(problemFilter || cartFilter) ? ` · ${cartFilter ? 'בעיות בעגלה ' + esc(cartFilter) : 'בעיות בלבד'} <a data-clearfilter style="cursor:pointer;color:var(--brand);font-size:12px">נקה סינון</a>` : ''}</div>
       <input id="tool-search" type="search" placeholder="🔍 חיפוש — מזהה / תיאור / מק״ט / מיקום / סידורי כיול" style="width:100%;padding:11px 13px;margin:0 0 9px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--txt);font-size:15px">
       <div class="card"><div class="tbl-scroll" id="tools-tbox">${toolsTable(db, shownTools)}</div></div>`}
       ${opts.demo ? '<div class="demo-note">★ תצוגת הדגמה על נתונים מומצאים. בגרסה החיה הנתונים מהענן.</div>' : ''}
@@ -592,9 +640,11 @@ function renderDashboard(db, actor, opts = {}) {
   });
   document.querySelectorAll('[data-releasehidden]').forEach(b => b.onclick = () => opts.onAction && opts.onAction('releasehidden', { toolId: b.getAttribute('data-releasehidden') }));
   document.querySelectorAll('[data-releaseallbuild]').forEach(b => b.onclick = () => opts.onAction && opts.onAction('releaseallbuild', {}));
-  document.querySelectorAll('[data-probfilter]').forEach(b => b.onclick = () => { problemFilter = true; setView('main'); });
+  document.querySelectorAll('[data-probfilter]').forEach(b => b.onclick = () => { problemFilter = true; cartFilter = ''; setView('main'); });
+  // #1 click a cart chip → that cart's problems only
+  document.querySelectorAll('[data-cartprob]').forEach(b => b.onclick = () => { cartFilter = b.getAttribute('data-cartprob'); problemFilter = false; setView('main'); });
   const clr = document.querySelector('[data-clearfilter]');
-  if (clr) clr.onclick = () => { problemFilter = false; _rerender(); };
+  if (clr) clr.onclick = () => { problemFilter = false; cartFilter = ''; _rerender(); };
   // #8 global search — filters the FULL visible list (not just the 300 shown) into the table box, keeps focus
   const searchInp = document.getElementById('tool-search');
   const tbox = document.getElementById('tools-tbox');
@@ -613,24 +663,35 @@ function renderDashboard(db, actor, opts = {}) {
   // #6 mark notifications read
   const mrBtn = document.querySelector('[data-markread]');
   if (mrBtn) mrBtn.onclick = () => opts.onAction && opts.onAction('markread', {});
+  // #6 click a notification → detail screen + action
+  document.querySelectorAll('[data-notif]').forEach(b => b.onclick = () =>
+    openNotifDetail(db, actor, (db.notifications || []).find(x => x.id === b.getAttribute('data-notif')), opts));
   // cart-report PDF (read-only, opens a print window — not an onAction)
   const repBtn = document.querySelector('[data-report]');
   if (repBtn) repBtn.onclick = () => { const sel = document.getElementById('m-rep-cart'); if (sel && sel.value) printCartReport(db, sel.value); };
   // clickable stat cubes → VIEW (open the report, no auto-print; the user prints from there if they want)
   document.querySelectorAll('[data-statreport]').forEach(b => b.onclick = () => {
     const k = b.getAttribute('data-statreport');
-    const titles = { total: 'דוח כל הכלים', expired: 'דוח — פג תוקף כיול (0)', due30: 'דוח — קרוב לכיול (30)', due60: 'דוח — מתקרב לכיול (60)' };
-    const subset = k === 'total' ? tools : tools.filter(t => statusOf(db, t) === k);
-    viewToolsReport(db, titles[k] || 'דוח כלים', subset);
+    const titles = { total: 'דוח כלים מכויילים', expired: 'דוח — פג תוקף כיול (0)', due30: 'דוח — קרוב לכיול (30)', due60: 'דוח — מתקרב לכיול (60)' };
+    const subset = k === 'total' ? tools.filter(t => t.cal === 'כן') : tools.filter(t => statusOf(db, t) === k);
+    openReportFilter(db, actor, titles[k] || 'דוח כלים', subset);   // #3 filter options before the report
   });
   // dashboard charts → SEPARATE צפה / הדפס buttons (never both at once)
   const today = new Date().toISOString().slice(0, 10);
   const chartReport = (k, doPrint) => {
-    if (k === 'cal') (doPrint ? printToolsReport : viewToolsReport)(db, 'דוח סטטוס כיול', visibleTools(db, actor));
+    if (k === 'cal') (doPrint ? printToolsReport : viewToolsReport)(db, 'דוח כלים מכויילים', visibleTools(db, actor).filter(t => t.cal === 'כן'));
+    else if (k === 'cart') (doPrint ? printToolsReport : viewToolsReport)(db, 'דוח עגלות — כלים בבעיה',
+      visibleTools(db, actor).filter(t => PROBLEM_STATUSES.includes(statusOf(db, t))));
     else (doPrint ? printSignoffReport : viewSignoffReport)(db, visibleCartIdsFor(db, actor), today);
   };
   document.querySelectorAll('[data-chartview]').forEach(b => b.onclick = () => chartReport(b.getAttribute('data-chartview'), false));
   document.querySelectorAll('[data-chartprint]').forEach(b => b.onclick = () => chartReport(b.getAttribute('data-chartprint'), true));
+  // cart/cal charts → filter dialog (#3) before view/print
+  document.querySelectorAll('[data-chartrep]').forEach(b => b.onclick = () => {
+    const k = b.getAttribute('data-chartrep');
+    if (k === 'cal') openReportFilter(db, actor, 'דוח כלים מכויילים', visibleTools(db, actor).filter(t => t.cal === 'כן'));
+    else openReportFilter(db, actor, 'דוח עגלות — כלים בבעיה', visibleTools(db, actor).filter(t => PROBLEM_STATUSES.includes(statusOf(db, t))));
+  });
   wireMgmt(opts);
 }
 
@@ -648,8 +709,64 @@ function notificationsHtml(db, actor) {
   const canMark = actor.role === ROLES.ADMIN || actor.role === ROLES.MANAGER;
   return `<div class="section-title">🔔 התראות${unread ? ` · <span style="color:var(--brand)">${unread} חדשות</span>` : ''}${unread && canMark ? ` <button class="mini" data-markread="1">סמן נקראו</button>` : ''}</div>
     <div class="card" style="padding:4px 0">${list.map(n =>
-      `<div class="notif"${n.read ? '' : ' style="font-weight:600"'}><span class="ni">${n.read ? '' : '🔵'}${icon[n.type] || '🔔'}</span><span>${esc(n.msg)}</span>` +
-      `<span class="c">${n.ts ? new Date(n.ts).toLocaleDateString('he-IL') : ''}</span></div>`).join('')}</div>`;
+      `<div class="notif" data-notif="${esc(n.id)}" style="cursor:pointer${n.read ? '' : ';font-weight:600'}"><span class="ni">${n.read ? '' : '🔵'}${icon[n.type] || '🔔'}</span><span>${esc(n.msg)}</span>` +
+      `<span class="c">${n.ts ? new Date(n.ts).toLocaleDateString('he-IL') : ''} ›</span></div>`).join('')}</div>`;
+}
+
+// #6 — click a notification → detail screen (who opened, the problem) + a treat/approve action
+function openNotifDetail(db, actor, n, opts) {
+  if (!n) return;
+  const ICON = { calibration_request: '🔧', broken: '💥', external_request: '📤', rejection: '⛔', hidden: '🕵️', request_decided: '✅', user_delete_request: '👤', transfer_request: '🔁', upgrade_request: '⬆️', calibration: '🔧' };
+  const when = n.ts ? new Date(n.ts).toLocaleString('he-IL') : '';
+  const userLabel = (uid) => { const u = (db.users || []).find(x => x.uid === uid); return u ? u.email : (uid || '—'); };
+  const req = (db.requests || []).find(r => r.id === n.refId);
+  const tr = (db.transfers || []).find(t => t.id === n.refId);
+  const tool = (db.tools || []).find(t => t.id === n.refId);
+  const row = (k, v) => `<div style="margin-bottom:5px"><b>${k}:</b> ${v}</div>`;
+  const okBtn = 'padding:10px 16px;border:0;border-radius:10px;background:#2e7d32;color:#fff;font-weight:700;cursor:pointer';
+  const noBtn = 'padding:10px 16px;border:0;border-radius:10px;background:#c62828;color:#fff;font-weight:700;cursor:pointer';
+  const ctaBtn = 'padding:10px 16px;border:0;border-radius:10px;background:var(--brand);color:#fff;font-weight:700;cursor:pointer';
+  let detail = '', actions = '';
+  if (req) {
+    const cart = (db.carts || []).find(c => c.id === req.cartId);
+    detail = row('סוג', 'בקשת ' + esc(req.kind || '')) + row('נפתח ע"י', esc(userLabel(req.by)))
+      + (cart ? row('עגלה', esc(cart.name) + ' · ' + esc(cart.id)) : '') + row('סטטוס', esc(req.status));
+    if (req.status === 'pending' && (actor.role === ROLES.ADMIN || actor.role === ROLES.MANAGER))
+      actions = `<button data-nd-act="approve" data-nd-id="${esc(req.id)}" style="${okBtn}">✅ אשר בקשה</button><button data-nd-act="reject" data-nd-id="${esc(req.id)}" style="${noBtn}">⛔ דחה</button>`;
+  } else if (tr) {
+    detail = row('מסירת עגלה', esc(tr.cartId)) + row('מ', esc(userLabel(tr.fromUid)) + ' → ' + esc(userLabel(tr.toUid))) + row('סטטוס', esc(tr.status));
+    if (tr.status === 'pending') actions = `<button data-nd-act="signtransfer" data-nd-id="${esc(tr.id)}" style="${okBtn}">✍️ חתום על מסירה</button>`;
+  } else if (tool) {
+    const st = statusOf(db, tool);
+    detail = row('כלי', esc(tool.desc) + ' <span class="id">' + esc(tool.id) + '</span>') + row('מק"ט', esc(tool.vendor))
+      + row('סטטוס', `<span class="pill ${st}">${STATUS_HE[st] || st}</span>`) + row('מיקום', esc(tool.loc || tool.cartId || '—'));
+    const ev = (db.audit || []).slice().reverse().find(a => (a.entityId === tool.id || a.refId === tool.id) && /broken|reject/.test(a.action || ''));
+    if (ev) detail += row('דווח ע"י', esc(ev.email || userLabel(ev.uid)));
+    if (tool.cartId) actions = `<button data-nd-act="gotocart" data-nd-id="${esc(tool.cartId)}" style="${ctaBtn}">🔍 הצג את בעיות העגלה</button>`;
+  } else {
+    detail = `<div>${esc(n.msg)}</div>`;
+  }
+  const ov = document.createElement('div');
+  ov.setAttribute('style', 'position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:18px');
+  ov.innerHTML = `<div style="width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px">
+    <div style="font-size:30px">${ICON[n.type] || '🔔'}</div>
+    <h3 style="margin:4px 0 2px">${esc(n.msg)}</h3>
+    <div style="color:var(--mut);font-size:12px;margin-bottom:14px">${esc(when)}</div>
+    <div style="font-size:14px;line-height:1.8">${detail}</div>
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center">${actions}
+      <button id="nd-x" style="margin-inline-start:auto;padding:10px 16px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--txt);cursor:pointer">סגור</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  const close = () => ov.remove();
+  ov.addEventListener('click', e => { if (e.target === ov) close(); });
+  ov.querySelector('#nd-x').onclick = close;
+  ov.querySelectorAll('[data-nd-act]').forEach(b => b.onclick = () => {
+    const act = b.getAttribute('data-nd-act'), id = b.getAttribute('data-nd-id'); close();
+    if (act === 'approve') opts.onAction && opts.onAction('approve', { requestId: id });
+    else if (act === 'reject') opts.onAction && opts.onAction('reject', { requestId: id });
+    else if (act === 'signtransfer') opts.onAction && opts.onAction('signtransfer', { transferId: id });
+    else if (act === 'gotocart') { cartFilter = id; problemFilter = false; setView('main'); }
+  });
 }
 
 // ── approvals (brick 14): pending requests with approve/reject ──────────────
@@ -1016,6 +1133,7 @@ function wireAddPanel(opts) {
 
 function cartChip(db, tools, c, ctx = {}) {
   const ct = tools.filter(t => t.cartId === c.id);
+  const probCount = ct.filter(t => PROBLEM_STATUSES.includes(statusOf(db, t))).length;   // #1
   const bad = ct.some(t => statusOf(db, t) === 'expired');
   const warn = ct.some(t => statusOf(db, t) === 'due60');
   const signable = ctx.canSign && c.type !== 'closet' && needsDailySignoff(c);   // not locked / awaiting-owner
@@ -1024,7 +1142,8 @@ function cartChip(db, tools, c, ctx = {}) {
   const sig = !signable ? ''
     : signed ? ` <span class="c" style="color:var(--ok);font-weight:700">✓ נחתם היום</span>`
     : ` <button data-signcart="${esc(c.id)}" style="margin-inline-start:6px;padding:4px 11px;border-radius:999px;border:0;background:var(--brand);color:#fff;font-size:11px;font-weight:700;cursor:pointer">🖊️ חתום</button>`;
-  return `<div class="chip"><span class="dot ${bad ? 'bad' : warn ? 'warn' : ''}"></span><b>${esc(c.name)}</b><span class="c">${ct.length} כלים</span>${lockBadge}${sig}</div>`;
+  const probBadge = probCount ? ` <span class="c" style="color:#fca5a5;font-weight:700">⚠ ${probCount} בעיות</span>` : '';
+  return `<div class="chip" data-cartprob="${esc(c.id)}" style="cursor:pointer" title="לחץ לראות את בעיות העגלה"><span class="dot ${bad ? 'bad' : warn ? 'warn' : ''}"></span><b>${esc(c.name)}</b><span class="c">${ct.length} כלים</span>${probBadge}${lockBadge}${sig}</div>`;
 }
 
 function toolsTable(db, tools) {
